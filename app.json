@@ -1,5 +1,5 @@
 {
-    "name": "EvaMariaBot",
+    "name": "KuttuBOT",
     "description": "When you going to send file on telegram channel this bot will save that in database, So you can search that easily in inline mode",
     "stack": "container",
     "keywords": [
@@ -15,8 +15,8 @@
       "index",
       "inline"
     ],
-    "website": "https://github.com/Jithins7/MPD_BOT",
-    "repository": "https://github.com/Jithins7/MPD_BOT",
+    "website": "https://github.com/GouthamSER/KuttuBot",
+    "repository": "https://github.com/GouthamSER/KuttuBot",
     "env": {
         "BOT_TOKEN": {
             "description": "Your bot token.",
