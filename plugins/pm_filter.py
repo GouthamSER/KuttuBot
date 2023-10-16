@@ -41,14 +41,14 @@ async def give_filter(client, message):
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     if int(req) not in [query.from_user.id, 0]:
-        return await query.answer("ɴᴇᴇ sʜᴏᴏᴘᴀʀᴀᴅᴀ👌.\nᴠᴇɴᴏɢɪʟ ɴᴇᴇʏ sᴇᴀʀᴄʜ ᴄʜʏ🔎🔍", show_alert=True)
+        return await query.answer("**Search for Yourself**🔎", show_alert=True)
     try:
         offset = int(offset)
     except:
         offset = 0
     search = BUTTONS.get(key)
     if not search:
-        await query.answer("ɴᴇᴇʏ ɪᴘᴏ ᴇɴᴛᴇ ᴘᴀᴢʜᴀʏᴀ ᴍᴇssᴀɢᴇ ᴀɴᴜ ᴜsᴇ ᴄʜʏᴀɴᴇ☠, \nɴᴇᴇʏ ᴏɴᴜᴅᴇ ᴀʏᴋ🤺.", show_alert=True)
+        await query.answer("**You are using My Old Messages**.", show_alert=True)
         return
 
     files, n_offset, total = await get_search_results(search, offset=offset, filter=True)
@@ -120,12 +120,12 @@ async def next_page(bot, query):
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer("ɴᴇʏ sʜᴏᴏᴘᴀʀᴀᴅᴀ👌\nɪᴛʜ ɴɪɴᴀᴋ ᴏʟᴀᴛʜᴀʟᴀ⚔️", show_alert=True)
+        return await query.answer("**Search for Yourself**🔎", show_alert=True)
     if movie_ == "close_spellcheck":
         return await query.message.delete()
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
     if not movies:
-        return await query.answer("You are clicking on an old button which is expired.", show_alert=True)
+        return await query.answer("**You are using My Old Spellcheck Messages**", show_alert=True)
     movie = movies[(int(movie_))]
     await query.answer('Checking for Movie in database...')
     k = await manual_filters(bot, query.message, text=movie)
@@ -364,7 +364,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     caption=f_caption,
                     protect_content=True if ident == "filep" else False 
                 )
-                await query.answer('ɴɪɴᴛᴇ ᴘᴍ ɴᴊɴ ᴀʏᴄʜɪᴛᴜɴᴅᴇ ғɪʟᴇ❤', show_alert=True)
+                await query.answer('**Already Sent In your Pm**', show_alert=True)#SNT PM FILE CAp
         except UserIsBlocked:
             await query.answer('Unblock the bot mahn !', show_alert=True)
         except PeerIdInvalid:
@@ -718,9 +718,7 @@ async def auto_filter(client, msg, spoll=False):
     if spoll:
         await msg.message.delete()
 
-
-        
-#SPELL CHECK ADDED BY GOUTHAM SER....        
+#SPELL CHECK RE EDITED BY GOUTHAMSER
 async def advantage_spell_chok(client, msg):
     mv_id = msg.id
     mv_rqst = msg.text
@@ -737,32 +735,47 @@ async def advantage_spell_chok(client, msg):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-        InlineKeyboardButton('🔍 sᴇᴀʀᴄʜ ᴏɴ ɢᴏᴏɢʟᴇ​ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")            
-        ]]
-
+                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
+             ]]
+        btn.insert(
+        [
+            InlineKeyboardButton('ENG', 'esp'),
+            InlineKeyboardButton('MAL', 'msp'),
+            InlineKeyboardButton('HIN', 'hsp'),
+            InlineKeyboardButton('TAM', 'tsp')
+        ]
+    )
+        
         k = await msg.reply_text(
-            text=("<b>sᴏʀʀʏ ɴᴏ ꜰɪʟᴇs ᴡᴇʀᴇ ꜰᴏᴜɴᴅ\n\nᴄʜᴇᴄᴋ ʏᴏᴜʀ sᴘᴇʟʟɪɴɢ ɪɴ ɢᴏᴏɢʟᴇ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ !!</b>"),
+            text=script.SPOLL_NOT_FND, #IN SCRIPT CHANGE DONOT CHANGE CODE
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(40)
-        await k.delete()
+        await asyncio.sleep(45)
+        await k.delete()      
         return
-    
+    movielist = []
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-        InlineKeyboardButton('🔍 sᴇᴀʀᴄʜ ᴏɴ ɢᴏᴏɢʟᴇ​ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")   
-        ]]
+                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}") 
+             ]]
+        btn.insert(
+        [
+            InlineKeyboardButton('ENG', 'esp'),
+            InlineKeyboardButton('MAL', 'msp'),
+            InlineKeyboardButton('HIN', 'hsp'),
+            InlineKeyboardButton('TAM', 'tsp')
+        ]
+    )
         k = await msg.reply_text(
-            text=("<b>sᴏʀʀʏ ɴᴏ ꜰɪʟᴇs ᴡᴇʀᴇ ꜰᴏᴜɴᴅ\n\nᴄʜᴇᴄᴋ ʏᴏᴜʀ sᴘᴇʟʟɪɴɢ ɪɴ ɢᴏᴏɢʟᴇ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ !!</b>"),
+            text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(40)
+        await asyncio.sleep(60)
         await k.delete()
         return
-    
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
     btn = [
@@ -780,11 +793,10 @@ async def advantage_spell_chok(client, msg):
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
     )
-    await asyncio.sleep(600)
+    await asyncio.sleep(180)
     await spell_check_del.delete()
-    
-    #SPELLCHECK ENDING.................
 
+#SPELL CHECK END
 
 async def manual_filters(client, message, text=False):
     group_id = message.chat.id
