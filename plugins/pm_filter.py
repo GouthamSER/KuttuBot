@@ -735,16 +735,13 @@ async def advantage_spell_chok(client, msg):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
+                 InlineKeyboardButton('ENG', 'esp'),
+                 InlineKeyboardButton('MAL', 'msp'),
+                 InlineKeyboardButton('HIN', 'hsp'),
+                 InlineKeyboardButton('TAM', 'tsp')
+        ],[
                  InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
              ]]
-        btn.insert(
-        [
-            InlineKeyboardButton('ENG', 'esp'),
-            InlineKeyboardButton('MAL', 'msp'),
-            InlineKeyboardButton('HIN', 'hsp'),
-            InlineKeyboardButton('TAM', 'tsp')
-        ]
-    )
         
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND, #IN SCRIPT CHANGE DONOT CHANGE CODE
@@ -758,16 +755,14 @@ async def advantage_spell_chok(client, msg):
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}") 
+                 InlineKeyboardButton('ENG', 'esp'),
+                 InlineKeyboardButton('MAL', 'msp'),
+                 InlineKeyboardButton('HIN', 'hsp'),
+                 InlineKeyboardButton('TAM', 'tsp')
+        ],[
+                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
              ]]
-        btn.insert(
-        [
-            InlineKeyboardButton('ENG', 'esp'),
-            InlineKeyboardButton('MAL', 'msp'),
-            InlineKeyboardButton('HIN', 'hsp'),
-            InlineKeyboardButton('TAM', 'tsp')
-        ]
-    )
+        
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
             reply_markup=InlineKeyboardMarkup(button),
