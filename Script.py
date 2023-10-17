@@ -118,3 +118,7 @@ Added By - {}
 ID - <code>{}</code>
 Name - {}
 """
+    SPOLL_NOT_FND="""Hey 🤚🏻
+I couldn't find anything related to your request. 😵
+Try reading the instruction below 👇🏼
+    """
