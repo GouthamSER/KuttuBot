@@ -120,12 +120,12 @@ async def next_page(bot, query):
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer("**Search for Yourself**🔎", show_alert=True)
+        return await query.answer("Search for Yourself🔎", show_alert=True)
     if movie_ == "close_spellcheck":
         return await query.message.delete()
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
     if not movies:
-        return await query.answer("**You are using My Old Spellcheck Messages**", show_alert=True)
+        return await query.answer("You are using My Old Spellcheck Messages", show_alert=True)
     movie = movies[(int(movie_))]
     await query.answer('Checking for Movie in database...')
     k = await manual_filters(bot, query.message, text=movie)
@@ -402,6 +402,16 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
     elif query.data == "pages":
         await query.answer()
+#ALERT FN IN SPELL CHECK FOR LANGAUGES TO KNOW HOW TO TYPE MOVIES esp english spell check goto adv spell check to check donot change the codes      
+    elif query.data == "esp":
+        await query.answer(text=script.ENG_SPELL, show_alert="true")
+    elif query.data == "msp":
+        await query.answer(text=script.MAL_SPELL, show_alert="true")
+    elif query.data == "hsp":
+        await query.answer(text=script.HIN_SPELL, show_alert="true")
+    elif query.data == "tsp":
+        await query.answer(text=script.TAM_SPELL, show_alert="true")
+        
     elif query.data == "start":
         buttons = [[
             InlineKeyboardButton('🎉 𝗔𝗱𝗱 𝗠𝗲 𝗧𝗼 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽𝘀 🎉', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
