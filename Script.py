@@ -132,7 +132,7 @@ FɪʟᴇSɪᴢᴇ : {file_size}
 ID - <code>{}</code>
 Name - {}
 """
-    SPOLL_NOT_FND="""Hey 🤚🏻
+    SPOLL_NOT_FND="""Eᴅᴀᴀ Mᴏɴᴇʜ🤚🏻
 I couldn't find anything related to your request. 😵
 Try reading the instruction below 👇🏼
     """
