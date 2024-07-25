@@ -117,15 +117,15 @@ python3 bot.py
 
 ## Thanks to 
  - Thanks To Dan For His Awesome [Library](https://github.com/pyrogram/pyrogram)
- - Thanks To Mahesh For His Ritesh [Evamaria](https://github.com/ritheshrkrm)
+ - Thanks To Mahesh For His Goutham [Evamaria](https://github.com/GouthamSER)
  - Thanks To [Trojanz](https://github.com/trojanzhex) for Their Awesome [Unlimited Filter Bot](https://github.com/TroJanzHEX/Unlimited-Filter-Bot) And [AutoFilterBoT](https://github.com/trojanzhex/auto-filter-bot)
  - Thanks To All Everyone In This Journey
 
 ### Note
 
-[Note To A So Called Dev](https://telegram.dog/subin_works/203): 
+[Note To A So Called Dev](https://telegram.dog/wudixh/13/4/): 
 
-Kanging this codes and and editing a few lines and releasing a V.x  or an [alpha](https://telegram.dog/subin_works/204), beta , gama branches of your repo won't make you a Developer.
+Kanging this codes and and editing a few lines and releasing a V.x  or an [alpha](https://telegram.dog/wudixh/13/4), beta , gama branches of your repo won't make you a Developer.
 Fork the repo and edit as per your needs.
 
 ## Disclaimer
