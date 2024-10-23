@@ -17,6 +17,10 @@ from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script
 
+import schedule
+import asyncio
+from datetime import date, datetime, timedelta
+import pytz
 
 from plugins.webcode import bot_run
 from os import environ
@@ -56,6 +60,12 @@ class Bot(Client):
         logging.info(LOG_STR)
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT)#RESTART SND IN LOG_CHANNEL
         print("Goutham SER own Bot</>")
+
+        tz = pytz.timezone('Asia/Kolkata')
+        today = date.today()
+        now = datetime.now(tz)
+        time = now.strftime("%H:%M:%S %p")
+        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
         
         client = webserver.AppRunner(await bot_run())
         await client.setup()
@@ -63,7 +73,21 @@ class Bot(Client):
         await webserver.TCPSite(client, bind_address,
         PORT_CODE).start()
                           
-        
+        # Schedule the restart every 24 hours
+        schedule.every(24).hours.do(lambda: asyncio.create_task(self.restart()))
+
+        #----------- Start the scheduler in a background task
+        asyncio.create_task(self.run_scheduler())
+  
+    async def restart(self):
+        logging.info(" Is it 12pm!! Bot is restarting...")
+        await self.stop()
+        await self.start()  # Restart the bot
+
+    async def run_scheduler(self):
+        while True:
+            schedule.run_pending()
+            await asyncio.sleep(1)  # Prevent busy-waiting--------------
         
 
     async def stop(self, *args):
