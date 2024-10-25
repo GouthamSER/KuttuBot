@@ -16,10 +16,8 @@ from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script
-
-import schedule
 import asyncio
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 import pytz
 
 from plugins.webcode import bot_run
