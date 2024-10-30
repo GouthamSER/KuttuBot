@@ -20,6 +20,10 @@ import asyncio
 from datetime import date, datetime
 import pytz
 
+from pyrogram import utils as pyroutils
+pyroutils.MIN_CHAT_ID = -999999999999
+pyroutils.MIN_CHANNEL_ID = -100999999999999
+
 from plugins.webcode import bot_run
 from os import environ
 from aiohttp import web as webserver
