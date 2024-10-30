@@ -7,6 +7,9 @@ logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("imdbpy").setLevel(logging.ERROR)
 
+# for prevent stoping the bot after 1 week
+logging.getLogger("asyncio").setLevel(logging.CRITICAL -1)
+
 from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
@@ -20,6 +23,7 @@ import asyncio
 from datetime import date, datetime
 import pytz
 
+# peer id invaild fixxx
 from pyrogram import utils as pyroutils
 pyroutils.MIN_CHAT_ID = -999999999999
 pyroutils.MIN_CHANNEL_ID = -100999999999999
