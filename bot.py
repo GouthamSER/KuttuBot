@@ -56,14 +56,14 @@ class Bot(Client):
         self.username = '@' + me.username
         logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
         logging.info(LOG_STR)
-        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT)#RESTART SND IN LOG_CHANNEL
+        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))#RESTART SND IN LOG_CHANNEL
         print("Goutham SER own Bot</>")
 
         tz = pytz.timezone('Asia/Kolkata')
         today = date.today()
         now = datetime.now(tz)
         time = now.strftime("%H:%M:%S %p")
-        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_GC_TXT.format(today, time))
+        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_GC_TXT.format)
         client = webserver.AppRunner(await bot_run())
         await client.setup()
         bind_address = "0.0.0.0"
