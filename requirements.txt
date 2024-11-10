@@ -1,5 +1,5 @@
 git+https://github.com/GouthamSER/cinemagoer
-pyrogram>=2.0.59
+pyrofork==2.3.45
 tgcrypto
 pymongo[srv]==4.3.2
 motor==3.0.0
