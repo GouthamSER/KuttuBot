@@ -9,7 +9,7 @@ logging.getLogger("imdbpy").setLevel(logging.ERROR)
 
 # for prevent stoping the bot after 1 week
 logging.getLogger("asyncio").setLevel(logging.CRITICAL -1)
-
+import tgcrypto
 from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
