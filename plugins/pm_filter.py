@@ -120,14 +120,16 @@ async def next_page(bot, query):
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer("Search for Yourself🔎", show_alert=True)
+        return await query.answer("Thiz is Not For You 🚫", show_alert=True)
     if movie_ == "close_spellcheck":
         return await query.message.delete()
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
     if not movies:
         return await query.answer(script.OLD_MES, show_alert=True)#script change
     movie = movies[(int(movie_))]
-    await query.answer(script.CHK_MOV_ALRT)#script change
+    aa=await query.answer(script.CHK_MOV_ALRT)#script change
+    await asyncio.sleep(10)
+    await aa.delete()
     k = await manual_filters(bot, query.message, text=movie)
     if k == False:
         files, offset, total_results = await get_search_results(movie, offset=0, filter=True)
@@ -615,7 +617,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ]
             reply_markup = InlineKeyboardMarkup(buttons)
             await query.message.edit_reply_markup(reply_markup)
-    await query.answer('Piracy Is Crime')
+    await query.answer('Settings Changed 👍')
 
 
 async def auto_filter(client, msg, spoll=False):
@@ -716,25 +718,25 @@ async def auto_filter(client, msg, spoll=False):
         try:
             delauto = await message.reply_photo(photo=imdb.get('poster'), caption=cap[:1024],
                                       reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(200)
+            await asyncio.sleep(150)
             await delauto.delete() #del msg auto 10min filter
             await message.delete()
         except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
             pic = imdb.get('poster')
             poster = pic.replace('.jpg', "._V1_UX360.jpg")
             delau = await message.reply_photo(photo=poster, caption=cap[:1024], reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(300)
+            await asyncio.sleep(150)
             await delau.delete()#del msg auto 10min filter
             await message.delete()
         except Exception as e:
             logger.exception(e)
             audel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(200)
+            await asyncio.sleep(150)
             await audel.delete()#del msg auto 10min filter
             await message.delete()
     else:
         autodel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-        await asyncio.sleep(200)
+        await asyncio.sleep(150)
         await autodel.delete()#del msg auto 10min filter
         await message.delete()
     if spoll:
