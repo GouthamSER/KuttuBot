@@ -127,9 +127,7 @@ async def advantage_spoll_choker(bot, query):
     if not movies:
         return await query.answer(script.OLD_MES, show_alert=True)#script change
     movie = movies[(int(movie_))]
-    aa=await query.answer(script.CHK_MOV_ALRT)#script change
-    await asyncio.sleep(10)
-    await aa.delete()
+    await query.answer(script.CHK_MOV_ALRT)#script change
     k = await manual_filters(bot, query.message, text=movie)
     if k == False:
         files, offset, total_results = await get_search_results(movie, offset=0, filter=True)
@@ -138,7 +136,7 @@ async def advantage_spoll_choker(bot, query):
             await auto_filter(bot, query, k)
         else:
             k = await query.message.edit(script.MOV_NT_FND)#script change
-            await asyncio.sleep(10)
+            await asyncio.sleep(15)
             await k.delete()
 
 
@@ -755,13 +753,14 @@ async def advantage_spell_chok(client, msg):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-                 InlineKeyboardButton('ENG', 'esp'),
-                 InlineKeyboardButton('MAL', 'msp'),
-                 InlineKeyboardButton('HIN', 'hsp'),
-                 InlineKeyboardButton('TAM', 'tsp')
+                 InlineKeyboardButton('English', 'esp'),
+                 InlineKeyboardButton('Malayalam', 'msp')
+        ],[
+                 InlineKeyboardButton('Hindi', 'hsp'),
+                 InlineKeyboardButton('Tamil', 'tsp')
         ],[
                  InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
-             ]]
+        ]]
         
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND, #IN SCRIPT CHANGE DONOT CHANGE CODE
@@ -775,14 +774,14 @@ async def advantage_spell_chok(client, msg):
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-                 InlineKeyboardButton('ENG', 'esp'),
-                 InlineKeyboardButton('MAL', 'msp'),
-                 InlineKeyboardButton('HIN', 'hsp'),
-                 InlineKeyboardButton('TAM', 'tsp')
+                 InlineKeyboardButton('English', 'esp'),
+                 InlineKeyboardButton('Malayalam', 'msp')
+        ],[
+                 InlineKeyboardButton('Hindi', 'hsp'),
+                 InlineKeyboardButton('Tamil', 'tsp')
         ],[
                  InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
-             ]]
-        
+        ]]    
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
             reply_markup=InlineKeyboardMarkup(button),
@@ -808,7 +807,7 @@ async def advantage_spell_chok(client, msg):
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
     )
-    await asyncio.sleep(10)
+    await asyncio.sleep(15)
     await spell_check_del.delete()
 
 #SPELL CHECK END
