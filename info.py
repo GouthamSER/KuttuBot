@@ -46,7 +46,7 @@ P_TTI_SHOW_OFF = is_enabled((environ.get('P_TTI_SHOW_OFF', 'True')), False)
 IMDB = is_enabled((environ.get('IMDB', 'False')), True)
 SINGLE_BUTTON = is_enabled((environ.get('SINGLE_BUTTON', 'True')), False)
 CUSTOM_FILE_CAPTION = environ.get("CUSTOM_FILE_CAPTION", f"{script.CUSTOM_FILE_CAPTION}") ## CHANGE CODE IN SCRIPT
-BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", "📂 <em>File Name</em>: <code>{file_name}</code>\n\n ♻ <em>File Size</em>:{file_size} \n\n <b><i>Latest Movies -</i> [ELDORADO](https://t.me/+pRaLXcOcEW83OWY1) </b>")
+BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", "📂 <em>File Name</em>: <code>{file_name}</code>\n\n <b><i>Latest Movies -</i> [𝙼𝚊𝚜𝚝𝚎𝚛 𝙿𝚛𝚒𝚗𝚝 𝙳𝚘𝚠𝚗𝚕𝚘𝚊𝚍𝚎𝚛🎞️【𝙼𝙿𝙳】7.0](https://t.me/MPD_007_7) </b> \n\n <b><i>Movie Request Group -</i>  [𝙼𝙿𝙳 𝚁𝚎𝚚𝚞𝚎𝚜𝚝𝚎𝚍 𝙼𝚘𝚟𝚒𝚎𝚜 𝚉𝚘𝚗𝚎 𝟻.𝟶 🎞](https://t.me/+5Ds-A89IhH0wYjJl) </b> \n\n <b><i>MPD Links -</i>  @MPD_Linkzz</b>")
 IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", "🏷 𝖳𝗂𝗍𝗅𝖾: <a href={url}>{title}</a> \n🔮 𝖸𝖾𝖺𝗋: {year} \n⭐️ 𝖱𝖺𝗍𝗂𝗇𝗀𝗌: {rating}/ 10 \n🎭 𝖦𝖾𝗇𝖾𝗋𝗌: {genres} \n\n🎊 𝖯𝗈𝗐𝖾𝗋𝖾𝖽 𝖡𝗒 [Kuttu Bot](https://t.me/im_kuttu_bot)")
 LONG_IMDB_DESCRIPTION = is_enabled(environ.get("LONG_IMDB_DESCRIPTION", "False"), False)
 SPELL_CHECK_REPLY = is_enabled(environ.get("SPELL_CHECK_REPLY", "True"), True)
