@@ -120,9 +120,7 @@ Added By - {}
     CUSTOM_FILE_CAPTION = """<b>📂Fɪʟᴇɴᴀᴍᴇ : {file_name}
 FɪʟᴇSɪᴢᴇ : {file_size}
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ════╗
-▫️<a href=https://t.me/wudixh> ᴇʟᴅᴏʀᴀᴅᴏ </a>
-╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ════╝</b>"""
+Share this bot to your friends 💥🫀</b>"""
 
     
     RESTART_GC_TXT = """
