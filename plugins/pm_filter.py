@@ -816,7 +816,7 @@ async def advantage_spell_chok(client, msg):
                  InlineKeyboardButton('Hindi', 'hsp'),
                  InlineKeyboardButton('Tamil', 'tsp')
         ],[
-                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
+                 InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
         
         k = await msg.reply_text(
@@ -837,7 +837,7 @@ async def advantage_spell_chok(client, msg):
                  InlineKeyboardButton('Hindi', 'hsp'),
                  InlineKeyboardButton('Tamil', 'tsp')
         ],[
-                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
+                 InlineKeyboardButton('Gᴏᴏɢʟᴇ', url=f"https://www.google.com/search?q={reqst_gle}")
         ]]    
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
