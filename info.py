@@ -33,6 +33,8 @@ auth_channel = environ.get('AUTH_CHANNEL')
 auth_grp = environ.get('AUTH_GROUP')
 AUTH_CHANNEL = environ.get('AUTH_CHANNEL')
 AUTH_GROUPS = [int(ch) for ch in auth_grp.split()] if auth_grp else None
+GRP_LNK = environ.get('GRP_LNK', 'https://t.me/+53lB8qzQaGFlNDll')
+CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/wudixh14')
 
 # MongoDB information
 DATABASE_URI = environ.get('DATABASE_URI', "")
