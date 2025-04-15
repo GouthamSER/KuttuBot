@@ -871,7 +871,6 @@ async def advantage_spell_chok(client, msg):
     )
     await asyncio.sleep(15)
     await spell_check_del.delete()
-    await message.delete()
 
 #SPELL CHECK END
 
