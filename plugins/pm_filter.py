@@ -59,7 +59,7 @@ async def next_page(bot, query):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}]-✨-{file.file_name}", callback_data=f'files#{file.file_id}'
+                    text=f"[{get_size(file.file_size)}]-☠-{file.file_name}", callback_data=f'files#{file.file_id}'
                 ),
             ]
             for file in files
@@ -368,7 +368,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.answer(url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
     elif query.data.startswith("checksub"):
         if AUTH_CHANNEL and not await is_subscribed(client, query):
-            await query.answer("I Like Your Smartness, But Don't Be Oversmart 😒", show_alert=True)
+            await query.answer("ɪ ʟɪᴋᴇ ʏᴏᴜʀ ꜱᴍᴀʀᴛɴᴇꜱꜱ, ʙᴜᴛ ᴅᴏɴ'ᴛ ʙᴇ ᴏᴠᴇʀꜱᴍᴀʀᴛ 😒", show_alert=True)
             return
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
@@ -429,11 +429,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InlineKeyboardButton('Mᴀɴᴜᴀʟ FIʟᴛᴇʀ', callback_data='manuelfilter'),
             InlineKeyboardButton('Aᴜᴛᴏ FIʟᴛᴇʀ', callback_data='autofilter')
         ], [
-            InlineKeyboardButton('Connection', callback_data='coct'),
-            InlineKeyboardButton('Extra Mods', callback_data='extra')
+            InlineKeyboardButton('ᴄᴏɴɴᴇᴄᴛɪᴏɴ', callback_data='coct'),
+            InlineKeyboardButton('ᴇxᴛʀᴀ ᴍᴏᴅꜱ', callback_data='extra')
         ], [
-            InlineKeyboardButton('📊 Usage', callback_data='usage'),
-            InlineKeyboardButton('🔮 Status', callback_data='stats')
+            InlineKeyboardButton('📊 ᴜꜱᴀɢᴇ', callback_data='usage'),
+            InlineKeyboardButton('🔮 ꜱᴛᴀᴛᴜꜱ', callback_data='stats')
         ],[
             InlineKeyboardButton('🏠 Hᴏᴍᴇ', callback_data='start')
         ]]
@@ -701,7 +701,7 @@ async def auto_filter(client, msg, spoll=False):
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}]-✨-{file.file_name}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"[{get_size(file.file_size)}]-☠-{file.file_name}", callback_data=f'{pre}#{file.file_id}'
                 ),
             ]
             for file in files
@@ -774,24 +774,29 @@ async def auto_filter(client, msg, spoll=False):
             delauto = await message.reply_photo(photo=imdb.get('poster'), caption=cap[:1024],
                                       reply_markup=InlineKeyboardMarkup(btn))
             await asyncio.sleep(150)
-            await delauto.delete() #del msg auto 10min filter
+            await delauto.delete()#del msg auto 10min filter
+            await message.delete()
         except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
             pic = imdb.get('poster')
             poster = pic.replace('.jpg', "._V1_UX360.jpg")
             delau = await message.reply_photo(photo=poster, caption=cap[:1024], reply_markup=InlineKeyboardMarkup(btn))
             await asyncio.sleep(150)
             await delau.delete()#del msg auto 10min filter
+            await message.delete()
         except Exception as e:
             logger.exception(e)
             audel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
             await asyncio.sleep(150)
             await audel.delete()#del msg auto 10min filter
+            await message.delete()
     else:
         autodel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
         await asyncio.sleep(150)
         await autodel.delete()#del msg auto 10min filter
+        await message.delete()
     if spoll:
         await msg.message.delete()
+        await message.delete()
 
 #SPELL CHECK RE EDITED BY GOUTHAMSER
 async def advantage_spell_chok(client, msg):
@@ -810,11 +815,11 @@ async def advantage_spell_chok(client, msg):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-                 InlineKeyboardButton('English', 'esp'),
-                 InlineKeyboardButton('Malayalam', 'msp')
+                 InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
+                 InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
         ],[
-                 InlineKeyboardButton('Hindi', 'hsp'),
-                 InlineKeyboardButton('Tamil', 'tsp')
+                 InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
+                 InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
         ],[
                  InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
@@ -831,14 +836,14 @@ async def advantage_spell_chok(client, msg):
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-                 InlineKeyboardButton('English', 'esp'),
-                 InlineKeyboardButton('Malayalam', 'msp')
+                 InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
+                 InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
         ],[
-                 InlineKeyboardButton('Hindi', 'hsp'),
-                 InlineKeyboardButton('Tamil', 'tsp')
+                 InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
+                 InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
         ],[
-                 InlineKeyboardButton('Gᴏᴏɢʟᴇ', url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]    
+                 InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
+        ]]   
         k = await msg.reply_text(
             text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
             reply_markup=InlineKeyboardMarkup(button),
@@ -866,6 +871,7 @@ async def advantage_spell_chok(client, msg):
     )
     await asyncio.sleep(15)
     await spell_check_del.delete()
+    await message.delete()
 
 #SPELL CHECK END
 
