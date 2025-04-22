@@ -42,19 +42,16 @@ class temp(object):
 
 async def is_subscribed(bot, query):
     try:
-        user1 = await bot.get_chat_member(FORCE_SUB1, query.from_user.id)
-        user2 = await bot.get_chat_member(FORCE_SUB2, query.from_user.id)
+        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
     except UserNotParticipant:
-        return False  # Return False if the user is not a participant in either channel
+        pass
     except Exception as e:
         logger.exception(e)
-        return False  # Return False if there is any other exception
     else:
-        # Check if the user is a member of both channels and not kicked
-        if user1.status != 'kicked' and user2.status != 'kicked':
+        if user.status != 'kicked':
             return True
 
-    return False  # Return False if the user is kicked from either channel
+    return False
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
