@@ -1,6 +1,6 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
+from info import FORCE_SUB2, FORCE_SUB1, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
 from imdb import IMDb
 import asyncio
 from pyrogram.types import Message, InlineKeyboardButton
@@ -42,16 +42,19 @@ class temp(object):
 
 async def is_subscribed(bot, query):
     try:
-        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
+        user1 = await bot.get_chat_member(FORCE_SUB1, query.from_user.id)
+        user2 = await bot.get_chat_member(FORCE_SUB2, query.from_user.id)
     except UserNotParticipant:
-        pass
+        return False  # Return False if the user is not a participant in either channel
     except Exception as e:
         logger.exception(e)
+        return False  # Return False if there is any other exception
     else:
-        if user.status != 'kicked':
+        # Check if the user is a member of both channels and not kicked
+        if user1.status != 'kicked' and user2.status != 'kicked':
             return True
 
-    return False
+    return False  # Return False if the user is kicked from either channel
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
