@@ -5,7 +5,7 @@ from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.ia_filterdb import Media, get_file_details, unpack_new_file_id
 from database.users_chats_db import db
-from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT
+from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, FORCE_SUB_1, FORCE_SUB_2
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 logger = logging.getLogger(__name__)
@@ -20,6 +20,31 @@ async def start(client, message):
         await message.react(emoji=random.choice(REACTIONS), big=True) #reaction for start
     except:
         pass
+    try:
+        # Check membership in FORCE_SUB_1
+        member1 = await client.get_chat_member(FORCE_SUB_1, user_id)
+        if member1.status == "kicked":
+            await message.reply_text("🚫 You are banned from accessing this bot (Channel 1).")
+            return
+        # Check membership in FORCE_SUB_2
+        member2 = await client.get_chat_member(FORCE_SUB_2, user_id)
+        if member2.status == "kicked":
+            await message.reply_text("🚫 You are banned from accessing this bot (Channel 2).")
+            return
+    except UserNotParticipant:
+        # If user is not a member in one or both channels
+        strdel = await message.reply_text(
+            "🔊 𝗝𝗼𝗶𝗻 𝗢𝘂𝗿 𝗠𝗮𝗶𝗻 𝗖𝗵𝗮𝗻𝗻𝗲𝗹𝘀 🤭\n\n"
+            "Tᴏ ᴀᴄᴄᴇss ᴛʜᴇ ʙᴏᴛ, ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ʙᴏᴛʜ ᴄʜᴀɴ𝗻ᴇ𝗹s.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("BackUp Channel 🎤", url=f"https://t.me/{FORCE_SUB_1}")],
+                [InlineKeyboardButton("Update Channel ♻", url=f"https://t.me/{FORCE_SUB_2}")],
+                [InlineKeyboardButton("✅ Joined Both", callback_data="checkfsub")]
+            ])
+        )
+        await asyncio.sleep(20)
+        await strdel.delete()
+        return
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [[
             InlineKeyboardButton('➕ Add Me To Your Groups ➕', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
