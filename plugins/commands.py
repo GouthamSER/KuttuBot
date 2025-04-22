@@ -514,3 +514,32 @@ async def settings(client, message):
             reply_to_message_id=message.id
         )
 
+@Client.on_callback_query(filters.regex("checkfsub"))
+async def recheck_subscription(client, callback_query):
+    user_id = callback_query.from_user.id
+    message = callback_query.message
+    
+    try:
+        # Check membership in FORCE_SUB_1
+        member1 = await client.get_chat_member(FORCE_SUB_1, user_id)
+        if member1.status == "kicked":
+            await callback_query.answer("🚫 You are banned from accessing this bot (Channel 1).", show_alert=True)
+            return
+    except UserNotParticipant:
+        # If user is not a member of FORCE_SUB_1
+        await callback_query.answer("❌ You must join the Main Channel 1 to proceed.", show_alert=True)
+        return
+    
+    try:
+        # Check membership in FORCE_SUB_2
+        member2 = await client.get_chat_member(FORCE_SUB_2, user_id)
+        if member2.status == "kicked":
+            await callback_query.answer("🚫 You are banned from accessing this bot (Channel 2).", show_alert=True)
+            return
+    except UserNotParticipant:
+        # If user is not a member of FORCE_SUB_2
+        await callback_query.answer("❌ You must join the Main Channel 2 to proceed.", show_alert=True)
+        return
+    
+    # If user is in both channels, restart the start function
+    await start(client, message)
