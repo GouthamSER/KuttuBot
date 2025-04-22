@@ -8,7 +8,7 @@ from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.ia_filterdb import Media, get_file_details, unpack_new_file_id
 from database.users_chats_db import db
-from info import CHANNELS, CHNL_LNK, GRP_LNK, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT
+from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, FORCE_SUB1, FORCE_SUB2
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 import re
@@ -20,37 +20,79 @@ BATCH_FILES = {}
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
+    user_id = message.from_user.id
+    try:
+        user1 = await bot.get_chat_member(FORCE_SUB1, user_id)
+        user2 = await bot.get_chat_member(FORCE_SUB2, user_id)
+        if user1.status == "kicked" or user2.status == "kicked":
+            await message.reply_text("🚫 You are banned from using this bot.")
+            return
+    except UserNotParticipant:
+        fc = await message.reply_text(
+            text=(
+                "🔐 𝖳𝗈 𝖠𝖼𝖼𝖾𝗌𝗌 𝖳𝗁𝖾 Bot:\n\n"
+                "1️⃣ 𝖩𝗈𝗂𝗇 𝗈𝗎𝗋 𝖼𝗁𝖺𝗇𝗇𝖾𝗅𝗌 𝖻𝗒 𝖼𝗅𝗂𝖼𝗄𝗂𝗇𝗀 𝗍𝗁𝖾 𝖻𝗎𝗍𝗍𝗈𝗇(𝗌) 𝖻𝖾𝗅𝗈𝗐.\n"
+                "2️⃣ 𝖧𝗂𝗍 𝗍𝗁𝖾 \"𝖳𝗋𝗒 𝖠𝗀𝖺𝗂𝗇\" 𝖻𝗎𝗍𝗍𝗈𝗇 𝗈𝗇𝖼𝖾 𝗒𝗈𝗎'𝗏𝖾 j𝗈𝗂𝗇𝖾𝖽."
+            ),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Join The Channel ❗️", url=FORCE_SUB1)],
+                [InlineKeyboardButton("Join The Channel ❗", url=FORCE_SUB2)],
+                [InlineKeyboardButton("♻ TrY aGaiN :)", callback_data="check_subs")]
+            ])
+        )
+    await asyncio.sleep(15)
+    await fc.delete()
+    return
+
+    await message.reply_text("✅ You’re good to go! Use the bot freely.\n\Type Again /start")
+
+@Client.on_callback_query(filters.regex("check_subs"))
+async def check_subs(bot, query: CallbackQuery):
+    user_id = query.from_user.id
+    try:
+        user1 = await bot.get_chat_member(FORCE_SUB1, user_id)
+        user2 = await bot.get_chat_member(FORCE_SUB2, user_id)
+        if user1.status == "kicked" or user2.status == "kicked":
+            await query.message.edit_text("🚫 You are banned from using this bot.")
+            return
+    except UserNotParticipant:
+        await query.answer("😕 You haven't joined both channels yet.", show_alert=True)
+        return
+    
+    fca = await query.message.edit_text("✅ You’re good to go! Use the bot freely.\n\Type Again /start")
+    await asyncio.sleep(25)
+    await fca.delete()
+    return
+    
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        buttons = [[
-            InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-            ],[
-            InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
-            ],[
-            InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-            InlineKeyboardButton('ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ', url=GRP_LNK)
-        ]]
+        buttons = [
+            [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
+            [
+                InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
+                InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
+            ]
+        ]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup)
-        await asyncio.sleep(2) # 😢 https://github.com/EvamariaTG/EvaMaria/blob/master/plugins/p_ttishow.py#L17 😬 wait a bit, before checking.
+        await asyncio.sleep(2)  # 😢 wait a bit, before checking.
         if not await db.get_chat(message.chat.id):
-            total=await client.get_chat_members_count(message.chat.id)
+            total = await client.get_chat_members_count(message.chat.id)
             await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))       
             await db.add_chat(message.chat.id, message.chat.title)
         return 
+
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
+    
     if len(message.command) != 2:
-        buttons = [[
-            InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-            ],[
-            InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
-            ],[
-            InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-            InlineKeyboardButton('ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ', url=GRP_LNK)
-        ]]
+        buttons = [
+            [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
+            [
+                InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
+                InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
+            ]
+        ]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
             photo=random.choice(PICS),
@@ -60,15 +102,23 @@ async def start(client, message):
         )
         return
 
-    if AUTH_CHANNEL and not await is_subscribed(client, message):
+    if FORCE_SUB1 and not await is_subscribed(client, message, FORCE_SUB1):
         try:
-            invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL))
+            invite_link_1 = await client.create_chat_invite_link(int(FORCE_SUB1))  # Ensure it's cast to an integer if needed
         except ChatAdminRequired:
-            logger.error("Make sure Bot is admin in Forcesub channel")
+            logger.error("Make sure Bot is admin in the FORCE_SUB1 channel")
             return
-        btn = [[
-            InlineKeyboardButton("🤖 Join Updates Channel", url=invite_link.invite_link)
-        ]]
+        btn = [
+            [InlineKeyboardButton("Join The Channel ❗️", url=invite_link_1.invite_link)]
+        ]
+
+        if FORCE_SUB2 and not await is_subscribed(client, message, FORCE_SUB2):
+            try:
+                invite_link_2 = await client.create_chat_invite_link(int(FORCE_SUB2))  # Ensure it's cast to an integer if needed
+            except ChatAdminRequired:
+                logger.error("Make sure Bot is admin in the FORCE_SUB2 channel")
+                return
+            btn.append([InlineKeyboardButton("Join The Channel ❗️", url=invite_link_2.invite_link)])
 
         if message.command[1] != "subscribe":
             try:
@@ -77,24 +127,23 @@ async def start(client, message):
                 btn.append([InlineKeyboardButton(" ↻ Try Again", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
                 btn.append([InlineKeyboardButton(" ↻ Try Again", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
-        mbb=await client.send_message(
+
+        mbb = await client.send_message(
             chat_id=message.from_user.id,
-            text="**Please Join My Updates Channel to use this Bot!**",
+            text="**Please Join My Updates Channel and Second Channel to use this Bot!**",
             reply_markup=InlineKeyboardMarkup(btn),
             parse_mode=enums.ParseMode.MARKDOWN
-            )
+        )
         await asyncio.sleep(65)
         await mbb.delete()
         return
+        
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         buttons = [[
             InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
             ],[
             InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
-            ],[
-            InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-            InlineKeyboardButton('ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ', url=GRP_LNK)
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
