@@ -42,6 +42,8 @@ DATABASE_NAME = environ.get('DATABASE_NAME', "DB")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'files')
 
 # Others
+FORCE_SUB_1 = environ.get('FORCE_SUB_1', '')
+FORCE_SUB_2 = environ.get('FORCE_SUB_2', '')
 LOG_CHANNEL = int(environ.get('LOG_CHANNEL', ''))
 SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'wudixh13')
 P_TTI_SHOW_OFF = is_enabled((environ.get('P_TTI_SHOW_OFF', 'True')), False)
