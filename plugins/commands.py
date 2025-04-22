@@ -15,7 +15,8 @@ REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "�
 BATCH_FILES = {}
 
 @Client.on_message(filters.command("start") & filters.incoming)
-async def start(client, message):
+async def start(client, message: Message):
+    user_id = message.from_user.id
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True) #reaction for start
     except:
