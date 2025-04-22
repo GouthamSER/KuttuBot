@@ -22,8 +22,8 @@ BATCH_FILES = {}
 async def start(client, message):
     user_id = message.from_user.id
     try:
-        user1 = await bot.get_chat_member(FORCE_SUB1, user_id)
-        user2 = await bot.get_chat_member(FORCE_SUB2, user_id)
+        user1 = await client.get_chat_member(FORCE_SUB1, user_id)
+        user2 = await client.get_chat_member(FORCE_SUB2, user_id)
         if user1.status == "kicked" or user2.status == "kicked":
             await message.reply_text("🚫 You are banned from using this bot.")
             return
@@ -40,30 +40,10 @@ async def start(client, message):
                 [InlineKeyboardButton("♻ TrY aGaiN :)", callback_data="check_subs")]
             ])
         )
-    await asyncio.sleep(15)
-    await fc.delete()
-    return
-
-    await message.reply_text("✅ You’re good to go! Use the bot freely.\n\Type Again /start")
-
-@Client.on_callback_query(filters.regex("check_subs"))
-async def check_subs(bot, query: CallbackQuery):
-    user_id = query.from_user.id
-    try:
-        user1 = await bot.get_chat_member(FORCE_SUB1, user_id)
-        user2 = await bot.get_chat_member(FORCE_SUB2, user_id)
-        if user1.status == "kicked" or user2.status == "kicked":
-            await query.message.edit_text("🚫 You are banned from using this bot.")
-            return
-    except UserNotParticipant:
-        await query.answer("😕 You haven't joined both channels yet.", show_alert=True)
+        await asyncio.sleep(15)
+        await fc.delete()
         return
-    
-    fca = await query.message.edit_text("✅ You’re good to go! Use the bot freely.\n\Type Again /start")
-    await asyncio.sleep(25)
-    await fca.delete()
-    return
-    
+    await message.reply_text("✅ You’re good to go! Use the bot freely.\nType Again /start")
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
@@ -73,18 +53,29 @@ async def check_subs(bot, query: CallbackQuery):
             ]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup)
-        await asyncio.sleep(2)  # 😢 wait a bit, before checking.
+        await message.reply(
+            script.START_TXT.format(
+                message.from_user.mention if message.from_user else message.chat.title,
+                temp.U_NAME,
+                temp.B_NAME
+            ),
+            reply_markup=reply_markup
+        )
+        await asyncio.sleep(2)
         if not await db.get_chat(message.chat.id):
             total = await client.get_chat_members_count(message.chat.id)
-            await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))       
+            await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(
+                message.chat.title,
+                message.chat.id,
+                total,
+                "Unknown"
+            ))
             await db.add_chat(message.chat.id, message.chat.title)
-        return 
+        return
+    if not await db.is_user_exist(user_id):
+        await db.add_user(user_id, message.from_user.first_name)
+        await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(user_id, message.from_user.mention))
 
-    if not await db.is_user_exist(message.from_user.id):
-        await db.add_user(message.from_user.id, message.from_user.first_name)
-        await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
-    
     if len(message.command) != 2:
         buttons = [
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
@@ -101,7 +92,6 @@ async def check_subs(bot, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )
         return
-
     if FORCE_SUB1 and not await is_subscribed(client, message, FORCE_SUB1):
         try:
             invite_link_1 = await client.create_chat_invite_link(int(FORCE_SUB1))  # Ensure it's cast to an integer if needed
@@ -583,3 +573,21 @@ async def save_template(client, message):
     template = message.text.split(" ", 1)[1]
     await save_group_settings(grp_id, 'template', template)
     await sts.edit(f"Successfully changed template for {title} to\n\n{template}")
+
+@Client.on_callback_query(filters.regex("check_subs"))
+async def check_subs(bot, query: CallbackQuery):
+    user_id = query.from_user.id
+    try:
+        user1 = await bot.get_chat_member(FORCE_SUB1, user_id)
+        user2 = await bot.get_chat_member(FORCE_SUB2, user_id)
+        if user1.status == "kicked" or user2.status == "kicked":
+            await query.message.edit_text("🚫 You are banned from using this bot.")
+            return
+    except UserNotParticipant:
+        await query.answer("😕 You haven't joined both channels yet.", show_alert=True)
+        return
+    
+    fca = await query.message.edit_text("✅ You’re good to go! Use the bot freely.\n\Type Again /start")
+    await asyncio.sleep(25)
+    await fca.delete()
+    return
