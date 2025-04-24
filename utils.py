@@ -41,15 +41,21 @@ class temp(object):
     SETTINGS = {}
 
 async def is_subscribed(bot, query):
+    """
+    Checks if the user is subscribed to the AUTH_CHANNEL.
+    
+    Returns True if the user is a member and not kicked, False otherwise.
+    """
     try:
         user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-    except UserNotParticipant:
-        pass
-    except Exception as e:
-        logger.exception(e)
-    else:
         if user.status != 'kicked':
             return True
+    except UserNotParticipant:
+        # User is not a participant in the channel
+        pass
+    except Exception as e:
+        # Logs any unexpected exceptions
+        logger.exception("Error checking subscription status: %s", e)
 
     return False
     
