@@ -864,7 +864,7 @@ async def advantage_spell_chok(client, msg):
         for k, movie_name in enumerate(movielist)
     ]
     btn.append([InlineKeyboardButton(text="✘ ᴄʟᴏsᴇ ✘", callback_data=f'spol#{reqstr1}#close_spellcheck')])
-    spell_check_del = await msg.reply_text(
+    spell_check_del = await msg.edit_text(
         text="<b>Sᴘᴇʟʟɪɴɢ Mɪꜱᴛᴀᴋᴇ Bʀᴏ ‼️\n\nᴅᴏɴ'ᴛ ᴡᴏʀʀʏ 😊 Cʜᴏᴏꜱᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ᴏɴᴇ ʙᴇʟᴏᴡ 👇</b>",
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
