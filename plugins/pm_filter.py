@@ -867,8 +867,7 @@ async def advantage_spell_chok(client, msg):
     spell_check_del = await msg.reply_text(
         text="<b>Sᴘᴇʟʟɪɴɢ Mɪꜱᴛᴀᴋᴇ Bʀᴏ ‼️\n\nᴅᴏɴ'ᴛ ᴡᴏʀʀʏ 😊 Cʜᴏᴏꜱᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ᴏɴᴇ ʙᴇʟᴏᴡ 👇</b>",
         reply_markup=InlineKeyboardMarkup(btn),
-        reply_to_message_id=msg.id,
-        parse_mode="html"
+        reply_to_message_id=msg.id
     )
     await asyncio.sleep(11)
     await spell_check_del.delete()
