@@ -43,22 +43,20 @@ class temp(object):
 async def is_subscribed(bot, query):
     """
     Checks if the user is subscribed to the AUTH_CHANNEL.
-    
     Returns True if the user is a member and not kicked, False otherwise.
     """
     try:
         user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-        if user.status != 'kicked':
-            return True
+        return user.status != 'kicked'
     except UserNotParticipant:
-        # User is not a participant in the channel
-        pass
+        # User is not a member of the channel
+        logger.info(f"User {query.from_user.id} is not a participant in the channel.")
+    except PeerIdInvalid:
+        logger.error(f"AUTH_CHANNEL ID is invalid or bot lacks access: {AUTH_CHANNEL}")
     except Exception as e:
-        # Logs any unexpected exceptions
-        logger.exception("Error checking subscription status: %s", e)
-
+        logger.exception(f"Unexpected error checking subscription status for user {query.from_user.id}: {e}")
     return False
-    
+
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
         # https://t.me/GetTGLink/4183
