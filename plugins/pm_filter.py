@@ -678,14 +678,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
 async def auto_filter(client, msg, spoll=False):
     if not spoll:
         message = msg
-        user_id = message.from_user.id
         settings = await get_settings(message.chat.id)
-    # Allow messages from admins
-        if user_id in ADMINS:
-            return
         # Delete message if it contains spammy links or usernames
         if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
-            await message.delete()
+            await message.delete(3) #3 seconds dlt msg
             return
         if message.text.startswith("/"): return  # ignore commands
         if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
