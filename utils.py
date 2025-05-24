@@ -1,7 +1,7 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
 from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
-from imdb import IMDb
+from imdb import Cinemagoer 
 import asyncio
 from pyrogram.types import Message, InlineKeyboardButton
 from pyrogram import enums
@@ -40,22 +40,26 @@ class temp(object):
     B_NAME = None
     SETTINGS = {}
 
-async def is_subscribed(bot, query):
-    """
-    Checks if the user is subscribed to the AUTH_CHANNEL.
-    Returns True if the user is a member and not kicked, False otherwise.
-    """
-    try:
-        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-        return user.status != 'kicked'
-    except UserNotParticipant:
-        # User is not a member of the channel
-        logger.info(f"User {query.from_user.id} is not a participant in the channel.")
-    except PeerIdInvalid:
-        logger.error(f"AUTH_CHANNEL ID is invalid or bot lacks access: {AUTH_CHANNEL}")
-    except Exception as e:
-        logger.exception(f"Unexpected error checking subscription status for user {query.from_user.id}: {e}")
-    return False
+async def is_subscribed(bot, query=None, userid=None):
+    invite_links = []
+    for id in AUTH_CHANNEL:
+        try:
+            if userid == None and query != None:
+                chat = await bot.get_chat(id)
+                user = await bot.get_chat_member(id, query.from_user.id)
+            else:
+                chat = await bot.get_chat(id)
+                user = await bot.get_chat_member(AUTH_CHANNEL, int(userid))
+        except UserNotParticipant:
+            invite_links.append(chat.invite_link)
+        except Exception as e:
+            logger.exception(e)
+            continue
+        else:
+            if user.status != enums.ChatMemberStatus.BANNED:
+                continue
+
+    return invite_links
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
