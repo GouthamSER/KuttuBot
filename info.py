@@ -31,7 +31,7 @@ auth_users = [int(user) if id_pattern.search(user) else user for user in environ
 AUTH_USERS = (auth_users + ADMINS) if auth_users else []
 auth_channel = environ.get('AUTH_CHANNEL')
 auth_grp = environ.get('AUTH_GROUP')
-AUTH_CHANNEL = environ.get('AUTH_CHANNEL')
+AUTH_CHANNEL = [int(auth_channel) for auth_channel in environ.get('AUTH_CHANNEL', '').split() if id_pattern.search(auth_channel)]
 AUTH_GROUPS = [int(ch) for ch in auth_grp.split()] if auth_grp else None
 FORCE_SUB1 = environ.get('FORCE_SUB1', 'https://t.me/+53lB8qzQaGFlNDll')
 FORCE_SUB2 = environ.get('FORCE_SUB2', 'https://t.me/wudixh12')
@@ -42,8 +42,6 @@ DATABASE_NAME = environ.get('DATABASE_NAME', "DB")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'files')
 
 # Others
-FORCE_SUB_1 = environ.get('FORCE_SUB_1', '')
-FORCE_SUB_2 = environ.get('FORCE_SUB_2', '')
 LOG_CHANNEL = int(environ.get('LOG_CHANNEL', ''))
 SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'wudixh13')
 P_TTI_SHOW_OFF = is_enabled((environ.get('P_TTI_SHOW_OFF', 'True')), False)
