@@ -17,36 +17,76 @@ BATCH_FILES = {}
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message: Message):
     user_id = message.from_user.id
+
+    # React with a random emoji from the list
     try:
-        await message.react(emoji=random.choice(REACTIONS), big=True) #reaction for start
+        await message.react(emoji=random.choice(REACTIONS), big=True)
     except:
         pass
+
+    # Group start
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        buttons = [[
-            InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-            ],[
-            InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
-            InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
-        ]]
+        buttons = [
+            [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
+            [InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
+             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')]
+        ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup)
-        await asyncio.sleep(1.5) # 😢 https://github.com/EvamariaTG/EvaMaria/blob/master/plugins/p_ttishow.py#L17 😬 wait a bit, before checking.
+        await message.reply(
+            script.START_TXT.format(
+                message.from_user.mention if message.from_user else message.chat.title,
+                temp.U_NAME,
+                temp.B_NAME
+            ),
+            reply_markup=reply_markup
+        )
+        await asyncio.sleep(1.5)
         if not await db.get_chat(message.chat.id):
-            total=await client.get_chat_members_count(message.chat.id)
-            await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))       
+            total = await client.get_chat_members_count(message.chat.id)
+            await client.send_message(
+                LOG_CHANNEL,
+                script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown")
+            )
             await db.add_chat(message.chat.id, message.chat.title)
-        return 
+        return
+
+    # Private start
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
-        await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
+        await client.send_message(
+            LOG_CHANNEL,
+            script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention)
+        )
+
+    # No start parameter
     if len(message.command) != 2:
-        buttons = [[
-            InlineKeyboardButton('➕ Add Me To Your Groups ➕', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-            ],[
-            InlineKeyboardButton('ℹ️ Help', callback_data='help'),
-            InlineKeyboardButton('😊 About', callback_data='about')
-        ]]
+        loading_msg = await message.reply("Loading...\n[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0%")
+        progress_bar = [
+            "[🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜] 10%",
+            "[🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜] 20%",
+            "[🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜] 30%",
+            "[🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜] 40%",
+            "[🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜] 50%",
+            "[🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜] 60%",
+            "[🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜] 70%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜] 80%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜] 90%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩] 100%"
+        ]
+        for frame in progress_bar:
+            await asyncio.sleep(0.2)
+            await loading_msg.edit(f"Loading...\n{frame}")
+        await asyncio.sleep(0.3)
+        await loading_msg.edit("✅ Process Complete! Welcome to the Bot.")
+
+        # Show main menu buttons
+        buttons = [
+            [InlineKeyboardButton('➕ Add Me To Your Groups ➕', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
+            [InlineKeyboardButton('ℹ️ Help', callback_data='help'),
+             InlineKeyboardButton('😊 About', callback_data='about')]
+        ]
         reply_markup = InlineKeyboardMarkup(buttons)
+
         await message.reply_photo(
             photo=random.choice(PICS),
             caption=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME),
@@ -54,6 +94,7 @@ async def start(client, message: Message):
             parse_mode=enums.ParseMode.HTML
         )
         return
+    # Start parameter handling continues below..
     invite_links = await is_subscribed(client, query=message)
     if AUTH_CHANNEL and len(invite_links) >= 1:
         #this is written by tg: @programcrasher
