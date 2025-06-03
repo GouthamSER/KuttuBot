@@ -74,10 +74,12 @@ async def start(client, message: Message):
             "[🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩] 100%"
         ]
         for frame in progress_bar:
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.1)
             await loading_msg.edit(f"Loading...\n{frame}")
-        await asyncio.sleep(0.3)
-        await loading_msg.edit("✅ Process Complete! Welcome to the Bot.")
+        await asyncio.sleep(0.2)
+        await loading_msg.edit("✅ **Process Complete! Welcome to the Bot.**")
+        await asyncio.sleep(3)
+        await loading_msg.delete()
 
         # Show main menu buttons
         buttons = [
