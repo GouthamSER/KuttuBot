@@ -78,7 +78,7 @@ async def start(client, message: Message):
             await loading_msg.edit(f"Loading...\n{frame}")
         await asyncio.sleep(0.2)
         await loading_msg.edit("✅ **Process Complete! Welcome to the Bot.**")
-        await asyncio.sleep(3)
+        await asyncio.sleep(1)
         await loading_msg.delete()
 
         # Show main menu buttons
