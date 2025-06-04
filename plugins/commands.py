@@ -30,7 +30,9 @@ async def start(client, message: Message):
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
             [InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
              InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')]
-        ]
+        ],[
+             InlineKeyboardButton('🔍 Search in PM', switch_inline_query='')
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply(
             script.START_TXT.format(
@@ -86,7 +88,9 @@ async def start(client, message: Message):
             [InlineKeyboardButton('➕ Add Me To Your Groups ➕', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
             [InlineKeyboardButton('ℹ️ Help', callback_data='help'),
              InlineKeyboardButton('😊 About', callback_data='about')]
-        ]
+        ],[
+             InlineKeyboardButton('🔍 Search in PM', switch_inline_query='')
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
 
         await message.reply_photo(
@@ -136,6 +140,8 @@ async def start(client, message: Message):
             ],[
             InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
+        ],[
+            InlineKeyboardButton('🔍 Search in PM', switch_inline_query='')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
