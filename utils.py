@@ -1,7 +1,7 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
 from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
-from imdb import IMDb
+from imdb import Cinemagoer 
 import asyncio
 from pyrogram.types import Message, InlineKeyboardButton
 from pyrogram import enums
@@ -21,7 +21,7 @@ BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
 )
 
-imdb = IMDb() 
+imdb = Cinemagoer()
 
 BANNED = {}
 SMART_OPEN = '“'
@@ -40,18 +40,26 @@ class temp(object):
     B_NAME = None
     SETTINGS = {}
 
-async def is_subscribed(bot, query):
-    try:
-        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-    except UserNotParticipant:
-        pass
-    except Exception as e:
-        logger.exception(e)
-    else:
-        if user.status != 'kicked':
-            return True
+async def is_subscribed(bot, query=None, userid=None):
+    invite_links = []
+    for id in AUTH_CHANNEL:
+        try:
+            if userid == None and query != None:
+                chat = await bot.get_chat(id)
+                user = await bot.get_chat_member(id, query.from_user.id)
+            else:
+                chat = await bot.get_chat(id)
+                user = await bot.get_chat_member(AUTH_CHANNEL, int(userid))
+        except UserNotParticipant:
+            invite_links.append(chat.invite_link)
+        except Exception as e:
+            logger.exception(e)
+            continue
+        else:
+            if user.status != enums.ChatMemberStatus.BANNED:
+                continue
 
-    return False
+    return invite_links
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
