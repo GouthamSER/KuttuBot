@@ -136,7 +136,7 @@ This module only works for my admins.
 👤 Total Members: <code>{}</code>
 ➕ Added By: {}
 """
-    RESULT_TXT = """🎉 Yay! I dug through my database and found this for you:  
+    RESULT_TXT = """<b>🎉 Yay! I dug through my database and found this for you:</b>
 <blockquote>{}</blockquote>"""
 
     CUSTOM_FILE_CAPTION = """<b>📁 Fɪʟᴇ Nᴀᴍᴇ: 📄 <code>{file_name}</code>
@@ -196,7 +196,7 @@ Take a peek at the instructions below and let’s try again! 👇🏼
 """
 
     RESTART_TXT = """<b><u>𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 ✅</u></b>"""
-    DMCA_TXT = """__**This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.**__
+    DMCA_TXT = """<b><u>This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.</u></b>
 
 <blockquote>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquote>
 """
