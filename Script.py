@@ -169,33 +169,22 @@ Take a peek at the instructions below and let’s try again! 👇🏼
     ENG_SPELL = """Please Note 📓
 
 1️⃣ Ask using correct spelling.  
-2️⃣ Don’t ask for movies that are not released on OTT platforms.  
-3️⃣ You can try queries like:  
-   • [movie name language]  
-   • [movie year]  
+2️⃣ Don’t ask for movies that are not released on OTT platforms.   
 """
     MAL_SPELL = """ദയവായി താഴെ ശ്രദ്ധിക്കുക📓
 
 1️⃣ ശരിയായ അക്ഷരവിന്യാസത്തിൽ ചോദിക്കുക.  
 2️⃣ OTT പ്ലാറ്റ്‌ഫോമുകളിൽ റിലീസ് ചെയ്യാത്ത സിനിമകൾ ചോദിക്കരുത്.  
-3️⃣ ഇത് പോലെ ചോദിക്കാം:  
-   • [സിനിമയുടെ പേര് ഭാഷ]  
-   • [സിനിമ വർഷം]  
 """
     HIN_SPELL = """कृपया नीचे ध्यान दें📓
 
 1️⃣ सही वर्तनी में पूछें।  
 2️⃣ उन फिल्मों के बारे में न पूछें जो ओटीटी प्लेटफॉर्म पर रिलीज़ नहीं हुई हैं।  
-3️⃣ संभवतः इस तरह पूछें:  
-   • [मूवी का नाम भाषा]  
-   • [मूवी वर्ष]  
 """
     TAM_SPELL = """கீழே கவனிக்கவும்📓
 
 1️⃣ சரியான எழுத்துப்பிழையில் கேளுங்கள்.  
-2️⃣ வெளியாகாத திரைப்படங்களை கேட்காதீர்கள்.  
-3️⃣ இந்த வடிவத்தில் கேளுங்கள்:  
-   • [திரைப்படத்தின் பெயர், ஆண்டு]  
+2️⃣ வெளியாகாத திரைப்படங்களை கேட்காதீர்கள்.   
 """
 
     CHK_MOV_ALRT = "♻️ Eᴅᴀᴀ Mᴏɴᴇʜ ᴄʜᴇᴄᴋɪɴɢ ꜰɪʟᴇ ᴏɴ ᴍʏ ᴅᴀᴛᴀʙᴀꜱᴇ... ♻️"
@@ -207,9 +196,9 @@ Take a peek at the instructions below and let’s try again! 👇🏼
 """
 
     RESTART_TXT = """<b><u>𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 ✅</u></b>"""
-    DMCA_TXT = """This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.
+    DMCA_TXT = """__**This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.**__
 
-<blockquotes>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquotes>
+<blockquote>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquote>
 """
 
 
