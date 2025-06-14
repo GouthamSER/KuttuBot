@@ -207,6 +207,10 @@ Take a peek at the instructions below and let’s try again! 👇🏼
 """
 
     RESTART_TXT = """<b><u>𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 ✅</u></b>"""
+    DMCA_TXT = """This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.
+
+<blockquotes>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquotes>
+"""
 
 
 
