@@ -1,5 +1,8 @@
 import logging
 import logging.config
+from datetime import datetime, timedelta
+import os
+import sys
 
 # Get logging configurations
 logging.config.fileConfig('logging.conf')
@@ -20,7 +23,6 @@ from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script
 import asyncio
-from datetime import date, datetime
 import pytz
 
 # peer id invaild fixxx
@@ -77,10 +79,25 @@ class Bot(Client):
         bind_address = "0.0.0.0"
         await webserver.TCPSite(client, bind_address,
         PORT_CODE).start()
+        
+        # Schedule auto-restart every 24 hours
+        asyncio.create_task(self.schedule_restart())
 
     async def stop(self, *args):
         await super().stop()
         logging.info("Bot stopped. Bye.")
+
+    # 24 hrs restart fn()
+    async def restart(self):
+        logging.info("Restarting bot process...")
+        await self.stop()
+        os.execl(sys.executable, sys.executable, *sys.argv)
+
+    async def schedule_restart(self, hours: int = 24):
+        await asyncio.sleep(hours * 60 * 60)  # Wait for 24 hours
+        await self.send_message(chat_id=LOG_CHANNEL, text="Auto Restarting the KuttuBot \n(24 hrs ⏰️ refresh)...")
+        await self.restart()
+#restarting fn() end;
     
     async def iter_messages(
         self,
