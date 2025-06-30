@@ -1,6 +1,6 @@
 import logging
 import logging.config
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os
 import sys
 
