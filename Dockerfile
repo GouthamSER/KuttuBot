@@ -8,5 +8,5 @@ RUN cd /
 RUN pip3 install -U pip && pip3 install -U -r requirements.txt
 RUN mkdir /KuttuBot
 WORKDIR /KuttuBot
-COPY . /KuttuBot
-CMD ["python", "bot.py"]
+COPY start.sh /start.sh
+CMD ["python3", "/start.sh"]
