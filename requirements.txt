@@ -1,5 +1,5 @@
 git+https://github.com/Joelkb/cinemagoer
-pyrofork
+pyrofork==2.3.45
 tgcrypto
 pymongo[srv]==3.12.3
 motor==2.5.1 
@@ -10,4 +10,4 @@ bs4
 aiohttp
 asyncio
 pytz
-psutil
+psutil==5.9.4
