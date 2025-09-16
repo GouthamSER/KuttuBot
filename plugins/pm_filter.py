@@ -133,6 +133,7 @@ async def advantage_spoll_choker(bot, query):
             k = await query.message.edit(script.MOV_NT_FND)#script change
             await asyncio.sleep(15)
             await k.delete()
+            await message.delete()
 
 
 @Client.on_callback_query()
@@ -796,6 +797,7 @@ async def advantage_spell_chok(client, msg):
         )
         await asyncio.sleep(15)
         await k.delete()      
+        await message.delete()
         return
     movielist = []
     if not movies:
@@ -816,6 +818,7 @@ async def advantage_spell_chok(client, msg):
         )
         await asyncio.sleep(15)
         await k.delete()
+        await message.delete()
         return
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
@@ -836,6 +839,7 @@ async def advantage_spell_chok(client, msg):
     )
     await asyncio.sleep(11)
     await spell_check_del.delete()
+    await message.delete()
 
 #SPELL CHECK END
 
