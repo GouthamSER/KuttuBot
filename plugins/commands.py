@@ -78,7 +78,10 @@ async def start(client, message: Message):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
-        clsnt = await client.send_message("**❗️Send Movie Name and Year Correctly 👍📌**")
+        clsnt = await client.send_message(
+            chat_id=message.chat.id,
+            text="**❗️Send Movie Name and Year Correctly 👍📌**"
+        )
         await asyncio.sleep(120)
         await clsnt.delete()
         return
