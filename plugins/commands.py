@@ -58,30 +58,8 @@ async def start(client, message: Message):
         await client.send_message(
             LOG_CHANNEL,
             script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention)
-        )
 
-    # No start parameter
-    if len(message.command) != 2:
-        loading_msg = await message.reply("Loading...\n[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0%")
-        progress_bar = [
-            "[🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜] 10%",
-            "[🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜] 20%",
-            "[🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜] 30%",
-            "[🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜] 40%",
-            "[🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜] 50%",
-            "[🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜] 60%",
-            "[🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜] 70%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜] 80%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜] 90%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩] 100%"
-        ]
-        for frame in progress_bar:
-            await asyncio.sleep(0.1)
-            await loading_msg.edit(f"Loading...\n{frame}")
-        await asyncio.sleep(0.2)
-        await loading_msg.edit("✅ **Process Complete! Welcome to the Bot.**")
-        await asyncio.sleep(1)
-        await loading_msg.delete()
+        )
 
         # Show main menu buttons
         buttons = [
@@ -98,6 +76,9 @@ async def start(client, message: Message):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        clsnt = await client.send_message("**❗️Send Movie Name and Year Correctly 👍📌**")
+        await asyncio.sleep(120)
+        await clsnt.delete()
         return
     # Start parameter handling continues below..
     invite_links = await is_subscribed(client, query=message)
