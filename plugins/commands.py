@@ -31,7 +31,6 @@ async def start(client, message: Message):
             [InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
              InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')]
         ]
-
         reply_markup = InlineKeyboardMarkup(buttons)
 
         await message.reply(
@@ -52,16 +51,19 @@ async def start(client, message: Message):
             await db.add_chat(message.chat.id, message.chat.title)
         return
 
-    # Private start
-    if not await db.is_user_exist(message.from_user.id):
-        await db.add_user(message.from_user.id, message.from_user.first_name)
+    # Private start (new user log)
+    if not await db.is_user_exist(user_id):
+        await db.add_user(user_id, message.from_user.first_name)
         await client.send_message(
             LOG_CHANNEL,
-            script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention)
-
+            script.LOG_TEXT_P.format(user_id, message.from_user.mention)
         )
 
-        # Show main menu buttons
+    # 🔹 SAFELY GET ARGUMENT
+    data = message.command[1] if len(message.command) > 1 else None
+
+    # If no argument → show menu and exit
+    if not data:
         buttons = [
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
             [InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -80,40 +82,35 @@ async def start(client, message: Message):
         await asyncio.sleep(120)
         await clsnt.delete()
         return
-    # Start parameter handling continues below..
+
+    # 🔹 Continue with parameter-based logic
     invite_links = await is_subscribed(client, query=message)
     if AUTH_CHANNEL and len(invite_links) >= 1:
-        #this is written by tg: @programcrasher
         btn = []
         for chnl_num, link in enumerate(invite_links, start=1):
-            if chnl_num == 1:
-                channel_num = "1sᴛ"
-            elif chnl_num == 2:
-                channel_num = "2ɴᴅ"
-            elif chnl_num == 3:
-                channel_num = "3ʀᴅ"
-            else:
-                channel_num = str(chnl_num)+"ᴛʜ"
-            btn.append([
-                InlineKeyboardButton(f"❆ Jᴏɪɴ {channel_num} Cʜᴀɴɴᴇʟ ❆", url=link)
-            ])
+            channel_num = {1: "1sᴛ", 2: "2ɴᴅ", 3: "3ʀᴅ"}.get(chnl_num, f"{chnl_num}ᴛʜ")
+            btn.append([InlineKeyboardButton(f"❆ Jᴏɪɴ {channel_num} Cʜᴀɴɴᴇʟ ❆", url=link)])
 
-        if message.command[1] != "subscribe":
+        if data != "subscribe":
             try:
-                kk, file_id = message.command[1].split("_", 1)
-                pre = 'checksubp' if kk == 'filep' else 'checksub' 
+                kk, file_id = data.split("_", 1)
+                pre = 'checksubp' if kk == 'filep' else 'checksub'
                 btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
-                btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
-        authdel=await client.send_message(
-            chat_id=message.from_user.id,
-            text="**Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ɪɴ ᴏᴜʀ Bᴀᴄᴋ-ᴜᴘ ᴄʜᴀɴɴᴇʟs ɢɪᴠᴇɴ ʙᴇʟᴏᴡ sᴏ ʏᴏᴜ ᴅᴏɴ'ᴛ ɢᴇᴛ ᴛʜᴇ ᴍᴏᴠɪᴇ ғɪʟᴇ...\n\nIғ ʏᴏᴜ ᴡᴀɴᴛ ᴛʜᴇ ᴍᴏᴠɪᴇ ғɪʟᴇ, ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ ɢɪᴠᴇɴ ʙᴜᴛᴛᴏɴs ʙᴇʟᴏᴡ ᴀɴᴅ ᴊᴏɪɴ ᴏᴜʀ ʙᴀᴄᴋ-ᴜᴘ ᴄʜᴀɴɴᴇʟs, ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ '↻ Tʀʏ Aɢᴀɪɴ' ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ...\n\nTʜᴇɴ ʏᴏᴜ ᴡɪʟʟ ɢᴇᴛ ᴛʜᴇ ᴍᴏᴠɪᴇ ғɪʟᴇs...**",
+                btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={data}")])
+
+        authdel = await client.send_message(
+            chat_id=user_id,
+            text="**Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ɪɴ ᴏᴜʀ Bᴀᴄᴋ-ᴜᴘ ᴄʜᴀɴɴᴇʟs...**",
             reply_markup=InlineKeyboardMarkup(btn),
             parse_mode=enums.ParseMode.MARKDOWN
-            )
+        )
         await asyncio.sleep(25)
         await authdel.delete()
         return
+
+    # The rest of your batch / dstore / file handling continues unchanged...
+    # (no more IndexError because `data` is guaranteed safe here)
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         buttons = [
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
