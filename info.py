@@ -24,6 +24,7 @@ CACHE_TIME = int(environ.get('CACHE_TIME', 300))
 USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', False))
 PICS = (environ.get('PICS', 'https://telegra.ph/file/8619a6f258621134b7576.jpg https://telegra.ph/file/d8daf35960bbb4a7f8558.jpg')).split()
 
+FILE_CHANNELS = [int(ch) for ch in environ.get('FILE_CHANNELS', '-1002831639976 -1002607076908 -1002869981026').split()]
 FILE_CHANNEL_SENDING_MODE = is_enabled(environ.get('FILE_CHANNEL_SENDING_MODE', 'False'), False)
 FILE_AUTO_DELETE_SECONDS = int(environ.get('FILE_AUTO_DELETE_SECONDS', 3600))  # Default: 1 hour
 #request fsub
