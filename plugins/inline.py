@@ -1,42 +1,54 @@
 import logging
-from asyncio import sleep
-from pyrogram import Client, emoji
+from pyrogram import Client, emoji, filters
 from pyrogram.errors.exceptions.bad_request_400 import QueryIdInvalid
-from pyrogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    InlineQueryResultCachedDocument,
-    InlineQuery,
-    ChosenInlineResult,
-)
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
 from utils import is_subscribed, get_size, temp
-from info import CACHE_TIME, AUTH_USERS, AUTH_CHANNEL, CUSTOM_FILE_CAPTION
-from database.connections_mdb import active_connection
+from info import CACHE_TIME, AUTH_USERS, CUSTOM_FILE_CAPTION
+from utils import create_invite_links
 
 logger = logging.getLogger(__name__)
-cache_time = 0 if AUTH_USERS or AUTH_CHANNEL else CACHE_TIME
-
-inline_file_map = {}  # Store result_id to file_id mapping
+cache_time = 0 if AUTH_USERS else CACHE_TIME
 
 async def inline_users(query: InlineQuery):
     if AUTH_USERS:
-        return query.from_user and query.from_user.id in AUTH_USERS
-    return query.from_user and query.from_user.id not in temp.BANNED_USERS
+        if query.from_user and query.from_user.id in AUTH_USERS:
+            return True
+        else:
+            return False
+    if query.from_user and query.from_user.id not in temp.BANNED_USERS:
+        return True
+    return False
 
 @Client.on_inline_query()
 async def answer(bot, query):
-    chat_id = await active_connection(str(query.from_user.id))
-
+    """Show search results for given inline query"""
+    
     if not await inline_users(query):
-        await query.answer(results=[], cache_time=0, switch_pm_text='Unauthorized', switch_pm_parameter="unauth")
+        await query.answer(results=[],
+                           cache_time=0,
+                           switch_pm_text='okDa',
+                           switch_pm_parameter="hehe")
         return
 
-    invite_links = await is_subscribed(bot, query=query)
-    if AUTH_CHANNEL and len(invite_links) >= 1:
-        await query.answer(results=[], cache_time=0,
-                           switch_pm_text='Please subscribe to use the bot',
-                           switch_pm_parameter="subscribe")
+    if not await is_subscribed(query.from_user.id, bot):
+        invite_links = await create_invite_links(bot)
+        first_link = next(iter(invite_links.values()), None)
+        
+        if first_link:
+            await query.answer(
+                results=[],
+                cache_time=0,
+                switch_pm_text="📢 Please join the updates channel to use this bot",
+                switch_pm_parameter="subscribe"
+            )
+        else:
+            await query.answer(
+                results=[],
+                cache_time=0,
+                switch_pm_text="⚠️ Bot owner hasn't set up the required channels properly.",
+                switch_pm_parameter="error"
+            )
         return
 
     results = []
@@ -50,87 +62,63 @@ async def answer(bot, query):
 
     offset = int(query.offset or 0)
     reply_markup = get_reply_markup(query=string)
-    files, next_offset, total = await get_search_results(chat_id, string, file_type=file_type, max_results=10, offset=offset)
+    files, next_offset, total = await get_search_results(string,
+                                                  file_type=file_type,
+                                                  max_results=10,
+                                                  offset=offset)
 
     for file in files:
-        title = file.file_name
-        size = get_size(file.file_size)
-        f_caption = file.caption
-
+        title=file.file_name
+        size=get_size(file.file_size)
+        f_caption=file.caption
         if CUSTOM_FILE_CAPTION:
             try:
-                f_caption = CUSTOM_FILE_CAPTION.format(
-                    file_name=title or '',
-                    file_size=size or '',
-                    file_caption=f_caption or ''
-                )
+                f_caption=CUSTOM_FILE_CAPTION.format(file_name= '' if title is None else title, file_size='' if size is None else size, file_caption='' if f_caption is None else f_caption)
             except Exception as e:
                 logger.exception(e)
-        if not f_caption:
+                f_caption=f_caption
+        if f_caption is None:
             f_caption = f"{file.file_name}"
-
-        result_id = file.file_id[:32]
-        inline_file_map[result_id] = file.file_id
-
         results.append(
             InlineQueryResultCachedDocument(
-                id=result_id,
-                title=title,
+                title=file.file_name,
                 document_file_id=file.file_id,
                 caption=f_caption,
-                description=f'Size: {size}\nType: {file.file_type}',
-                reply_markup=reply_markup
-            )
-        )
+                description=f'Size: {get_size(file.file_size)}\nType: {file.file_type}',
+                reply_markup=reply_markup))
 
     if results:
-        switch_pm_text = f"{emoji.FILE_FOLDER} Results - {total}"
+        switch_pm_text = f"{emoji.FILE_FOLDER} Results "
         if string:
             switch_pm_text += f" for {string}"
         try:
-            await query.answer(
-                results=results,
-                is_personal=True,
-                cache_time=cache_time,
-                switch_pm_text=switch_pm_text,
-                switch_pm_parameter="start",
-                next_offset=str(next_offset))
+            await query.answer(results=results,
+                           is_personal = True,
+                           cache_time=cache_time,
+                           switch_pm_text=switch_pm_text,
+                           switch_pm_parameter="start",
+                           next_offset=str(next_offset))
         except QueryIdInvalid:
             pass
         except Exception as e:
-            logger.exception(str(e))
+            logging.exception(str(e))
     else:
         switch_pm_text = f'{emoji.CROSS_MARK} No results'
         if string:
             switch_pm_text += f' for "{string}"'
-        await query.answer(results=[], is_personal=True, cache_time=cache_time,
+
+        await query.answer(results=[],
+                           is_personal = True,
+                           cache_time=cache_time,
                            switch_pm_text=switch_pm_text,
                            switch_pm_parameter="okay")
 
-@Client.on_chosen_inline_result()
-async def on_chosen_inline(bot, result: ChosenInlineResult):
-    try:
-        user_id = result.from_user.id
-        result_id = result.result_id
-        file_id = inline_file_map.get(result_id)
-
-        if not file_id:
-            return
-
-        sent = await bot.send_document(
-            chat_id=user_id,
-            document=file_id,
-            caption="This file will be deleted in 5 minutes due to copyright policy."
-        )
-
-        await sleep(300)
-        await bot.delete_messages(chat_id=user_id, message_ids=sent.message_id)
-
-    except Exception as e:
-        logger.exception(f"Error in chosen_inline_result: {e}")
 
 def get_reply_markup(query):
     buttons = [
-        [InlineKeyboardButton('Search again', switch_inline_query_current_chat=query)]
-    ]
+        [
+            InlineKeyboardButton('Search again', switch_inline_query_current_chat=query)
+        ]
+        ]
     return InlineKeyboardMarkup(buttons)
+
