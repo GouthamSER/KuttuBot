@@ -1,6 +1,7 @@
 import logging
 from struct import pack
 import re
+from collections import defaultdict
 import base64
 from pyrogram.file_id import FileId
 from pymongo.errors import DuplicateKeyError
