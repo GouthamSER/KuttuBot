@@ -6,30 +6,54 @@
 </h1>
 
 
-[![Stars](https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=flat-square&color=yellow)](https://github.com/GouthamSER/KuttuBot/stargazers)
-[![Forks](https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=flat-square&color=orange)](https://github.com/GouthamSER/KuttuBot/fork)
-[![Size](https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?style=flat-square&color=green)](https://github.com/GouthamSER/KuttuBot/)   
-[![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/GouthamSER/KuttuBot)   
-[![Contributors](https://img.shields.io/github/contributors/GouthamSER/KuttuBot?style=flat-square&color=green)](https://github.com/GouthamSER/KuttuBot/graphs/contributors)
-[![License](https://img.shields.io/badge/License-AGPL-blue)](https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE)
-[![Sparkline](https://stars.medv.io/GouthamSER/KuttuBot.svg)](https://github.com/GouthamSER/KuttuBot)
+<p align="center">
+  A powerful and versatile Telegram bot designed for filtering, automation, and much more!
+</p>
+<div align="center">
+  <a href="https://github.com/GouthamSER/KuttuBot/stargazers">
+    <img src="https://img.shields.io/github/stars/GouthamSER/KuttuBot?color=black&logo=github&logoColor=black&style=for-the-badge" alt="Stars" />
+  </a>
+  <a href="https://github.com/GouthamSER/KuttuBot/network/members">
+    <img src="https://img.shields.io/github/forks/GouthamSER/KuttuBot?color=black&logo=github&logoColor=black&style=for-the-badge" alt="Forks" />
+  </a>
+  <a href="https://github.com/GouthamSER/KuttuBot">
+    <img src="https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?color=skyblue&logo=github&logoColor=blue&style=for-the-badge" alt="Repo Size" />
+  </a>
+  <a href="https://github.com/GouthamSER/KuttuBot/commits/main">
+    <img src="https://img.shields.io/github/last-commit/GouthamSER/KuttuBot?color=black&logo=github&logoColor=black&style=for-the-badge" alt="Last Commit" />
+  </a>
+  <a href="https://github.com/GouthamSER/KuttuBot">
+    <img src="https://img.shields.io/github/contributors/GouthamSER/KuttuBot?color=skyblue&logo=github&logoColor=blue&style=for-the-badge" alt="Contributors" />
+  </a>
+  <a href="https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-GPL%202.0%20license-blueviolet?style=for-the-badge" alt="License" />
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/Written%20in-Python-skyblue?style=for-the-badge&logo=python" alt="Python" />
+  </a>
+  <a href="https://pypi.org/project/Pyrogram/">
+    <img src="https://img.shields.io/pypi/v/pyrogram?color=white&label=pyrogram&logo=python&logoColor=blue&style=for-the-badge" alt="Pyrogram" />
+  </a>
+</div>
+
+## ✨ Features
+
+- ✅ Auto Filter  
+- ✅ Manual Filter  
+- ✅ IMDB Search and Info  
+- ✅ Admin Commands  
+- ✅ Broadcast Messages  
+- ✅ File Indexing
+- ✅ User and Chat Stats
+- ✅ Auto Delete: Automatically removes user messages after processing, so you don't need a separate auto-delete bot
+- ✅ Auto Restart
+- ✅ File Storage
+- ✅ Keep Alive Function: Prevents the bot from sleeping or shutting down unexpectedly on platforms like Koyeb, eliminating the need for external uptime services like UptimeRobot.
+- ✅ Auto delete for files.
+- ✅ /movies and /series Commands: Instantly fetch and display the most recently added movies or series with these commands.
+- ✅ Multiple Request FSub support: You can add multiple channels. Easily update the required channels with the /fsub command, e.g., /fsub (channel1 id) (channel2 id) (channel3 id).
 
 
-## Features
-
-- [x] Auto Filter
-- [x] Manual Filter
-- [x] IMDB
-- [x] Admin Commands
-- [x] Broadcast
-- [x] Index
-- [x] IMDB search
-- [x] Inline Search
-- [x] Random pics
-- [x] ids and User info 
-- [x] Stats, Users, Chats, Ban, Unban, Leave, Disable, Channel
-- [x] Spelling Check Feature
-- [x] File Store
 ## Variables
 
 Read [this](https://telegram.dog/Sources_cods) before you start messing up with your edits.
@@ -132,5 +156,5 @@ Fork the repo and edit as per your needs.
 
 ## Disclaimer
 [![GNU Affero General Public License 2.0](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html#header)    
-Licensed under [GNU AGPL 2.0.](https://github.com/EvamariaTG/evamaria/blob/master/LICENSE)
+Licensed under [GNU AGPL 2.0.](https://github.com/GouthamSER/KuttuBot/blob/master/LICENSE)
 Selling The Codes To Other People For Money Is *Strictly Prohibited*.
