@@ -14,6 +14,156 @@ REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "�
 
 BATCH_FILES = {}
 
+from datetime import datetime, timedelta
+import random
+
+AUTO_DELETE_SECONDS = 15  
+
+# Helper function to create buttons for specific channel
+async def create_file_buttons(client, sent_message):
+    buttons = []
+    
+    # Create message link
+    if sent_message.chat.username:
+        message_link = f"https://t.me/{sent_message.chat.username}/{sent_message.id}"
+    else:
+        channel_id = str(sent_message.chat.id).replace('-100', '')
+        message_link = f"https://t.me/c/{channel_id}/{sent_message.id}"
+    
+    # Create invite link only for this channel
+    try:
+        chat = await client.get_chat(sent_message.chat.id)
+        if chat.username:
+            invite_link = f"https://t.me/{chat.username}"
+        else:
+            invite_link = (await client.create_chat_invite_link(
+                sent_message.chat.id,
+                name=f"FileAccess-{datetime.now().timestamp()}",
+                expire_date=datetime.now() + timedelta(minutes=10),
+                member_limit=1
+            )).invite_link
+        
+        buttons.append([InlineKeyboardButton("📢 Join Channel", url=invite_link)])
+        buttons.append([InlineKeyboardButton("🔗 View File", url=message_link)])
+    except Exception as e:
+        logger.error(f"Error creating invite: {e}")
+        buttons.append([InlineKeyboardButton("🔗 View File", url=message_link)])
+    
+    return InlineKeyboardMarkup(buttons)
+# Auto-delete helpers
+async def auto_delete_message(client, message, delay):
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception as e:
+        logger.error(f"Error deleting message: {e}")
+
+async def auto_delete_file(client, message, delay):
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+        logger.info(f"Deleted file from channel {message.chat.id}")
+    except Exception as e:
+        logger.error(f"Error deleting file: {e}")
+
+async def send_file_to_user(client, user_id, file_id, protect_content_flag, file_name=None, file_size=None, file_caption=None):
+    try:
+        # Generate proper caption
+        caption = None
+        if CUSTOM_FILE_CAPTION:
+            try:
+                caption = CUSTOM_FILE_CAPTION.format(
+                    file_name=file_name if file_name else "",
+                    file_size=file_size if file_size else "",
+                    file_caption=file_caption if file_caption else ""
+                )
+            except Exception as e:
+                logger.error(f"Error formatting caption: {e}")
+                caption = file_caption if file_caption else file_name
+        else:
+            caption = file_caption if file_caption else file_name
+
+        # File sending logic with channel support
+        if FILE_CHANNEL_SENDING_MODE and FILE_CHANNELS:
+            channel_id = random.choice(FILE_CHANNELS)
+            sent_message = await client.send_cached_media(
+                chat_id=channel_id,
+                file_id=file_id,
+                caption=caption,
+                protect_content=protect_content_flag
+            )
+            # Schedule auto-delete for channel file
+            asyncio.create_task(auto_delete_file(client, sent_message, FILE_AUTO_DELETE_SECONDS))
+            
+            # Create channel-specific buttons
+            reply_markup = await create_file_buttons(client, sent_message)
+            
+            # Notify user with auto-delete
+            user_msg = await client.send_message(
+                chat_id=user_id,
+                text=f"**Your file is ready!**\n\nJoin the channel to view your file ",
+                protect_content=True,
+                reply_markup=reply_markup
+            )
+            asyncio.create_task(auto_delete_message(client, user_msg, AUTO_DELETE_SECONDS))
+        else:
+            # Fallback to direct send with caption
+            await client.send_cached_media(
+                chat_id=user_id,
+                file_id=file_id,
+                caption=caption,
+                protect_content=protect_content_flag,
+            )
+    except Exception as e:
+        logger.error(f"File send error: {e}")
+        # Fallback to direct send if channel send fails
+        await client.send_cached_media(
+            chat_id=user_id,
+            file_id=file_id,
+            caption=caption,
+            protect_content=protect_content_flag,
+        )
+
+@Client.on_callback_query(filters.regex(r'^checksubp#') | filters.regex(r'^checksub#'))
+async def checksub_callback(client, callback_query):
+    # Extract data from callback
+    data = callback_query.data
+    pre, file_id = data.split('#', 1)
+    user_id = callback_query.from_user.id
+    protect_content_flag = True if pre == 'checksubp' else False
+
+    # Get file details for caption
+    files = await get_file_details(file_id)
+    file_details = files[0] if files else None
+    
+    # Check subscription status
+    if await is_subscribed(user_id, client):
+        try:
+            # Use helper function to send file via channels with proper caption
+            await send_file_to_user(
+                client=client,
+                user_id=user_id,
+                file_id=file_id,
+                protect_content_flag=protect_content_flag,
+                file_name=file_details.file_name if file_details else None,
+                file_size=get_size(file_details.file_size) if file_details else None,
+                file_caption=file_details.caption if file_details else None
+            )
+            await callback_query.message.delete()
+        except Exception as e:
+            logger.error(f"File send error in callback: {e}")
+            await callback_query.answer("Failed to send file. Please try again later.", show_alert=True)
+    else:
+        # Resend subscription prompt
+        links = await create_invite_links(client)
+        btn = [[InlineKeyboardButton("🤖 Join Updates Channel", url=url)] for url in links.values()]
+        btn.append([InlineKeyboardButton("🔄 Try Again", callback_data=data)])
+        await callback_query.edit_message_text(
+            text="**❌ You still haven't joined all channels!**\n\nPlease join and press Try Again:",
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
+
+
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message: Message):
     user_id = message.from_user.id
@@ -86,34 +236,28 @@ async def start(client, message: Message):
         await clsnt.delete()
         return
 
-    # 🔹 Continue with parameter-based logic
-    invite_links = await is_subscribed(client, query=message)
-    if AUTH_CHANNEL and len(invite_links) >= 1:
-        btn = []
-        for chnl_num, link in enumerate(invite_links, start=1):
-            channel_num = {1: "1sᴛ", 2: "2ɴᴅ", 3: "3ʀᴅ"}.get(chnl_num, f"{chnl_num}ᴛʜ")
-            btn.append([InlineKeyboardButton(f"❆ Jᴏɪɴ {channel_num} Cʜᴀɴɴᴇʟ ❆", url=link)])
+    if not await is_subscribed(message.from_user.id, client):
+        links = await create_invite_links(client)
+        btn = [[InlineKeyboardButton("🤖 Join Updates Channel", url=url)] for url in links.values()]
 
-        if data != "subscribe":
+        if len(message.command) == 2:
             try:
-                kk, file_id = data.split("_", 1)
+                kk, file_id = message.command[1].split("_", 1)
                 pre = 'checksubp' if kk == 'filep' else 'checksub'
-                btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", callback_data=f"{pre}#{file_id}")])
+                btn.append([InlineKeyboardButton("🔄 Try Again", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
-                btn.append([InlineKeyboardButton("↻ Tʀʏ Aɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={data}")])
-
-        authdel = await client.send_message(
-            chat_id=user_id,
-            text="**Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ɪɴ ᴏᴜʀ Bᴀᴄᴋ-ᴜᴘ ᴄʜᴀɴɴᴇʟs...**",
+                btn.append([InlineKeyboardButton("🔄 Try Again", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
+        
+        subdel=await client.send_message(
+            chat_id=message.from_user.id,
+            text="**Please Join My Updates Channel to use this Bot!**",
             reply_markup=InlineKeyboardMarkup(btn),
             parse_mode=enums.ParseMode.MARKDOWN
         )
-        await asyncio.sleep(25)
-        await authdel.delete()
+        await asyncio.sleep(20)
+        await subdel.delete()
         return
 
-    # The rest of your batch / dstore / file handling continues unchanged...
-    # (no more IndexError because `data` is guaranteed safe here)
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         buttons = [
             [InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')],
@@ -291,6 +435,29 @@ async def start(client, message: Message):
     await m.delete()
     await k.edit("<b>Your File/Video is successfully deleted!!!</b>")
     return             
+
+def is_admin(user) -> bool:
+    return (
+        user.id in ADMINS or
+        (f"@{user.username}" in ADMINS if user.username else False)
+    )
+
+@Client.on_message(filters.command("fsub") & filters.private)
+async def set_auth_channels(client, message: Message):
+    user = message.from_user
+    if not is_admin(user):
+        return await message.reply("🚫 You are not authorized to use this command.")
+
+    args = message.text.split()[1:]
+    if not args:
+        return await message.reply("Usage: /fsub (channel_id1) (channel_id2) ...")
+
+    try:
+        channels = [int(cid) for cid in args]
+        await db.set_auth_channels(channels)
+        await message.reply(f"✅ AUTH_CHANNELs updated:\n{channels}")
+    except ValueError:
+        await message.reply("❌ Invalid channel IDs. Use numeric Telegram chat IDs.")
 
 @Client.on_message(filters.command('channel') & filters.user(ADMINS))
 async def channel_info(bot, message):
