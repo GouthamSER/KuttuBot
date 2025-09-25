@@ -141,6 +141,24 @@ class Database:
 
     async def get_db_size(self):
         return (await self.db.command("dbstats"))['dataSize']
+    
+    
+    async def set_auth_channels(self, channels: list[int]):
+        # Store the list of auth channel IDs in a singleton document
+        await self.config.update_one(
+            {"_id": "auth_channels"},
+            {"$set": {"channels": channels}},
+            upsert=True,
+        )
+
+    async def get_auth_channels(self) -> list[int]:
+        doc = await self.config.find_one({"_id": "auth_channels"})
+        if doc and "channels" in doc:
+            return doc["channels"]
+        return []
+
+    async def get_db_size(self):
+        return (await self.db.command("dbstats"))['dataSize']
 
 
 db = Database(DATABASE_URI, DATABASE_NAME)
