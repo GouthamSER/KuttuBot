@@ -111,11 +111,11 @@ async def next_page(bot, query):
     await query.answer()
 
 
-@Client.on_callback_query(filters.regex(r"^spol")) ###SOMECHANGES DONE BY GOUTHAMSER
+@Client.on_callback_query(filters.regex(r"^spol")) 
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer("Thiz is Not For You 🚫", show_alert=True)
+        return await query.answer("Search for Yourself🔎", show_alert=True)
     if movie_ == "close_spellcheck":
         return await query.message.delete()
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
@@ -131,9 +131,8 @@ async def advantage_spoll_choker(bot, query):
             await auto_filter(bot, query, k)
         else:
             k = await query.message.edit(script.MOV_NT_FND)#script change
-            await asyncio.sleep(15)
+            await asyncio.sleep(10)
             await k.delete()
-            await message.delete()
 
 
 @Client.on_callback_query()
@@ -779,96 +778,78 @@ async def auto_filter(client, msg, spoll=False):
 
 
 # ================== SPELL CHECK ==================
+#SPELL CHECK RE EDITED BY GOUTHAMSER
 async def advantage_spell_chok(client, msg):
     mv_id = msg.id
     mv_rqst = msg.text
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
     settings = await get_settings(msg.chat.id)
-
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
-        "", msg.text, flags=re.IGNORECASE
-    )
+        "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
     query = query.strip() + " movie"
-
     try:
         movies = await get_poster(mv_rqst, bulk=True)
     except Exception as e:
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
-            InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
-        ], [
-            InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
-            InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
-        ], [
-            InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
+                 InlineKeyboardButton('ENG', 'esp'),
+                 InlineKeyboardButton('MAL', 'msp'),
+                 InlineKeyboardButton('HIN', 'hsp'),
+                 InlineKeyboardButton('TAM', 'tsp')
+        ],[
+                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
+             ]]
         
         k = await msg.reply_text(
-            text=script.SPOLL_NOT_FND,
+            text=script.SPOLL_NOT_FND, #IN SCRIPT CHANGE DONOT CHANGE CODE
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(15)
-        await k.delete()
-        await msg.delete()
+        await asyncio.sleep(45)
+        await k.delete()      
         return
-
+    movielist = []
     if not movies:
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
-            InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
-        ], [
-            InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
-            InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
-        ], [
-            InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
+                 InlineKeyboardButton('ENG', 'esp'),
+                 InlineKeyboardButton('MAL', 'msp'),
+                 InlineKeyboardButton('HIN', 'hsp'),
+                 InlineKeyboardButton('TAM', 'tsp')
+        ],[
+                 InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
+             ]]
         
         k = await msg.reply_text(
-            text=script.SPOLL_NOT_FND,
+            text=script.SPOLL_NOT_FND, 
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(15)
+        await asyncio.sleep(60)
         await k.delete()
-        await msg.delete()
         return
-
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
-
     btn = [
-        [InlineKeyboardButton(
-            text=movie_name.strip(),
-            callback_data=f"spol#{reqstr1}#{k}"
-        )]
+        [
+            InlineKeyboardButton(
+                text=movie_name.strip(),
+                callback_data=f"spol#{reqstr1}#{k}",
+            )
+        ]
         for k, movie_name in enumerate(movielist)
     ]
     btn.append([InlineKeyboardButton(text="✘ ᴄʟᴏsᴇ ✘", callback_data=f'spol#{reqstr1}#close_spellcheck')])
-
     spell_check_del = await msg.reply_text(
         text="<b>Sᴘᴇʟʟɪɴɢ Mɪꜱᴛᴀᴋᴇ Bʀᴏ ‼️\n\nᴅᴏɴ'ᴛ ᴡᴏʀʀʏ 😊 Cʜᴏᴏꜱᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ᴏɴᴇ ʙᴇʟᴏᴡ 👇</b>",
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
     )
-    await asyncio.sleep(11)
+    await asyncio.sleep(180)
     await spell_check_del.delete()
-    await msg.delete()
-
-
-# ================== SPELL CHECK CALLBACK ==================
-async def advantage_spoll_choker(client, query):
-    try:
-        await query.message.delete()
-        search_text = query.data.split("#", 1)[1]
-        await auto_filter(client, query, spoll=(search_text, *await get_search_results(search_text)))
-    except Exception as e:
-        logger.exception(e)
 
 #SPELL CHECK END
 
