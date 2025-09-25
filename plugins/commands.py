@@ -108,12 +108,14 @@ async def send_file_to_user(client, user_id, file_id, protect_content_flag, file
             asyncio.create_task(auto_delete_message(client, user_msg, AUTO_DELETE_SECONDS))
         else:
             # Fallback to direct send with caption
-            await client.send_cached_media(
+            xdd=await client.send_cached_media(
                 chat_id=user_id,
                 file_id=file_id,
                 caption=caption,
                 protect_content=protect_content_flag,
             )
+            await asyncio.sleep(300)
+            await xdd.delete()
     except Exception as e:
         logger.error(f"File send error: {e}")
         # Fallback to direct send if channel send fails
@@ -158,10 +160,12 @@ async def checksub_callback(client, callback_query):
         links = await create_invite_links(client)
         btn = [[InlineKeyboardButton("🤖 Join Updates Channel", url=url)] for url in links.values()]
         btn.append([InlineKeyboardButton("🔄 Try Again", callback_data=data)])
-        await callback_query.edit_message_text(
+        auxd=await callback_query.edit_message_text(
             text="**❌ You still haven't joined all channels!**\n\nPlease join and press Try Again:",
             reply_markup=InlineKeyboardMarkup(btn)
         )
+        await asyncio.sleep(20)
+        await auxd.delete()
 
 
 @Client.on_message(filters.command("start") & filters.incoming)
@@ -228,6 +232,7 @@ async def start(client, message: Message):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        await asyncio.sleep(1)
         clsnt = await client.send_message(
             chat_id=message.chat.id,
             text="**❗️Send Movie Name and Year Correctly 👍📌**"
