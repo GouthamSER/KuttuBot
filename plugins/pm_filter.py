@@ -808,7 +808,7 @@ async def advantage_spell_chok(client, msg):
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(45)
+        await asyncio.sleep(20)
         await k.delete()      
         return
     movielist = []
@@ -828,7 +828,7 @@ async def advantage_spell_chok(client, msg):
             reply_markup=InlineKeyboardMarkup(button),
             reply_to_message_id=msg.id
         )
-        await asyncio.sleep(60)
+        await asyncio.sleep(20)
         await k.delete()
         return
     movielist = [movie.get('title') for movie in movies]
@@ -848,7 +848,7 @@ async def advantage_spell_chok(client, msg):
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
     )
-    await asyncio.sleep(180)
+    await asyncio.sleep(20)
     await spell_check_del.delete()
 
 #SPELL CHECK END
