@@ -38,7 +38,8 @@
 
 ## ✨ Features
 
-- ✅ Auto Filter  
+- ✅ Auto Filter
+- ✅️ Restart added with days , hours , minutes check info.py for indexing files help
 - ✅ Manual Filter  
 - ✅ IMDB Search and Info  
 - ✅ Admin Commands  
