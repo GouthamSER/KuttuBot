@@ -139,11 +139,11 @@ This module only works for my admins.
     RESULT_TXT = """<b>🎉 Yay! I dug through my database and found this for you:</b>
 <blockquote>{}</blockquote>"""
 
-    CUSTOM_FILE_CAPTION = """<b>📁 Fɪʟᴇ Nᴀᴍᴇ: 📄 <code>{file_name}</code>
+    CUSTOM_FILE_CAPTION = """<blockquote><b>📁 Fɪʟᴇ Nᴀᴍᴇ: 📄 <code>{file_name}</code>
 
 📦 Fɪʟᴇ Sɪᴢᴇ: 💾 <code>{file_size}</code>
 
-🔗 [⚡ Jᴏɪɴ Eʟᴅᴏʀᴀᴅᴏ ⚡](https://t.me/+53lB8qzQaGFlNDll)</b>"""
+🔗 [⚡ Jᴏɪɴ Eʟᴅᴏʀᴀᴅᴏ ⚡](https://t.me/+53lB8qzQaGFlNDll)</b></blockquote>"""
     
     RESTART_GC_TXT = """
 <b>🔄 𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽!</b>
@@ -195,7 +195,8 @@ Take a peek at the instructions below and let’s try again! 👇🏼
 <blockquote>Report To ADMIN - <a href="https://t.me/im_goutham_josh">@im_goutham_josh</a></blockquote>
 """
 
-    RESTART_TXT = """<b><u>𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 ✅</u></b>"""
+    RESTART_TXT = """<b><u>𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 ✅
+Kuttu Bot ¹ 💓</u></b>"""
     DMCA_TXT = """<b><u>This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.</u></b>
 
 <blockquote>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquote>
