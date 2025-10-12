@@ -137,8 +137,9 @@ python3 bot.py
 • /link - to create link for one post
 ```
 ## Support
-[![telegram badge](https://img.shields.io/badge/Telegram-Group-30302f?style=flat&logo=telegram)](https://telegram.dog/Technical_Help_Support_Bot)
-[![telegram badge](https://img.shields.io/badge/Telegram-Channel-30302f?style=flat&logo=telegram)](https://telegram.dog/sources_cods)
+[![telegram badge](https://img.shields.io/badge/Telegram-Movie-30302f?style=flat&logo=telegram)](
+https://t.me/+53lB8qzQaGFlNDll)
+
 
 
 
