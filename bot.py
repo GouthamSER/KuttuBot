@@ -17,7 +17,7 @@ from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
 from database.users_chats_db import db
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL
+from info import RESTART_INTERVAL, SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
@@ -70,6 +70,14 @@ class Bot(Client):
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT)#RESTART SND IN LOG_CHANNEL
         print("Goutham SER own Bot</>")
 
+        try:
+            await self.send_message(
+                chat_id=LOG_CHANNEL,
+                text="✅ Bot Started Successfully!\n⚡ Kuttu Bot2 with 2DB Feature Active."
+            )
+        except Exception as e:
+            logging.error(f"Could not send start message: {e}")
+            
         tz = pytz.timezone('Asia/Kolkata')
         today = date.today()
         now = datetime.now(tz)
@@ -82,23 +90,50 @@ class Bot(Client):
         PORT_CODE).start()
         
         # Schedule auto-restart every 24 hours
-        asyncio.create_task(self.schedule_restart())
+        asyncio.create_task(self.schedule_restart(RESTART_INTERVAL))
 
     async def stop(self, *args):
         await super().stop()
-        logging.info("Bot stopped. Bye.")
+        logging.info("Bot stopped. Bye 👋")
 
-    # 24 hrs restart fn()
     async def restart(self):
         logging.info("Restarting bot process...")
         await self.stop()
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # Koyeb/Docker compatible restart
+        os._exit(0)
 
-    async def schedule_restart(self, hours: int = 24):
-        await asyncio.sleep(hours * 60 * 60)  # Wait for 24 hours
-        await self.send_message(chat_id=LOG_CHANNEL, text="Auto Restarting the KuttuBot \n(24 hrs ⏰️ refresh)...")
-        await self.restart()
-#restarting fn() end;
+    async def schedule_restart(self, interval: str = RESTART_INTERVAL):
+        """
+        Automatically restart the bot after the given interval.
+        Example interval: '12h', '1d', '30m'
+        """
+        if not interval:
+            logging.warning("No restart interval set — skipping auto-restart.")
+            return
+
+        try:
+            seconds = parse_interval(interval)
+        except Exception as e:
+            logging.error(f"Invalid restart interval '{interval}': {e}")
+            return
+
+        while True:
+            try:
+                # Sleep until 1 minute before restart
+                await asyncio.sleep(max(0, seconds - 60))
+                try:
+                    await self.send_message(
+                        chat_id=LOG_CHANNEL,
+                        text=f"| Kuttu Bot ¹ |\n⚠️ Bot will restart in 1 minute (every {interval}).",
+                    )
+                except Exception as e:
+                    logging.error(f"Could not send restart warning: {e}")
+
+                await asyncio.sleep(60)
+                await self.restart()
+            except Exception as e:
+                logging.error(f"Restart loop error: {e}")
+                await asyncio.sleep(60)
     
     async def iter_messages(
         self,
@@ -115,6 +150,27 @@ class Bot(Client):
             for message in messages:
                 yield message
                 current += 1
+
+
+# Helper function: Parse restart interval
+def parse_interval(interval: str) -> int:
+    """
+    Convert interval string like '1h', '2d', '30m' to seconds.
+    """
+    match = re.match(r"(\d+)([dhm])", interval.lower())
+    if not match:
+        raise ValueError("Invalid interval format. Use e.g., '1h', '2d', '30m'.")
+    value, unit = match.groups()
+    value = int(value)
+    if unit == "d":
+        return value * 24 * 60 * 60
+    elif unit == "h":
+        return value * 60 * 60
+    elif unit == "m":
+        return value * 60
+    else:
+        raise ValueError("Invalid time unit. Only 'd', 'h', 'm' are allowed.")
+
 
 
 app = Bot()
