@@ -73,7 +73,7 @@ class Bot(Client):
         try:
             await self.send_message(
                 chat_id=LOG_CHANNEL,
-                text="✅ Bot Started Successfully!\n⚡ Kuttu Bot2 with 2DB Feature Active."
+                text="✅ Bot Started Successfully!\n⚡ Kuttu Bot¹ 💥"
             )
         except Exception as e:
             logging.error(f"Could not send start message: {e}")
