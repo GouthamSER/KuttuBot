@@ -23,61 +23,80 @@ async def stop_button(bot, message):
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
+
 BOT_START_TIME = time.time()
 
 def make_bar(percentage: float, length: int = 10) -> str:
-    """Generate a progress bar with filled and empty blocks."""
+    """Create a nice progress bar for usage metrics."""
     filled = int(length * percentage / 100)
     empty = length - filled
-    return "▰" * filled + "▱" * empty  # Unicode bar style
+    return "▰" * filled + "▱" * empty
+
 
 @Client.on_message(filters.command("usage"))
-async def stats(bot, update):
-    # Calculate uptime
-    uptime_seconds = int(time.time() - BOT_START_TIME)
-    currentTime = format_uptime_short(uptime_seconds)
+async def live_usage(bot, update):
+    msg = await bot.send_message(
+        chat_id=update.chat.id,
+        text="__Initializing system monitor...__",
+        parse_mode=enums.ParseMode.MARKDOWN
+    )
 
-    # Disk usage
-    total, used, free = shutil.disk_usage(".")
-    total = humanbytes(total)
-    used = humanbytes(used)
-    free = humanbytes(free)
+    start_time = time.time()
 
-    # System stats
-    cpu_usage = psutil.cpu_percent(interval=0.5)
-    ram_usage = psutil.virtual_memory().percent
-    disk_usage = psutil.disk_usage('/').percent
+    while True:
+        uptime_seconds = int(time.time() - BOT_START_TIME)
+        currentTime = format_uptime_short(uptime_seconds)
 
-    # Progress bars
-    cpu_bar = make_bar(cpu_usage)
-    ram_bar = make_bar(ram_usage)
-    disk_bar = make_bar(disk_usage)
+        total, used, free = shutil.disk_usage(".")
+        total = humanbytes(total)
+        used = humanbytes(used)
+        free = humanbytes(free)
 
-    # Message template
-    ms_g = f"""<b>⚙️ 𝖡𝗈𝗍 𝖲𝗍𝖺𝗍𝗎𝗌</b>
+        cpu_usage = psutil.cpu_percent(interval=0.5)
+        ram_usage = psutil.virtual_memory().percent
+        disk_usage = psutil.disk_usage('/').percent
+
+        cpu_bar = make_bar(cpu_usage)
+        ram_bar = make_bar(ram_usage)
+        disk_bar = make_bar(disk_usage)
+
+        text = f"""<b>⚙️ 𝖱𝖾𝖺𝗅-𝖳𝗂𝗆𝖾 𝖡𝗈𝗍 𝖲𝗍𝖺𝗍𝗎𝗌 (Koyeb)</b>
 
 🕔 𝖴𝗉𝗍𝗂𝗆𝖾: <code>{currentTime}</code>
 
-🛠 𝖢𝖯𝖴: <code>{cpu_usage}%</code>
+🛠 𝖢𝖯𝖴: <code>{cpu_usage:.1f}%</code>
 <code>[{cpu_bar}]</code>
 
-🗜 𝖱𝖠𝖬: <code>{ram_usage}%</code>
+🗜 𝖱𝖠𝖬: <code>{ram_usage:.1f}%</code>
 <code>[{ram_bar}]</code>
 
-💾 𝖣𝗂𝗌𝗄: <code>{disk_usage}%</code>
+💾 𝖣𝗂𝗌𝗄: <code>{disk_usage:.1f}%</code>
 <code>[{disk_bar}]</code>
 
-🗂 𝖳𝗈𝗍𝖺𝗅 𝖲𝗉𝖺𝖼𝖾: <code>{total}</code>
-🗳 𝖴𝗌𝖾𝖽 𝖲𝗉𝖺𝖼𝖾: <code>{used}</code>
-📝 𝖥𝗋𝖾𝖾 𝖲𝗉𝖺𝖼𝖾: <code>{free}</code>"""
+🗂 𝖳𝗈𝗍𝖺𝗅: <code>{total}</code>
+🗳 𝖴𝗌𝖾𝖽: <code>{used}</code>
+📝 𝖥𝗋𝖾𝖾: <code>{free}</code>
 
-    # Send and edit message
-    msg = await bot.send_message(
-        chat_id=update.chat.id,
-        text="__𝖯𝗋𝗈𝖼𝖾𝗌𝗌𝗂𝗇𝗀...__",
-        parse_mode=enums.ParseMode.MARKDOWN
-    )
-    await msg.edit_text(text=ms_g, parse_mode=enums.ParseMode.HTML)
+⏳ Updating live... (refreshes every 5s)
+"""
+
+        try:
+            await msg.edit_text(text, parse_mode=enums.ParseMode.HTML)
+        except Exception:
+            # Ignore if message was deleted or can't be edited
+            break
+
+        # Stop after 20 sec to avoid infinite loop (safety)
+        if time.time() - start_time > 20:
+            await msg.edit_text(
+                text + "\n✅ <b>Monitoring stopped (20 sec elapsed)</b>",
+                parse_mode=enums.ParseMode.HTML
+            )
+            break
+
+        await asyncio.sleep(5)
+
+
 
 def format_uptime_short(seconds: int) -> str:
     # Define time units in seconds
