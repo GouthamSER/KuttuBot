@@ -143,6 +143,8 @@ This module only works for my admins.
 
 📦 Fɪʟᴇ Sɪᴢᴇ: 💾 <code>{file_size}</code>
 
+⏰ Duration: {duration}
+
 🔗 [⚡ Jᴏɪɴ Eʟᴅᴏʀᴀᴅᴏ ⚡](https://t.me/+53lB8qzQaGFlNDll)</b></blockquote>"""
     
     RESTART_GC_TXT = """
