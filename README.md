@@ -38,7 +38,7 @@
 
 ## ✨ Features
 
-- ✅ Auto Filter
+- ✅ Auto Filter and Auto Approval 💥
 - ✅️ Restart added with days , hours , minutes check info.py for indexing files help
 - ✅ Manual Filter  
 - ✅ IMDB Search and Info  
