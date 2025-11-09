@@ -1,3 +1,7 @@
+#CREDITS GOTO GOUTHAMSER !!!!!!!!!!!
+#@im_goutham_josh    tg user
+# add to group or channel and gives admin rights only
+
 import os
 from pyrogram import Client, filters
 from pyrogram.types import ChatJoinRequest, Message
@@ -32,7 +36,7 @@ async def auto_approve(client, join_request: ChatJoinRequest):
             try:
                 await client.send_message(
                     chat_id=join_request.from_user.id,
-                    text=f"🎉 You’ve been approved to join **{join_request.chat.title}**!\nEnjoy your stay 😄"
+                    text=f"🎉 You’ve been approved to join **{join_request.chat.title}**!\n\nEnjoy your stay 😄"
                 )
                 print(f"✉️ Sent welcome DM to {join_request.from_user.first_name}")
             except Exception as pm_error:
