@@ -152,7 +152,7 @@ async def generate_link(client, message):
         return await message.reply(
             "❗ **Please provide movie name**\n\n"
             "**Example:**\n`/link game of thrones`",
-            parse_mode="markdown"
+            parse_mode=enums.ParseMode.MARKDOWN
         )
 
     # Create URL-safe movie slug
