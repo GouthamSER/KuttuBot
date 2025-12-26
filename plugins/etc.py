@@ -4,6 +4,10 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import *
 from info import ADMINS
 from utils import humanbytes
+from urllib.parse import quote_plus
+
+BOT_USERNAME = None  # cache bot username
+
 
 
 CMD = ["/", "."]
@@ -134,37 +138,38 @@ def format_uptime_short(seconds: int) -> str:
     return " ".join(parts)
 
 
-BOT_USERNAME = None  # important
-
 @Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def generate_link(client, message):
     global BOT_USERNAME
 
-    # Fetch bot username once and cache it
+    # Get bot username once
     if BOT_USERNAME is None:
         me = await client.get_me()
         BOT_USERNAME = me.username
 
-    command_text = message.text.split(maxsplit=1)
-
-    if len(command_text) < 2:
-        await message.reply(
-            "Please provide the name for the movie!\n\n"
-            "Example:\n`/link game of thrones`"
+    # Validate argument
+    if len(message.command) < 2:
+        return await message.reply(
+            "❗ **Please provide movie name**\n\n"
+            "**Example:**\n`/link game of thrones`",
+            parse_mode="markdown"
         )
-        return
 
-    movie_name = command_text[1].replace(" ", "-")
+    # Create URL-safe movie slug
+    movie_name = quote_plus(" ".join(message.command[1:]).lower())
+
+    # 🔥 PLAIN TEXT deep-link (NO base64)
     link = f"https://t.me/{BOT_USERNAME}?start=getfile-{movie_name}"
 
     await message.reply(
-        text=f"Here is your link:\n{link}",
+        text=f"✅ **Your link is ready:**\n\n{link}",
         reply_markup=InlineKeyboardMarkup(
             [[
                 InlineKeyboardButton(
-                    text="🔗 Share Link",
+                    "🔗 Share Link",
                     url=f"https://telegram.me/share/url?url={link}"
                 )
             ]]
-        )
+        ),
+        disable_web_page_preview=True
     )
