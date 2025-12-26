@@ -134,17 +134,9 @@ def format_uptime_short(seconds: int) -> str:
     return " ".join(parts)
 
 
-# Cache bot username
-BOT_USERNAME = None
+BOT_USERNAME = None  # important
 
-
-def slugify(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r"[^\w\s-]", "", text)
-    return re.sub(r"\s+", "-", text)
-
-
-@Client.on_message(filters.command("link") & filters.user(ADMINS) & filters.private)
+@Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def generate_link(client, message):
     global BOT_USERNAME
 
@@ -153,28 +145,26 @@ async def generate_link(client, message):
         me = await client.get_me()
         BOT_USERNAME = me.username
 
-    if len(message.command) < 2:
+    command_text = message.text.split(maxsplit=1)
+
+    if len(command_text) < 2:
         await message.reply(
-            "❌ **Movie name missing!**\n\n"
-            "**Usage:** `/link Game of Thrones`",
-            quote=True
+            "Please provide the name for the movie!\n\n"
+            "Example:\n`/link game of thrones`"
         )
         return
 
-    movie_name = " ".join(message.command[1:])
-    movie_slug = slugify(movie_name)
-
-    link = f"https://t.me/{BOT_USERNAME}?start=getfile-{movie_slug}"
+    movie_name = command_text[1].replace(" ", "-")
+    link = f"https://t.me/{BOT_USERNAME}?start=getfile-{movie_name}"
 
     await message.reply(
-        text=f"✅ **Your generated link:**\n\n🔗 `{link}`",
+        text=f"Here is your link:\n{link}",
         reply_markup=InlineKeyboardMarkup(
             [[
                 InlineKeyboardButton(
-                    text="📤 Share Link",
+                    text="🔗 Share Link",
                     url=f"https://telegram.me/share/url?url={link}"
                 )
             ]]
-        ),
-        quote=True
+        )
     )
