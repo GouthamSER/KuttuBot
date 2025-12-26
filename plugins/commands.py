@@ -9,6 +9,7 @@ from info import CHANNELS, ADMINS, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp, create_invite_links
 from database.connections_mdb import active_connection
 logger = logging.getLogger(__name__)
+from plugins.pm_filter import auto_filter
 
 REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] #don't add any emoji because tg not support all emoji reactions
 
@@ -262,7 +263,7 @@ async def start(client, message: Message):
         await asyncio.sleep(20)
         await subdel.delete()
         return
-        # etc.py link feature !!!>>>
+        # etc.py link feature !!!>>> import pmfilter autofilter fn()
     if len(message.command) == 2 and message.command[1].startswith('getfile'):
         searches = message.command[1].split("-", 1)[1] 
         search = searches.replace('-',' ')
