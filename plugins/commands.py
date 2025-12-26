@@ -390,6 +390,12 @@ async def start(client, message: Message):
 
     files_ = await get_file_details(file_id)           
     if not files_:
+    # 🚫 NEVER base64-decode plain-text links
+        if data.startswith("getfile-"):
+            return await message.reply(
+                "❌ No files found for this movie.\n"
+                "Please search again or contact admin."
+            )
         pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
         try:
             m = await client.send_cached_media(
