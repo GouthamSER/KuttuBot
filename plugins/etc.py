@@ -157,21 +157,21 @@ async def generate_link(client, message):
         # a. Join command parts and convert to lowercase
         movie_query = " ".join(message.command[1:]).lower()
         
-        # b. Replace spaces with underscores
-        movie_slug_with_underscores = movie_query.replace(" ", "_")
+        # b. Crucial Change: Replace spaces with hyphens (-)
+        movie_slug_with_hyphens = movie_query.replace(" ", "-"))
         
         # c. Apply quote_plus just to handle any *other* special characters 
         #    (though underscores and hyphens are usually fine).
         #    Note: For this specific use case (only replacing spaces), 
         #    quote_plus might be redundant after the replacement, but it's safe.
-        final_movie_slug = quote_plus(movie_slug_with_underscores)
+        final_movie_slug = quote_plus(movie_slug_with_hyphens)
 
         # 🔥 PLAIN TEXT deep-link (using the underscore slug)
         link = f"https://t.me/{bot_username}?start=getfile-{final_movie_slug}"
 
         # 3. Send the response
         await message.reply(
-            text=f"✅ **Your link is ready:**\n\n`{link}`",
+            text=f"✅ **Your link is ready:**\n\n{link}",
             reply_markup=InlineKeyboardMarkup(
                 [[
                     InlineKeyboardButton(
