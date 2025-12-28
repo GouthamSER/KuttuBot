@@ -6,7 +6,6 @@ from info import ADMINS
 from utils import humanbytes
 from urllib.parse import quote_plus
 
-BOT_USERNAME = None  # cache bot username
 
 
 CMD = ["/", "."]
@@ -136,39 +135,51 @@ def format_uptime_short(seconds: int) -> str:
 
     return " ".join(parts)
 
-
 @Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def generate_link(client, message):
-    global BOT_USERNAME
+    """
+    Generates a shareable Telegram deep link for a given movie name.
+    The deep link uses the 'getfile-' prefix for file retrieval logic.
+    """
+    try:
+        # 1. Validate argument
+        if len(message.command) < 2:
+            return await message.reply(
+                text=(
+                    "❗ **Please provide movie name**\n\n"
+                    "**Example:**\n`/link game of thrones`"
+                ),
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
 
-    # Get bot username once
-    if BOT_USERNAME is None:
-        me = await client.get_me()
-        BOT_USERNAME = me.username
+        # 2. Get bot username directly from the client object (more efficient)
+        # client.me is populated after a successful connection.
+        bot_username = client.me.username
 
-    # Validate argument
-    if len(message.command) < 2:
-        return await message.reply(
-            "❗ **Please provide movie name**\n\n"
-            "**Example:**\n`/link game of thrones`",
+        # 3. Create URL-safe movie slug
+        # Join command parts, convert to lowercase, then URL-encode.
+        movie_query = " ".join(message.command[1:]).lower()
+        movie_slug = quote_plus(movie_query)
+
+        # 🔥 PLAIN TEXT deep-link
+        link = f"https://t.me/{bot_username}?start=getfile-{movie_slug}"
+
+        # 4. Send the response
+        await message.reply(
+            text=f"✅ **Your link is ready:**\n\n`{link}`",
+            reply_markup=InlineKeyboardMarkup(
+                [[
+                    InlineKeyboardButton(
+                        text="🔗 Share Link",
+                        url=f"https://telegram.me/share/url?url={link}"
+                    )
+                ]]
+            ),
+            disable_web_page_preview=True,
             parse_mode=enums.ParseMode.MARKDOWN
         )
 
-    # Create URL-safe movie slug
-    movie_name = quote_plus(" ".join(message.command[1:]).lower())
-
-    # 🔥 PLAIN TEXT deep-link (NO base64)
-    link = f"https://t.me/{BOT_USERNAME}?start=getfile-{movie_name}"
-
-    await message.reply(
-        text=f"✅ **Your link is ready:**\n\n{link}",
-        reply_markup=InlineKeyboardMarkup(
-            [[
-                InlineKeyboardButton(
-                    "🔗 Share Link",
-                    url=f"https://telegram.me/share/url?url={link}"
-                )
-            ]]
-        ),
-        disable_web_page_preview=True
-    )
+    except Exception as e:
+        # Basic error handling
+        print(f"Error in generate_link: {e}")
+        await message.reply_text("An unexpected error occurred while generating the link.")
