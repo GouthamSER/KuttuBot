@@ -750,25 +750,25 @@ async def auto_filter(client, msg, spoll=False):
                 caption=cap[:1024],
                 reply_markup=InlineKeyboardMarkup(btn)
             )
-            await asyncio.sleep(600)
+            await asyncio.sleep(43200) #12hr to dlt
             await delauto.delete()
             await message.delete()
         except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
             pic = imdb.get('poster')
             poster = pic.replace('.jpg', "._V1_UX360.jpg")
             delau = await message.reply_photo(photo=poster, caption=cap[:1024], reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(600)
+            await asyncio.sleep(43200) #12hr to dlt
             await delau.delete()
             await message.delete()
         except Exception as e:
             logger.exception(e)
             audel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(600)
+            await asyncio.sleep(600) #12hr to dlt
             await audel.delete()
             await message.delete()
     else:
         autodel = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-        await asyncio.sleep(600)
+        await asyncio.sleep(43200) #12hr to dlt
         await autodel.delete()
         await message.delete()
 
