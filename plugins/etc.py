@@ -6,8 +6,6 @@ from info import ADMINS
 from utils import humanbytes
 from urllib.parse import quote_plus
 
-
-
 CMD = ["/", "."]
 
 @Client.on_message(filters.command("ping", CMD))
@@ -138,8 +136,8 @@ def format_uptime_short(seconds: int) -> str:
 @Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def generate_link(client, message):
     """
-    Generates a shareable Telegram deep link for a given movie name.
-    The deep link uses the 'getfile-' prefix for file retrieval logic.
+    Generates a shareable Telegram deep link, replacing spaces with underscores
+    in the payload for cleaner deep links.
     """
     try:
         # 1. Validate argument
@@ -152,19 +150,26 @@ async def generate_link(client, message):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-        # 2. Get bot username directly from the client object (more efficient)
-        # client.me is populated after a successful connection.
+        # Get bot username
         bot_username = client.me.username
 
-        # 3. Create URL-safe movie slug
-        # Join command parts, convert to lowercase, then URL-encode.
+        # 2. Create URL-safe movie slug with underscores
+        # a. Join command parts and convert to lowercase
         movie_query = " ".join(message.command[1:]).lower()
-        movie_slug = quote_plus(movie_query)
+        
+        # b. Replace spaces with underscores
+        movie_slug_with_underscores = movie_query.replace(" ", "_")
+        
+        # c. Apply quote_plus just to handle any *other* special characters 
+        #    (though underscores and hyphens are usually fine).
+        #    Note: For this specific use case (only replacing spaces), 
+        #    quote_plus might be redundant after the replacement, but it's safe.
+        final_movie_slug = quote_plus(movie_slug_with_underscores)
 
-        # 🔥 PLAIN TEXT deep-link
-        link = f"https://t.me/{bot_username}?start=getfile-{movie_slug}"
+        # 🔥 PLAIN TEXT deep-link (using the underscore slug)
+        link = f"https://t.me/{bot_username}?start=getfile-{final_movie_slug}"
 
-        # 4. Send the response
+        # 3. Send the response
         await message.reply(
             text=f"✅ **Your link is ready:**\n\n`{link}`",
             reply_markup=InlineKeyboardMarkup(
