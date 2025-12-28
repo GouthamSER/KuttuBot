@@ -158,7 +158,7 @@ async def generate_link(client, message):
         movie_query = " ".join(message.command[1:]).lower()
         
         # b. Crucial Change: Replace spaces with hyphens (-)
-        movie_slug_with_hyphens = movie_query.replace(" ", "-"))
+        movie_slug_with_hyphens = movie_query.replace(" ", "-")
         
         # c. Apply quote_plus just to handle any *other* special characters 
         #    (though underscores and hyphens are usually fine).
