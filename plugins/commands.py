@@ -142,7 +142,7 @@ async def start(client, message):
                     caption=f_caption,
                     protect_content=msg.get('protect', False),
                     )
-                 k = await client.send_message(
+                k = await client.send_message(
                     chat_id=message.from_user.id,
                     text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>")
                 await asyncio.sleep(600)
