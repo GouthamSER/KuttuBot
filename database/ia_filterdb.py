@@ -1,7 +1,6 @@
 import logging
 from struct import pack
 import re
-from collections import defaultdict
 import base64
 from pyrogram.file_id import FileId
 from pymongo.errors import DuplicateKeyError
@@ -155,34 +154,3 @@ def unpack_new_file_id(new_file_id):
     )
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
-
-async def get_movie_list(limit=20):
-    cursor = Media.find().sort("$natural", -1).limit(100)
-    files = await cursor.to_list(length=100)
-    results = []
-
-    for file in files:
-        name = getattr(file, "file_name", "")
-        if not re.search(r"(s\d{1,2}|season\s*\d+).*?(e\d{1,2}|episode\s*\d+)", name, re.I):
-            results.append(name)
-        if len(results) >= limit:
-            break
-    return results
-
-async def get_series_grouped(limit=30):
-    cursor = Media.find().sort("$natural", -1).limit(150)
-    files = await cursor.to_list(length=150)
-    grouped = defaultdict(list)
-
-    for file in files:
-        name = getattr(file, "file_name", "")
-        match = re.search(r"(.*?)(?:S\d{1,2}|Season\s*\d+).*?(?:E|Ep|Episode)?(\d{1,2})", name, re.I)
-        if match:
-            title = match.group(1).strip().title()
-            episode = int(match.group(2))
-            grouped[title].append(episode)
-
-    return {
-        title: sorted(set(eps))[:10]
-        for title, eps in grouped.items() if eps
-    }

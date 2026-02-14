@@ -2,7 +2,6 @@
 import motor.motor_asyncio
 from info import DATABASE_NAME, DATABASE_URI, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, P_TTI_SHOW_OFF, SINGLE_BUTTON, SPELL_CHECK_REPLY, PROTECT_CONTENT
 
-
 class Database:
     
     def __init__(self, uri, database_name):
@@ -10,7 +9,6 @@ class Database:
         self.db = self._client[database_name]
         self.col = self.db.users
         self.grp = self.db.groups
-        self.config = self.db.config
 
 
     def new_user(self, id, name):
@@ -140,19 +138,6 @@ class Database:
     async def get_all_chats(self):
         return self.grp.find({})
 
-    async def set_auth_channels(self, channels: list[int]):
-        # Store the list of auth channel IDs in a singleton document
-        await self.config.update_one(
-            {"_id": "auth_channels"},
-            {"$set": {"channels": channels}},
-            upsert=True,
-        )
-
-    async def get_auth_channels(self) -> list[int]:
-        doc = await self.config.find_one({"_id": "auth_channels"})
-        if doc and "channels" in doc:
-            return doc["channels"]
-        return []
 
     async def get_db_size(self):
         return (await self.db.command("dbstats"))['dataSize']

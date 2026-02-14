@@ -1,7 +1,7 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
-from imdb import Cinemagoer 
+from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
+from imdb import IMDb
 import asyncio
 from pyrogram.types import Message, InlineKeyboardButton
 from pyrogram import enums
@@ -14,12 +14,6 @@ from database.users_chats_db import db
 from bs4 import BeautifulSoup
 import requests
 
-from pyrogram.enums import ChatMemberStatus
-from database.users_chats_db import db
-from info import REQUEST_FSUB_MODE  # Import from your info.py
-
-JOIN_REQUEST_USERS = {}
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -27,7 +21,7 @@ BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
 )
 
-imdb = Cinemagoer()
+imdb = IMDb() 
 
 BANNED = {}
 SMART_OPEN = '“'
@@ -46,52 +40,18 @@ class temp(object):
     B_NAME = None
     SETTINGS = {}
 
-async def is_subscribed(user_id: int, client) -> bool:
-    auth_channels = await db.get_auth_channels()
-    if not auth_channels:
-        return True  # No channels to check
-
-    # Check if user is joined in channels
-    joined_all = True
-    for channel in auth_channels:
-        try:
-            member = await client.get_chat_member(channel, user_id)
-            if member.status not in [
-                ChatMemberStatus.MEMBER,
-                ChatMemberStatus.ADMINISTRATOR,
-                ChatMemberStatus.OWNER,
-            ]:
-                joined_all = False
-                break
-        except Exception:
-            joined_all = False
-            break
-
-    if joined_all:
-        return True
-
-    # If REQUEST_FSUB_MODE is True, check join requests
-    if REQUEST_FSUB_MODE:
-        requested_channels = JOIN_REQUEST_USERS.get(user_id, set())
-        if set(auth_channels).issubset(requested_channels):
+async def is_subscribed(bot, query):
+    try:
+        user = await bot.get_chat_member(AUTH_CHANNEL, query.from_user.id)
+    except UserNotParticipant:
+        pass
+    except Exception as e:
+        logger.exception(e)
+    else:
+        if user.status != 'kicked':
             return True
 
     return False
-
-async def create_invite_links(client) -> dict:
-    links = {}
-    auth_channels = await db.get_auth_channels()
-    for channel in auth_channels:
-        try:
-            invite = await client.create_chat_invite_link(
-                channel,
-                creates_join_request=REQUEST_FSUB_MODE,  # Only enable join requests if REQUEST_FSUB_MODE is True
-                name="BotAuthAccess"
-            )
-            links[channel] = invite.invite_link
-        except Exception:
-            continue
-    return links
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:

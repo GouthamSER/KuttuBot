@@ -4,11 +4,10 @@ from pyrogram.errors.exceptions.bad_request_400 import QueryIdInvalid
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
 from utils import is_subscribed, get_size, temp
-from info import CACHE_TIME, AUTH_USERS, CUSTOM_FILE_CAPTION
-from utils import create_invite_links
+from info import CACHE_TIME, AUTH_USERS, AUTH_CHANNEL, CUSTOM_FILE_CAPTION
 
 logger = logging.getLogger(__name__)
-cache_time = 0 if AUTH_USERS else CACHE_TIME
+cache_time = 0 if AUTH_USERS or AUTH_CHANNEL else CACHE_TIME
 
 async def inline_users(query: InlineQuery):
     if AUTH_USERS:
@@ -31,24 +30,11 @@ async def answer(bot, query):
                            switch_pm_parameter="hehe")
         return
 
-    if not await is_subscribed(query.from_user.id, bot):
-        invite_links = await create_invite_links(bot)
-        first_link = next(iter(invite_links.values()), None)
-        
-        if first_link:
-            await query.answer(
-                results=[],
-                cache_time=0,
-                switch_pm_text="📢 Please join the updates channel to use this bot",
-                switch_pm_parameter="subscribe"
-            )
-        else:
-            await query.answer(
-                results=[],
-                cache_time=0,
-                switch_pm_text="⚠️ Bot owner hasn't set up the required channels properly.",
-                switch_pm_parameter="error"
-            )
+    if AUTH_CHANNEL and not await is_subscribed(bot, query):
+        await query.answer(results=[],
+                           cache_time=0,
+                           switch_pm_text='You have to subscribe my channel to use the bot',
+                           switch_pm_parameter="subscribe")
         return
 
     results = []
@@ -121,4 +107,7 @@ def get_reply_markup(query):
         ]
         ]
     return InlineKeyboardMarkup(buttons)
+
+
+
 
