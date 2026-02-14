@@ -23,9 +23,6 @@ async def start(client, message):
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [
             [
-                InlineKeyboardButton('🤖 Movie𝚄𝚙𝚍𝚊𝚝𝚎𝚜', url='https://t.me/wudixh')
-            ],
-            [
                 InlineKeyboardButton('ℹ️ 𝙷𝚎𝚕𝚙', url=f"https://t.me/{temp.U_NAME}?start=help"),
             ]
             ]
@@ -46,6 +43,8 @@ async def start(client, message):
             ],[
             InlineKeyboardButton('🛠️ ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('🛡️ ᴀʙᴏᴜᴛ', callback_data='about')
+            ],[
+            InlineKeyboardButton('✔ DMCA', callback_data='dmca')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         #add sticker loading then run 1 sec and dlt
@@ -93,6 +92,8 @@ async def start(client, message):
             ],[
             InlineKeyboardButton('🛠️ ʜᴇʟᴘ', callback_data='help'),
             InlineKeyboardButton('🛡️ ᴀʙᴏᴜᴛ', callback_data='about')
+            ],[
+            InlineKeyboardButton('✔ DMCA', callback_data='dmca')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
@@ -135,21 +136,33 @@ async def start(client, message):
             if f_caption is None:
                 f_caption = f"{title}"
             try:
-                await client.send_cached_media(
+                m=await client.send_cached_media(
                     chat_id=message.from_user.id,
                     file_id=msg.get("file_id"),
                     caption=f_caption,
                     protect_content=msg.get('protect', False),
                     )
+                 k = await client.send_message(
+                    chat_id=message.from_user.id,
+                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>")
+                await asyncio.sleep(600)
+                await m.delete()
+                await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>") 
             except FloodWait as e:
                 await asyncio.sleep(e.x)
                 logger.warning(f"Floodwait of {e.x} sec.")
-                await client.send_cached_media(
+                m=await client.send_cached_media(
                     chat_id=message.from_user.id,
                     file_id=msg.get("file_id"),
                     caption=f_caption,
                     protect_content=msg.get('protect', False),
                     )
+                k = await client.send_message(
+                    chat_id=message.from_user.id,
+                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>")
+                await asyncio.sleep(600)
+                await m.delete()
+                await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>") 
             except Exception as e:
                 logger.warning(e, exc_info=True)
                 continue
@@ -211,6 +224,12 @@ async def start(client, message):
                 file_id=file_id,
                 protect_content=True if pre == 'filep' else False,
                 )
+            k = await client.send_message(
+                chat_id=message.from_user.id,
+                text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>")
+            await asyncio.sleep(600)
+            await msg.delete()
+            await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>") 
             filetype = msg.media
             file = getattr(msg, filetype.value)
             title = file.file_name
@@ -238,12 +257,18 @@ async def start(client, message):
             f_caption=f_caption
     if f_caption is None:
         f_caption = f"{files.file_name}"
-    await client.send_cached_media(
+    m=await client.send_cached_media(
         chat_id=message.from_user.id,
         file_id=file_id,
         caption=f_caption,
         protect_content=True if pre == 'filep' else False,
         )
+    k = await client.send_message(
+        chat_id=message.from_user.id,  
+        text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>")
+    await asyncio.sleep(600)
+    await m.delete()
+    await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>") 
                     
 
 @Client.on_message(filters.command('channel') & filters.user(ADMINS))
