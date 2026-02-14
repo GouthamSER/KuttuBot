@@ -165,3 +165,7 @@ Try reading the instruction below 👇🏼
     MOV_NT_FND="""<b>Eᴅᴀᴀ Mᴏɴᴇʜ Tʜɪs Mᴏᴠɪᴇ Is Nᴏᴛ Yᴇᴛ Rᴇᴀʟᴇsᴇᴅ Oʀ Aᴅᴅᴇᴅ Tᴏ DB</b>
 Report To ADMIN - @im_goutham_josh
 """
+     DMCA_TXT = """<b><u>This Telegram bot is designed to operate within the guidelines of the Digital Millennium Copyright Act (DMCA) and respects intellectual property rights. We are committed to responding to any valid DMCA takedown notices promptly.</u></b>
+
+<blockquote>Please send your DMCA takedown notice to dmcarexie@proton.me</blockquote>
+"""
