@@ -8,38 +8,86 @@ from urllib.parse import quote_plus
 
 CMD = ["/", "."]
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#              🏓  PING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 @Client.on_message(filters.command("ping", CMD))
 async def ping(_, message):
     start_t = time.time()
-    rm = await message.reply_text("...........")
+    rm = await message.reply_text("<b>⚡ Pinging...</b>", parse_mode=enums.ParseMode.HTML)
     end_t = time.time()
-    time_taken_s = (end_t - start_t) * 1000
-    await rm.edit(f"𝖯𝗂𝗇𝗀!\n{time_taken_s:.3f} ms")
+    ms = (end_t - start_t) * 1000
+
+    if ms < 100:
+        quality = "🟢 Excellent"
+    elif ms < 300:
+        quality = "🟡 Good"
+    else:
+        quality = "🔴 Slow"
+
+    await rm.edit_text(
+        f"<b>🏓 Pong!</b>\n\n"
+        f"<b>┌ Latency  :</b> <code>{ms:.3f} ms</code>\n"
+        f"<b>└ Quality  :</b> {quality}",
+        parse_mode=enums.ParseMode.HTML
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#             🔄  RESTART
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 @Client.on_message(filters.command("restart") & filters.user(ADMINS))
-async def stop_button(bot, message):
-    msg = await bot.send_message(text="**𝖡𝗈𝗍 𝖨𝗌 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝗂𝗇𝗀...🪄**", chat_id=message.chat.id)       
+async def restart(bot, message):
+    msg = await bot.send_message(
+        chat_id=message.chat.id,
+        text=(
+            "<b>🔄 Restarting Bot...</b>\n\n"
+            "<blockquote>⏳ Please wait a moment.\n"
+            "All systems will be back online shortly.</blockquote>"
+        ),
+        parse_mode=enums.ParseMode.HTML
+    )
     await asyncio.sleep(3)
-    await msg.edit("**𝖡𝗈𝗍 𝖱𝖾𝗌𝗍𝖺𝗋𝗍𝖾𝖽 𝖲𝗎𝖼𝖼𝖾𝗌𝗌𝖿𝗎𝗅𝗅𝗒 ! 𝖱𝖾𝖺𝖽𝗒 𝖳𝗈 𝖬𝗈𝗏𝖾 𝖮𝗇 💯**")
+    await msg.edit_text(
+        "<b>✅ Bot Restarted Successfully!</b>\n\n"
+        "<blockquote>🚀 All systems are back online.\n"
+        "Ready to serve you 💯</blockquote>",
+        parse_mode=enums.ParseMode.HTML
+    )
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#          📊  LIVE USAGE MONITOR
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 BOT_START_TIME = time.time()
 
+
 def make_bar(percentage: float, length: int = 10) -> str:
-    """Create a nice progress bar for usage metrics."""
+    """Create a styled progress bar."""
     filled = int(length * percentage / 100)
     empty = length - filled
-    return "▰" * filled + "▱" * empty
+    return "█" * filled + "░" * empty
+
+
+def get_status_emoji(percentage: float) -> str:
+    """Return colour emoji based on usage level."""
+    if percentage < 50:
+        return "🟢"
+    elif percentage < 80:
+        return "🟡"
+    return "🔴"
 
 
 @Client.on_message(filters.command("usage"))
 async def live_usage(bot, update):
     msg = await bot.send_message(
         chat_id=update.chat.id,
-        text="__Initializing system monitor...__",
-        parse_mode=enums.ParseMode.MARKDOWN
+        text="<b>⚙️ Initializing System Monitor...</b>",
+        parse_mode=enums.ParseMode.HTML
     )
 
     start_time = time.time()
@@ -49,48 +97,51 @@ async def live_usage(bot, update):
         currentTime = format_uptime_short(uptime_seconds)
 
         total, used, free = shutil.disk_usage(".")
-        total = humanbytes(total)
-        used = humanbytes(used)
-        free = humanbytes(free)
+        total_hr  = humanbytes(total)
+        used_hr   = humanbytes(used)
+        free_hr   = humanbytes(free)
 
-        cpu_usage = psutil.cpu_percent(interval=0.5)
-        ram_usage = psutil.virtual_memory().percent
-        disk_usage = psutil.disk_usage('/').percent
+        cpu_pct  = psutil.cpu_percent(interval=0.5)
+        ram_pct  = psutil.virtual_memory().percent
+        disk_pct = psutil.disk_usage('/').percent
 
-        cpu_bar = make_bar(cpu_usage)
-        ram_bar = make_bar(ram_usage)
-        disk_bar = make_bar(disk_usage)
+        elapsed = int(time.time() - start_time)
+        remaining = max(0, 60 - elapsed)
 
-        text = f"""<b>⚙️ 𝖱𝖾𝖺𝗅-𝖳𝗂𝗆𝖾 𝖡𝗈𝗍 𝖲𝗍𝖺𝗍𝗎𝗌 (Koyeb)</b>
+        text = (
+            f"<b>⚙️ 𝖱𝖾𝖺𝗅-𝖳𝗂𝗆𝖾 𝖡𝗈𝗍 𝖲𝗍𝖺𝗍𝗎𝗌</b>  <i>(Koyeb)</i>\n"
+            f"{'━' * 28}\n\n"
 
-🕔 𝖴𝗉𝗍𝗂𝗆𝖾: <code>{currentTime}</code>
+            f"🕔 <b>Uptime</b>   » <code>{currentTime}</code>\n\n"
 
-🛠 𝖢𝖯𝖴: <code>{cpu_usage:.1f}%</code>
-<code>[{cpu_bar}]</code>
+            f"🖥 <b>CPU</b>  {get_status_emoji(cpu_pct)}  <code>{cpu_pct:.1f}%</code>\n"
+            f"   <code>[{make_bar(cpu_pct)}]</code>\n\n"
 
-🗜 𝖱𝖠𝖬: <code>{ram_usage:.1f}%</code>
-<code>[{ram_bar}]</code>
+            f"🧠 <b>RAM</b>  {get_status_emoji(ram_pct)}  <code>{ram_pct:.1f}%</code>\n"
+            f"   <code>[{make_bar(ram_pct)}]</code>\n\n"
 
-💾 𝖣𝗂𝗌𝗄: <code>{disk_usage:.1f}%</code>
-<code>[{disk_bar}]</code>
+            f"💾 <b>Disk</b>  {get_status_emoji(disk_pct)}  <code>{disk_pct:.1f}%</code>\n"
+            f"   <code>[{make_bar(disk_pct)}]</code>\n\n"
 
-🗂 𝖳𝗈𝗍𝖺𝗅: <code>{total}</code>
-🗳 𝖴𝗌𝖾𝖽: <code>{used}</code>
-📝 𝖥𝗋𝖾𝖾: <code>{free}</code>
-
-⏳ Updating live... (refreshes every 5s)
-"""
+            f"{'━' * 28}\n"
+            f"📦 <b>Total</b>  » <code>{total_hr}</code>\n"
+            f"🗳 <b>Used</b>   » <code>{used_hr}</code>\n"
+            f"📂 <b>Free</b>   » <code>{free_hr}</code>\n"
+            f"{'━' * 28}\n\n"
+            f"⏱ <i>Auto-stops in {remaining}s  •  Refreshes every 5s</i>"
+        )
 
         try:
             await msg.edit_text(text, parse_mode=enums.ParseMode.HTML)
         except Exception:
-            # Ignore if message was deleted or can't be edited
             break
 
-        # Stop after 20 sec to avoid infinite loop (safety)
-        if time.time() - start_time > 20:
+        if time.time() - start_time > 60:
             await msg.edit_text(
-                text + "\n✅ <b>Monitoring stopped (20 sec elapsed)</b>",
+                text.replace(
+                    f"⏱ <i>Auto-stops in {remaining}s  •  Refreshes every 5s</i>",
+                    "✅ <b>Monitoring complete.</b>"
+                ),
                 parse_mode=enums.ParseMode.HTML
             )
             break
@@ -98,93 +149,86 @@ async def live_usage(bot, update):
         await asyncio.sleep(5)
 
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#           ⏱  UPTIME FORMATTER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def format_uptime_short(seconds: int) -> str:
-    # Define time units in seconds
-    YEAR = 31536000      # 365 days
-    MONTH = 2592000      # 30 days
-    WEEK = 604800        # 7 days
-    DAY = 86400
-    HOUR = 3600
+    YEAR   = 31536000
+    MONTH  = 2592000
+    WEEK   = 604800
+    DAY    = 86400
+    HOUR   = 3600
     MINUTE = 60
 
-    years, rem = divmod(seconds, YEAR)
-    months, rem = divmod(rem, MONTH)
-    weeks, rem = divmod(rem, WEEK)
-    days, rem = divmod(rem, DAY)
-    hours, rem = divmod(rem, HOUR)
-    minutes, sec = divmod(rem, MINUTE)
+    years,   rem = divmod(seconds, YEAR)
+    months,  rem = divmod(rem,     MONTH)
+    weeks,   rem = divmod(rem,     WEEK)
+    days,    rem = divmod(rem,     DAY)
+    hours,   rem = divmod(rem,     HOUR)
+    minutes, sec = divmod(rem,     MINUTE)
 
     parts = []
-    if years > 0:
-        parts.append(f"{years}y")
-    if months > 0:
-        parts.append(f"{months}mo")
-    if weeks > 0:
-        parts.append(f"{weeks}w")
-    if days > 0:
-        parts.append(f"{days}d")
-    if hours > 0:
-        parts.append(f"{hours}hr")
-    if minutes > 0:
-        parts.append(f"{minutes}m")
-    if sec > 0 or not parts:
-        parts.append(f"{sec}s")
+    if years:   parts.append(f"{years}y")
+    if months:  parts.append(f"{months}mo")
+    if weeks:   parts.append(f"{weeks}w")
+    if days:    parts.append(f"{days}d")
+    if hours:   parts.append(f"{hours}hr")
+    if minutes: parts.append(f"{minutes}m")
+    if sec or not parts: parts.append(f"{sec}s")
 
     return " ".join(parts)
 
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#           🔗  LINK GENERATOR
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 @Client.on_message(filters.command("link") & filters.user(ADMINS))
 async def generate_link(client, message):
-    """
-    Generates a shareable Telegram deep link, replacing spaces with underscores
-    in the payload for cleaner deep links.
-    """
+    """Generate a shareable Telegram deep link for a movie/file."""
     try:
-        # 1. Validate argument
         if len(message.command) < 2:
-            return await message.reply(
-                text=(
-                    "❗ **Please provide movie name**\n\n"
-                    "**Example:**\n`/link game of thrones`"
-                ),
-                parse_mode=enums.ParseMode.MARKDOWN
+            return await message.reply_text(
+                "<b>❗ No Movie Name Provided!</b>\n\n"
+                "<blockquote>"
+                "📌 <b>Usage:</b>  <code>/link &lt;movie name&gt;</code>\n\n"
+                "📎 <b>Example:</b>\n"
+                "   <code>/link game of thrones</code>\n"
+                "   <code>/link KGF Chapter 2</code>"
+                "</blockquote>",
+                parse_mode=enums.ParseMode.HTML
             )
 
-        # Get bot username
         bot_username = client.me.username
+        movie_query  = " ".join(message.command[1:]).lower()
+        movie_slug   = quote_plus(movie_query.replace(" ", "-"))
+        link         = f"https://t.me/{bot_username}?start=getfile-{movie_slug}"
+        share_url    = f"https://telegram.me/share/url?url={link}"
 
-        # 2. Create URL-safe movie slug with underscores
-        # a. Join command parts and convert to lowercase
-        movie_query = " ".join(message.command[1:]).lower()
-        
-        # b. Crucial Change: Replace spaces with hyphens (-)
-        movie_slug_with_hyphens = movie_query.replace(" ", "-")
-        
-        # c. Apply quote_plus just to handle any *other* special characters 
-        #    (though underscores and hyphens are usually fine).
-        #    Note: For this specific use case (only replacing spaces), 
-        #    quote_plus might be redundant after the replacement, but it's safe.
-        final_movie_slug = quote_plus(movie_slug_with_hyphens)
+        # Clean display name — title case
+        display_name = " ".join(message.command[1:]).title()
 
-        # 🔥 PLAIN TEXT deep-link (using the underscore slug)
-        link = f"https://t.me/{bot_username}?start=getfile-{final_movie_slug}"
-
-        # 3. Send the response
-        await message.reply(
-            text=f"✅ **Your link is ready:**\n\n{link}",
-            reply_markup=InlineKeyboardMarkup(
-                [[
-                    InlineKeyboardButton(
-                        text="🔗 Share Link",
-                        url=f"https://telegram.me/share/url?url={link}"
-                    )
-                ]]
-            ),
+        await message.reply_text(
+            f"<b>🔗 Deep Link Generated!</b>\n\n"
+            f"{'━' * 28}\n"
+            f"🎬 <b>Movie  :</b>  <code>{display_name}</code>\n"
+            f"🤖 <b>Bot    :</b>  @{bot_username}\n"
+            f"{'━' * 28}\n\n"
+            f"📎 <b>Your Link:</b>\n"
+            f"<code>{link}</code>\n\n"
+            f"<i>👇 Tap the button below to share it instantly!</i>",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("📤 Share This Link", url=share_url),
+            ]]),
             disable_web_page_preview=True,
-            parse_mode=enums.ParseMode.MARKDOWN
+            parse_mode=enums.ParseMode.HTML
         )
 
     except Exception as e:
-        # Basic error handling
-        print(f"Error in generate_link: {e}")
-        await message.reply_text("An unexpected error occurred while generating the link.")
+        print(f"[generate_link] Error: {e}")
+        await message.reply_text(
+            "<b>⚠️ Something went wrong!</b>\n\n"
+            "<blockquote>Please try again or contact the admin.</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
