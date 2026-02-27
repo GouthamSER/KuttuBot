@@ -1,134 +1,171 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/97418751/212598655-d7637a29-cba8-4ed6-92a4-6534d394b0f7.jpg" alt="ᴋᴜᴛᴛᴜ ʙᴏᴛ™ Logo">
+  <img src="https://user-images.githubusercontent.com/97418751/212598655-d7637a29-cba8-4ed6-92a4-6534d394b0f7.jpg" alt="ᴋᴜᴛᴛᴜ ʙᴏᴛ™ Logo" width="200">
 </p>
-<h1 align="center">
-  <b>ᴋᴜᴛᴛᴜ ʙᴏᴛ™</b>
-</h1>
 
+<h1 align="center">ᴋᴜᴛᴛᴜ ʙᴏᴛ™</h1>
 
-[![Stars](https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=flat-square&color=yellow)](https://github.com/GouthamSER/KuttuBot/stargazers)
-[![Forks](https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=flat-square&color=orange)](https://github.com/GouthamSER/KuttuBot/fork)
-[![Size](https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?style=flat-square&color=green)](https://github.com/GouthamSER/KuttuBot/)   
-[![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/GouthamSER/KuttuBot)   
-[![Contributors](https://img.shields.io/github/contributors/GouthamSER/KuttuBot?style=flat-square&color=green)](https://github.com/GouthamSER/KuttuBot/graphs/contributors)
-[![License](https://img.shields.io/badge/License-AGPL-blue)](https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE)
-[![Sparkline](https://stars.medv.io/GouthamSER/KuttuBot.svg)](https://github.com/GouthamSER/KuttuBot)
+<p align="center">
+  <a href="https://github.com/GouthamSER/KuttuBot/stargazers"><img src="https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/fork"><img src="https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=flat-square&color=orange" alt="Forks"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/"><img src="https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?style=flat-square&color=green" alt="Size"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot"><img src="https://badges.frapsoft.com/os/v2/open-source.svg?v=103" alt="Open Source"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/graphs/contributors"><img src="https://img.shields.io/github/contributors/GouthamSER/KuttuBot?style=flat-square&color=green" alt="Contributors"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL-blue" alt="License"></a>
+</p>
 
+<p align="center">
+  <a href="https://telegram.dog/Technical_Help_Support_Bot"><img src="https://img.shields.io/badge/Telegram-Support%20Group-30302f?style=flat&logo=telegram" alt="Support Group"></a>
+  <a href="https://telegram.dog/sources_cods"><img src="https://img.shields.io/badge/Telegram-Updates%20Channel-30302f?style=flat&logo=telegram" alt="Updates Channel"></a>
+</p>
 
-## Features
+---
 
-- [x] Auto Filter
-- [x] Manual Filter
-- [x] IMDB
-- [x] Admin Commands
-- [x] Broadcast
-- [x] Index
-- [x] IMDB search
-- [x] Inline Search
-- [x] Random pics
-- [x] ids and User info 
-- [x] Stats, Users, Chats, Ban, Unban, Leave, Disable, Channel
-- [x] Spelling Check Feature
-- [x] File Store
-## Variables
+## ✨ Features
 
-Read [this](https://telegram.dog/Sources_cods) before you start messing up with your edits.
+| Feature | Status |
+|---|---|
+| Auto Filter | ✅ |
+| Manual Filter | ✅ |
+| IMDB Info & Search | ✅ |
+| Inline Search | ✅ |
+| Spelling Check | ✅ |
+| File Store | ✅ |
+| Broadcast | ✅ |
+| Index Channels | ✅ |
+| Admin Commands | ✅ |
+| Random Pics | ✅ |
+| User & Chat Stats | ✅ |
+| Ban / Unban Users | ✅ |
 
-### Required Variables
-* `BOT_TOKEN`: Create a bot using [@BotFather](https://telegram.dog/BotFather), and get the Telegram API token.
-* `API_ID`: Get this value from [telegram.org](https://my.telegram.org/apps)
-* `API_HASH`: Get this value from [telegram.org](https://my.telegram.org/apps)
-* `CHANNELS`: Username or ID of channel or group. Separate multiple IDs by space
-* `ADMINS`: Username or ID of Admin. Separate multiple Admins by space
-* `DATABASE_URI`: [mongoDB](https://www.mongodb.com) URI. Get this value from [mongoDB](https://www.mongodb.com). For more help watch this [video](https://youtu.be/1G1XwEOnxxo)
-* `DATABASE_NAME`: Name of the database in [mongoDB](https://www.mongodb.com). For more help watch this [video](https://youtu.be/Miajl2amrKo)
-* `LOG_CHANNEL` : A channel to log the activities of bot. Make sure bot is an admin in the channel.
-### Optional Variables
-* `PICS`: Telegraph links of images to show in start message.( Multiple images can be used separated by space )
-* `FILE_STORE_CHANNEL`: Channel from were file store links of posts should be made.Separate multiple IDs by space
-* Check [info.py](https://github.com/8769ANURAG/EvaMaria/blob/master/info.py) for more
+---
 
+## ⚙️ Variables
 
-## Deploy
-You can deploy this bot anywhere.
+> Read [this](https://telegram.dog/Sources_cods) before editing your config.
 
-<a href="https://app.koyeb.com/deploy?type=git&repository=github.com/Jithins7/MPD_BOT&env[BOT_TOKEN]&env[API_ID]&env[API_HASH]&env[CHANNELS]&env[ADMINS]&env[PICS]&env[LOG_CHANNEL]&env[AUTH_CHANNEL]&env[CUSTOM_FILE_CAPTION]&env[DATABASE_URI]&env[DATABASE_NAME]&env[COLLECTION_NAME]=Telegram_files&env[FILE_CHANNEL]=-1001832732995&env[SUPPORT_CHAT]&env[IMDB]=True&env[IMDB_TEMPLATE]&env[SINGLE_BUTTON]=True&env[AUTH_GROUPS]&env[P_TTI_SHOW_OFF]=True&branch=main&name=telegrambot">
- <img src="https://www.koyeb.com/static/images/deploy/button.svg">
+### 🔴 Required
 
-[![Deploy](https://cdn.scalingo.com/deploy/button.svg)](https://dashboard.scalingo.com/create/app?source=https://github.com/GouthamSER/KuttuBot)
+| Variable | Description |
+|---|---|
+| `BOT_TOKEN` | Create a bot via [@BotFather](https://telegram.dog/BotFather) and get the token |
+| `API_ID` | Get from [my.telegram.org](https://my.telegram.org/apps) |
+| `API_HASH` | Get from [my.telegram.org](https://my.telegram.org/apps) |
+| `CHANNELS` | Username or ID of channels/groups — separate multiple by space |
+| `ADMINS` | Username or ID of admins — separate multiple by space |
+| `DATABASE_URI` | MongoDB URI — [get from MongoDB](https://www.mongodb.com) · [video guide](https://youtu.be/1G1XwEOnxxo) |
+| `DATABASE_NAME` | Name of your MongoDB database · [video guide](https://youtu.be/Miajl2amrKo) |
+| `LOG_CHANNEL` | Channel to log bot activity — bot must be admin there |
 
+### 🟡 Optional
 
+| Variable | Description |
+|---|---|
+| `PICS` | Telegraph image links for start message (multiple, space-separated) |
+| `FILE_STORE_CHANNEL` | Channel for file store links (multiple IDs, space-separated) |
 
-<details><summary>Deploy To Heroku</summary>
-<p>
+> See [info.py](https://github.com/GouthamSER/KuttuBot/blob/master/info.py) for all available variables.
+
+---
+
+## 🚀 Deploy
+
+### ☁️ Koyeb (Recommended)
+
+<a href="https://app.koyeb.com/deploy?type=git&repository=github.com/GouthamSER/KuttuBot&branch=main&name=kuttubot">
+  <img src="https://www.koyeb.com/static/images/deploy/button.svg" alt="Deploy to Koyeb">
+</a>
+
+### ☁️ Scalingo
+
+<a href="https://dashboard.scalingo.com/create/app?source=https://github.com/GouthamSER/KuttuBot">
+  <img src="https://cdn.scalingo.com/deploy/button.svg" alt="Deploy to Scalingo">
+</a>
+
+### 🟣 Heroku
+
+<details>
+<summary>Click to expand</summary>
 <br>
 <a href="https://telegram.dog/XTZ_HerokuBot?start=QU0tUk9CT1RTL0V2YU1hcmlhIG1haW4">
-  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy">
+  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku">
 </a>
-</p>
 </details>
 
-<details><summary>Deploy To VPS</summary>
-<p>
-<pre>
+### 🖥️ VPS / Self-Host
+
+<details>
+<summary>Click to expand</summary>
+
+```bash
 git clone https://github.com/GouthamSER/KuttuBot
-# Install Packages
+cd KuttuBot
 pip3 install -U -r requirements.txt
-Edit info.py with variables as given below then run bot
+# Edit info.py with your variables
 python3 bot.py
-</pre>
-</p>
+```
 </details>
 
+---
 
-## Commands
+## 📋 Commands
+
+### 👤 User Commands
 ```
-• /logs - to get the rescent errors
-• /stats - to get status of files in db.
-* /filter - add manual filters
-* /filters - view filters
-* /connect - connect to PM.
-* /disconnect - disconnect from PM
-* /del - delete a filter
-* /delall - delete all filters
-* /deleteall - delete all index(autofilter)
-* /delete - delete a specific file from index.
-* /info - get user info
-* /id - get tg ids.
-* /imdb - fetch info from imdb.
-• /users - to get list of my users and ids.
-• /chats - to get list of the my chats and ids 
-• /index  - to add files from a channel
-• /leave  - to leave from a chat.
-• /disable  -  do disable a chat.
-* /enable - re-enable chat.
-• /ban  - to ban a user.
-• /unban  - to unban a user.
-• /channel - to get list of total connected channels
-• /broadcast - to broadcast a message to all Eva Maria users
-• /batch - to create link for multiple posts
-• /link - to create link for one post
+/start      - Start the bot
+/help       - Get help info
+/about      - About the bot
+/id         - Get Telegram IDs
+/info       - Get user info
+/imdb       - Fetch info from IMDB
 ```
-## Support
-[![telegram badge](https://img.shields.io/badge/Telegram-Group-30302f?style=flat&logo=telegram)](https://telegram.dog/Technical_Help_Support_Bot)
-[![telegram badge](https://img.shields.io/badge/Telegram-Channel-30302f?style=flat&logo=telegram)](https://telegram.dog/sources_cods)
 
+### 🔧 Filter Commands
+```
+/filter     - Add a manual filter
+/filters    - View all filters
+/del        - Delete a filter
+/delall     - Delete all filters
+/connect    - Connect to PM
+/disconnect - Disconnect from PM
+```
 
+### 🛡️ Admin Commands
+```
+/logs       - Get recent error logs
+/stats      - Get database file stats
+/users      - List all users and IDs
+/chats      - List all chats and IDs
+/index      - Index files from a channel
+/deleteall  - Delete all indexed files
+/delete     - Delete a specific indexed file
+/channel    - List all connected channels
+/broadcast  - Broadcast a message to all users
+/batch      - Create a link for multiple posts
+/link       - Create a link for a single post
+/leave      - Leave a chat
+/disable    - Disable a chat
+/enable     - Re-enable a chat
+/ban        - Ban a user
+/unban      - Unban a user
+```
 
-## Thanks to 
- - Thanks To Dan For His Awesome [Library](https://github.com/pyrogram/pyrogram)
- - Thanks To Mahesh For His Ritesh [Evamaria](https://github.com/ritheshrkrm)
- - Thanks To [Trojanz](https://github.com/trojanzhex) for Their Awesome [Unlimited Filter Bot](https://github.com/TroJanzHEX/Unlimited-Filter-Bot) And [AutoFilterBoT](https://github.com/trojanzhex/auto-filter-bot)
- - Thanks To All Everyone In This Journey
+---
 
-### Note
+## 🙏 Credits
 
-[Note To A So Called Dev](https://telegram.dog/subin_works/203): 
+- [Pyrogram](https://github.com/pyrogram/pyrogram) by **Dan** — the awesome MTProto library
+- [EvaMaria](https://github.com/ritheshrkrm) by **Mahesh & Ritesh** — original bot base
+- [TroJanZ](https://github.com/trojanzhex) — [Unlimited Filter Bot](https://github.com/TroJanzHEX/Unlimited-Filter-Bot) & [AutoFilterBot](https://github.com/trojanzhex/auto-filter-bot)
+- Everyone who supported this project along the way 💙
+- [Goutham SER](https://gouthamjosh.vercel.app) by **Goutham Josh** — Repo Redited with BUGFREE
 
-Kanging this codes and and editing a few lines and releasing a V.x  or an [alpha](https://telegram.dog/subin_works/204), beta , gama branches of your repo won't make you a Developer.
-Fork the repo and edit as per your needs.
+---
 
-## Disclaimer
-[![GNU Affero General Public License 2.0](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html#header)    
-Licensed under [GNU AGPL 2.0.](https://github.com/EvamariaTG/evamaria/blob/master/LICENSE)
-Selling The Codes To Other People For Money Is *Strictly Prohibited*.
+## ⚠️ Disclaimer
+
+[![GNU AGPL v3](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
+
+Licensed under [GNU AGPL v3.0](https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE).
+
+> **Selling this code for money is strictly prohibited.**
+> Forking and editing for personal use is welcome — but simply copying a few lines and releasing it as your own "v2.0 alpha" does not make you a developer. Please respect the original work. 🙏
