@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <a href="https://telegram.dog/Technical_Help_Support_Bot"><img src="https://img.shields.io/badge/Telegram-Support%20Group-30302f?style=flat&logo=telegram" alt="Support Group"></a>
-  <a href="https://telegram.dog/sources_cods"><img src="https://img.shields.io/badge/Telegram-Updates%20Channel-30302f?style=flat&logo=telegram" alt="Updates Channel"></a>
+  <a href="https://telegram.dog/im_goutham_josh"><img src="https://img.shields.io/badge/Telegram-Support%20Group-30302f?style=flat&logo=telegram" alt="Support Group"></a>
+  <a href="https://telegram.dog/wudixh15"><img src="https://img.shields.io/badge/Telegram-Updates%20Channel-30302f?style=flat&logo=telegram" alt="Updates Channel"></a>
 </p>
 
 ---
@@ -39,9 +39,6 @@
 
 ---
 
-## ⚙️ Variables
-
-> Read [this](https://telegram.dog/Sources_cods) before editing your config.
 
 ### 🔴 Required
 
