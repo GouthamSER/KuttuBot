@@ -34,8 +34,6 @@ class Media(Document):
 
 async def save_file(media):
     """Save file in database"""
-
-    # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
     try:
@@ -54,33 +52,26 @@ async def save_file(media):
     else:
         try:
             await file.commit()
-        except DuplicateKeyError:      
+        except DuplicateKeyError:
             logger.warning(
                 f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
             )
-
             return False, 0
         else:
             logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
             return True, 1
 
 
-
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
     """For given query return (results, next_offset)"""
-
     query = query.strip()
-    #if filter:
-        #better ?
-        #query = query.replace(' ', r'(\s|\.|\+|\-|_)')
-        #raw_pattern = r'(\s|_|\-|\.|\+)' + query + r'(\s|_|\-|\.|\+)'
     if not query:
         raw_pattern = '.'
     elif ' ' not in query:
         raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
     else:
         raw_pattern = query.replace(' ', r'.*[\s\.\+\-_]')
-    
+
     try:
         regex = re.compile(raw_pattern, flags=re.IGNORECASE)
     except:
@@ -101,15 +92,11 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
         next_offset = ''
 
     cursor = Media.find(filter)
-    # Sort by recent
     cursor.sort('$natural', -1)
-    # Slice files according to offset and max results
     cursor.skip(offset).limit(max_results)
-    # Get list of files
     files = await cursor.to_list(length=max_results)
 
     return files, next_offset, total_results
-
 
 
 async def get_file_details(query):
@@ -117,6 +104,93 @@ async def get_file_details(query):
     cursor = Media.find(filter)
     filedetails = await cursor.to_list(length=1)
     return filedetails
+
+
+async def get_movie_list(max_results=30):
+    """
+    Returns a list of recent movie file names.
+    Movies are identified by NOT having episode/season patterns like S01E01.
+    """
+    try:
+        # Episode pattern — if file name matches this, it's a series not a movie
+        series_pattern = re.compile(
+            r'(s\d{1,2}[\s\.\-_]*e\d{1,2}|season[\s\.\-_]*\d+|episode[\s\.\-_]*\d+|\b\d+x\d+\b)',
+            flags=re.IGNORECASE
+        )
+        cursor = Media.find({})
+        cursor.sort('$natural', -1)
+        cursor.limit(max_results * 5)  # fetch extra to filter down to movies
+        all_files = await cursor.to_list(length=max_results * 5)
+
+        movies = []
+        seen = set()
+        for file in all_files:
+            name = file.file_name or ""
+            # Skip if it looks like a series episode
+            if series_pattern.search(name):
+                continue
+            # Clean up name for display
+            clean_name = re.sub(r'\.(mkv|mp4|avi|mov|wmv|flv|webm)$', '', name, flags=re.IGNORECASE).strip()
+            if clean_name and clean_name not in seen:
+                seen.add(clean_name)
+                movies.append(clean_name)
+            if len(movies) >= max_results:
+                break
+
+        return movies
+    except Exception as e:
+        logger.exception(f"Error in get_movie_list: {e}")
+        return []
+
+
+async def get_series_grouped(max_results=50):
+    """
+    Returns a dict of { series_title: [episode_numbers] } for recent series.
+    Series are identified by having S01E01 or similar patterns in the file name.
+    """
+    try:
+        # Match series episode patterns e.g. S01E01, S1E1, Season 1 Episode 1
+        episode_pattern = re.compile(
+            r's(\d{1,2})[\s\.\-_]*e(\d{1,2})',
+            flags=re.IGNORECASE
+        )
+
+        cursor = Media.find({})
+        cursor.sort('$natural', -1)
+        cursor.limit(max_results * 10)
+        all_files = await cursor.to_list(length=max_results * 10)
+
+        series_dict = {}
+        for file in all_files:
+            name = file.file_name or ""
+            match = episode_pattern.search(name)
+            if not match:
+                continue
+
+            ep_num = int(match.group(2))  # episode number
+
+            # Extract series title = everything before the SxxExx match
+            title_raw = name[:match.start()].strip()
+            # Clean up title
+            title = re.sub(r'[\._\-]+', ' ', title_raw).strip()
+            title = re.sub(r'\s+', ' ', title).strip()
+
+            if not title:
+                continue
+
+            if title not in series_dict:
+                series_dict[title] = set()
+            series_dict[title].add(ep_num)
+
+            if len(series_dict) >= max_results:
+                break
+
+        # Convert sets to sorted lists
+        return {title: sorted(eps) for title, eps in series_dict.items()}
+
+    except Exception as e:
+        logger.exception(f"Error in get_series_grouped: {e}")
+        return {}
 
 
 def encode_file_id(s: bytes) -> str:
@@ -130,7 +204,6 @@ def encode_file_id(s: bytes) -> str:
             if n:
                 r += b"\x00" + bytes([n])
                 n = 0
-
             r += bytes([i])
 
     return base64.urlsafe_b64encode(r).decode().rstrip("=")
