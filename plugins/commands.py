@@ -14,6 +14,7 @@ from database.connections_mdb import active_connection
 import re
 import json
 import base64
+from plugins.pm_filter import auto_filter
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,14 @@ async def start(client, message):
             reply_markup=InlineKeyboardMarkup(btn),
             parse_mode=enums.ParseMode.MARKDOWN
         )
+        return
+        
+        # etc.py link feature !!!>>> import pmfilter autofilter fn()
+    if len(message.command) == 2 and message.command[1].startswith('getfile'):
+        searches = message.command[1].split("-", 1)[1] 
+        search = searches.replace('-',' ')
+        message.text = search 
+        await auto_filter(client, message) 
         return
 
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
