@@ -83,9 +83,16 @@ async def start(client, message):
 
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
+            await client.get_chat(int(AUTH_CHANNEL))  # resolve peer first
             invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL))
         except ChatAdminRequired:
             logger.error("Make sure Bot is admin in Forcesub channel")
+            return
+        except ValueError as e:
+            logger.error(f"Invalid AUTH_CHANNEL ID: {AUTH_CHANNEL} → {e}")
+            return
+        except Exception as e:
+            logger.error(f"Failed to create invite link: {e}")
             return
         btn = [
             [
