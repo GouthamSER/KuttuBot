@@ -3,6 +3,7 @@ import asyncio
 import re
 import ast
 import math
+from urllib.parse import quote_plus
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from Script import script
 import pyrogram
@@ -760,7 +761,7 @@ async def advantage_spell_chok(client, msg):
         movies = await get_poster(cleaned_query, bulk=True)
     except Exception as e:
         logger.exception(e)
-        reqst_gle = mv_rqst.replace(" ", "+")
+        reqst_gle = quote_plus(mv_rqst)
         button = [[
             InlineKeyboardButton('ENG', 'esp'),
             InlineKeyboardButton('MAL', 'msp'),
@@ -818,11 +819,10 @@ async def advantage_spell_chok(client, msg):
         reply_markup=InlineKeyboardMarkup(btn),
         reply_to_message_id=msg.id
     )
-    await asyncio.sleep(180)
+    await asyncio.sleep(50)
     await spell_check_del.delete()
 
 # SPELL CHECK END
-
 
 async def manual_filters(client, message, text=False):
     group_id = message.chat.id
