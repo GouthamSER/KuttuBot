@@ -1,4 +1,4 @@
-import logging
+import logging,sys,os
 import logging.config
 
 # Get logging configurations
@@ -17,16 +17,16 @@ from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script
 
-
 from plugins.webcode import bot_run
 from os import environ
 from aiohttp import web as webserver
 
 PORT_CODE = environ.get("PORT", "8080")
 
-
-
-
+async def schedule_restart():
+    await asyncio.sleep(86400)  # 24 hours
+    # Restart the bot
+    os.execv(sys.executable, ['python'] + sys.argv)
 
 class Bot(Client):
 
@@ -62,9 +62,7 @@ class Bot(Client):
         bind_address = "0.0.0.0"
         await webserver.TCPSite(client, bind_address,
         PORT_CODE).start()
-                          
-        
-        
+        asyncio.create_task(schedule_restart()) #restart after 24 hrs clearing memory
 
     async def stop(self, *args):
         await super().stop()
