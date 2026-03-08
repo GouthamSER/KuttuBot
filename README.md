@@ -5,12 +5,17 @@
 <h1 align="center">ᴋᴜᴛᴛᴜ ʙᴏᴛ™</h1>
 
 <p align="center">
+  A powerful Telegram auto-filter bot built with <a href="https://github.com/pyrogram/pyrogram">Pyrogram</a> — index your channels, serve files, and manage your groups with ease.
+</p>
+
+<p align="center">
   <a href="https://github.com/GouthamSER/KuttuBot/stargazers"><img src="https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=flat-square&color=yellow" alt="Stars"></a>
   <a href="https://github.com/GouthamSER/KuttuBot/fork"><img src="https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=flat-square&color=orange" alt="Forks"></a>
   <a href="https://github.com/GouthamSER/KuttuBot/"><img src="https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?style=flat-square&color=green" alt="Size"></a>
-  <a href="https://github.com/GouthamSER/KuttuBot"><img src="https://badges.frapsoft.com/os/v2/open-source.svg?v=103" alt="Open Source"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot"><img src="https://badges.frapppe.com/os/v2/open-source.svg?v=103" alt="Open Source"></a>
   <a href="https://github.com/GouthamSER/KuttuBot/graphs/contributors"><img src="https://img.shields.io/github/contributors/GouthamSER/KuttuBot?style=flat-square&color=green" alt="Contributors"></a>
   <a href="https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL-blue" alt="License"></a>
+  <img src="https://img.shields.io/badge/Python-3.10-blue?style=flat-square&logo=python" alt="Python 3.10">
 </p>
 
 <p align="center">
@@ -28,39 +33,63 @@
 | Manual Filter | ✅ |
 | IMDB Info & Search | ✅ |
 | Inline Search | ✅ |
-| Spelling Check | ✅ |
-| File Store | ✅ |
-| Broadcast | ✅ |
+| Spelling Check & Suggestions | ✅ |
+| File Store with Auto-Delete | ✅ |
+| Broadcast to All Users | ✅ |
 | Index Channels | ✅ |
 | Admin Commands | ✅ |
-| Random Pics | ✅ |
-| User & Chat Stats | ✅ |
+| Group Connection via PM | ✅ |
 | Ban / Unban Users | ✅ |
+| User & Chat Stats | ✅ |
+| Protect Content | ✅ |
+| Auth Channel Subscription Check | ✅ |
+| Random Pics on Start | ✅ |
 
 ---
 
+## ⚙️ Configuration
 
-### 🔴 Required
+Copy `sample_info.py` → `info.py` and fill in your values, **or** set them as environment variables for cloud deployments.
+
+### 🔴 Required Variables
 
 | Variable | Description |
 |---|---|
-| `BOT_TOKEN` | Create a bot via [@BotFather](https://telegram.dog/BotFather) and get the token |
+| `BOT_TOKEN` | Get from [@BotFather](https://telegram.dog/BotFather) |
 | `API_ID` | Get from [my.telegram.org](https://my.telegram.org/apps) |
 | `API_HASH` | Get from [my.telegram.org](https://my.telegram.org/apps) |
-| `CHANNELS` | Username or ID of channels/groups — separate multiple by space |
-| `ADMINS` | Username or ID of admins — separate multiple by space |
-| `DATABASE_URI` | MongoDB URI — [get from MongoDB](https://www.mongodb.com) · [video guide](https://youtu.be/1G1XwEOnxxo) |
-| `DATABASE_NAME` | Name of your MongoDB database · [video guide](https://youtu.be/Miajl2amrKo) |
-| `LOG_CHANNEL` | Channel to log bot activity — bot must be admin there |
+| `CHANNELS` | Username or ID of channels to index — space-separated |
+| `ADMINS` | Username or ID of bot admins — space-separated |
+| `DATABASE_URI` | MongoDB connection URI — [get one free](https://www.mongodb.com) |
+| `DATABASE_NAME` | Name of your MongoDB database |
+| `LOG_CHANNEL` | Channel ID for bot activity logs — bot must be admin there |
 
-### 🟡 Optional
+### 🟡 Optional Variables
 
-| Variable | Description |
-|---|---|
-| `PICS` | Telegraph image links for start message (multiple, space-separated) |
-| `FILE_STORE_CHANNEL` | Channel for file store links (multiple IDs, space-separated) |
+| Variable | Default | Description |
+|---|---|---|
+| `PICS` | Telegra.ph URLs | Space-separated image links shown on `/start` |
+| `FILE_STORE_CHANNEL` | — | Channel IDs for file store links (space-separated) |
+| `AUTH_CHANNEL` | — | Force-subscribe channel ID — users must join before getting files |
+| `AUTH_USERS` | — | Extra user IDs allowed to use admin features |
+| `AUTH_GROUP` | — | Allowed group IDs (space-separated) |
+| `CACHE_TIME` | `300` | Inline query cache time in seconds |
+| `CUSTOM_FILE_CAPTION` | Script default | Custom caption template for sent files |
+| `BATCH_FILE_CAPTION` | Built-in template | Caption used in batch file links |
+| `IMDB_TEMPLATE` | Built-in template | Template for IMDB result messages |
+| `IMDB` | `False` | Enable IMDB info on search results |
+| `LONG_IMDB_DESCRIPTION` | `False` | Show full IMDB plot instead of short summary |
+| `SINGLE_BUTTON` | `True` | Show filename + size in one button instead of two |
+| `P_TTI_SHOW_OFF` | `True` | Redirect users to bot PM instead of sending file directly in group |
+| `SPELL_CHECK_REPLY` | `True` | Suggest similar titles when a file isn't found |
+| `MAX_LIST_ELM` | `None` | Limit cast/crew list length in IMDB template |
+| `PROTECT_CONTENT` | `False` | Enable forward-protection on sent files |
+| `PUBLIC_FILE_STORE` | `False` | Allow anyone to create file store links |
+| `MELCOW_NEW_USERS` | `True` | Send a welcome message to new users |
+| `COLLECTION_NAME` | `Telegram_files` | MongoDB collection name for indexed files |
+| `INDEX_REQ_CHANNEL` | `LOG_CHANNEL` | Channel where index requests are logged |
 
-> See [info.py](https://github.com/GouthamSER/KuttuBot/blob/master/info.py) for all available variables.
+> Full list with defaults: [`info.py`](./info.py) · Example config: [`sample_info.py`](./sample_info.py)
 
 ---
 
@@ -88,7 +117,7 @@
 </a>
 </details>
 
-### 🖥️ VPS / Self-Host
+### 🐳 Docker
 
 <details>
 <summary>Click to expand</summary>
@@ -96,8 +125,25 @@
 ```bash
 git clone https://github.com/GouthamSER/KuttuBot
 cd KuttuBot
+# Fill in your variables in info.py or set them as environment vars
+docker-compose up -d
+```
+
+A `Dockerfile` and `docker-compose.yml` are included in the repo.
+</details>
+
+### 🖥️ VPS / Self-Host
+
+<details>
+<summary>Click to expand</summary>
+
+```bash
+# Requirements: Python 3.10+
+git clone https://github.com/GouthamSER/KuttuBot
+cd KuttuBot
 pip3 install -U -r requirements.txt
-# Edit info.py with your variables
+cp sample_info.py info.py
+# Edit info.py with your values
 python3 bot.py
 ```
 </details>
@@ -107,54 +153,88 @@ python3 bot.py
 ## 📋 Commands
 
 ### 👤 User Commands
-```
-/start      - Start the bot
-/help       - Get help info
-/about      - About the bot
-/id         - Get Telegram IDs
-/info       - Get user info
-/imdb       - Fetch info from IMDB
-```
 
-### 🔧 Filter Commands
-```
-/filter     - Add a manual filter
-/filters    - View all filters
-/del        - Delete a filter
-/delall     - Delete all filters
-/connect    - Connect to PM
-/disconnect - Disconnect from PM
-```
+| Command | Description |
+|---|---|
+| `/start` | Start the bot |
+| `/help` | Get help info |
+| `/about` | About the bot |
+| `/id` | Get your Telegram ID |
+| `/info` | Get user info |
+| `/imdb` | Fetch movie info from IMDB |
+
+### 🔧 Filter & Connection Commands
+
+| Command | Description |
+|---|---|
+| `/filter` | Add a manual filter |
+| `/filters` | View all filters in this group |
+| `/del` | Delete a specific filter |
+| `/delall` | Delete all filters |
+| `/connect` | Connect a group to your PM |
+| `/disconnect` | Disconnect from current group |
+| `/connections` | List your active connections |
 
 ### 🛡️ Admin Commands
+
+| Command | Description |
+|---|---|
+| `/logs` | Get recent error logs |
+| `/stats` | Get database and file stats |
+| `/users` | List all users |
+| `/chats` | List all chats |
+| `/index` | Index files from a channel |
+| `/deleteall` | Delete all indexed files |
+| `/delete` | Delete a specific indexed file |
+| `/channel` | List all connected channels |
+| `/broadcast` | Broadcast a message to all users |
+| `/batch` | Create a shareable link for multiple posts |
+| `/link` | Create a shareable link for a single post |
+| `/leave` | Make the bot leave a chat |
+| `/disable` | Disable the bot in a chat |
+| `/enable` | Re-enable the bot in a chat |
+| `/ban` | Ban a user from the bot |
+| `/unban` | Unban a user |
+| `/settings` | Configure per-group settings |
+
+---
+
+## 🗂️ Project Structure
+
 ```
-/logs       - Get recent error logs
-/stats      - Get database file stats
-/users      - List all users and IDs
-/chats      - List all chats and IDs
-/index      - Index files from a channel
-/deleteall  - Delete all indexed files
-/delete     - Delete a specific indexed file
-/channel    - List all connected channels
-/broadcast  - Broadcast a message to all users
-/batch      - Create a link for multiple posts
-/link       - Create a link for a single post
-/leave      - Leave a chat
-/disable    - Disable a chat
-/enable     - Re-enable a chat
-/ban        - Ban a user
-/unban      - Unban a user
+KuttuBot/
+├── bot.py                  # Entry point
+├── info.py                 # All configuration variables
+├── sample_info.py          # Config template (copy → info.py)
+├── utils.py                # Shared utilities
+├── Script.py               # All message texts/templates
+├── requirements.txt        # Python dependencies
+├── plugins/
+│   ├── pm_filter.py        # Callback query handler & auto filter
+│   ├── filters.py          # Manual filter management
+│   ├── broadcast.py        # Broadcast system
+│   ├── index.py            # Channel indexing
+│   ├── inline.py           # Inline search
+│   ├── connection.py       # PM ↔ group connection
+│   ├── commands.py         # User-facing commands
+│   ├── channel.py          # Channel management
+│   ├── misc.py             # Miscellaneous handlers
+│   └── ...
+└── database/
+    ├── ia_filterdb.py      # Indexed file DB
+    ├── filters_mdb.py      # Manual filter DB
+    └── users_chats_db.py   # Users & chats DB
 ```
 
 ---
 
 ## 🙏 Credits
 
-- [Pyrogram](https://github.com/pyrogram/pyrogram) by **Dan** — the awesome MTProto library
+- [Pyrogram](https://github.com/pyrogram/pyrogram) by **Dan** — the MTProto library powering this bot
 - [EvaMaria](https://github.com/ritheshrkrm) by **Mahesh & Ritesh** — original bot base
 - [TroJanZ](https://github.com/trojanzhex) — [Unlimited Filter Bot](https://github.com/TroJanzHEX/Unlimited-Filter-Bot) & [AutoFilterBot](https://github.com/trojanzhex/auto-filter-bot)
-- Everyone who supported this project along the way 💙
-- [Goutham SER](https://gouthamjosh.vercel.app) by **Goutham Josh** — Repo Redited with BUGFREE
+- [Goutham Josh](https://gouthamjosh.vercel.app) — repo maintainer, bug fixes & improvements
+- Everyone who starred, forked, and contributed 💙
 
 ---
 
@@ -162,7 +242,7 @@ python3 bot.py
 
 [![GNU AGPL v3](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
-Licensed under [GNU AGPL v3.0](https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE).
+Licensed under [GNU AGPL v3.0](./LICENSE).
 
 > **Selling this code for money is strictly prohibited.**
-> Forking and editing for personal use is welcome — but simply copying a few lines and releasing it as your own "v2.0 alpha" does not make you a developer. Please respect the original work. 🙏
+> Forking and editing for personal use is welcome — but please credit the original authors and do not rebrand it as your own work. Respect the community that built this. 🙏
