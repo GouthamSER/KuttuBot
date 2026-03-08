@@ -13,7 +13,7 @@ from info import ADMINS, AUTH_CHANNEL, AUTH_USERS, CUSTOM_FILE_CAPTION, AUTH_GRO
     SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram import Client, filters, enums
-from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid
+from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, QueryIdInvalid
 from utils import get_size, is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
@@ -30,6 +30,15 @@ logger.setLevel(logging.ERROR)
 BUTTONS = {}
 SPELL_CHECK = {}
 
+
+# ── Helper: never crash on expired / already-answered queries ──────────────────
+async def safe_answer(query, *args, **kwargs):
+    try:
+        await query.answer(*args, **kwargs)
+    except QueryIdInvalid:
+        pass
+
+
 @Client.on_message((filters.group | filters.private) & filters.text & filters.incoming)
 async def give_filter(client, message):
     k = await manual_filters(client, message)
@@ -41,14 +50,14 @@ async def give_filter(client, message):
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     if int(req) not in [query.from_user.id, 0]:
-        return await query.answer("**Search for Yourself**🔎", show_alert=True)
+        return await safe_answer(query, "**Search for Yourself**🔎", show_alert=True)
     try:
         offset = int(offset)
     except:
         offset = 0
     search = BUTTONS.get(key)
     if not search:
-        await query.answer(script.OLD_MES, show_alert=True)
+        await safe_answer(query, script.OLD_MES, show_alert=True)
         return
 
     files, n_offset, total = await get_search_results(search, offset=offset, filter=True)
@@ -113,21 +122,21 @@ async def next_page(bot, query):
         )
     except MessageNotModified:
         pass
-    await query.answer()
+    await safe_answer(query)
 
 
 @Client.on_callback_query(filters.regex(r"^spol"))
 async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer("Search for Yourself🔎", show_alert=True)
+        return await safe_answer(query, "Search for Yourself🔎", show_alert=True)
     if movie_ == "close_spellcheck":
         return await query.message.delete()
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
     if not movies:
-        return await query.answer(script.OLD_MES, show_alert=True)
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
     movie = movies[(int(movie_))]
-    await query.answer(script.CHK_MOV_ALRT)
+    await safe_answer(query, script.CHK_MOV_ALRT)
     k = await manual_filters(bot, query.message, text=movie)
     if k == False:
         files, offset, total_results = await get_search_results(movie, offset=0, filter=True)
@@ -144,6 +153,7 @@ async def advantage_spoll_choker(bot, query):
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
         await query.message.delete()
+
     elif query.data == "delallconfirm":
         userid = query.from_user.id
         chat_type = query.message.chat.type
@@ -157,26 +167,27 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     title = chat.title
                 except:
                     await query.message.edit_text("Make sure I'm present in your group!!", quote=True)
-                    return await query.answer('Piracy Is Crime')
+                    return await safe_answer(query, 'Piracy Is Crime')
             else:
                 await query.message.edit_text(
                     "I'm not connected to any groups!\nCheck /connections or connect to any groups",
                     quote=True
                 )
-                return await query.answer('Piracy Is Crime')
+                return await safe_answer(query, 'Piracy Is Crime')
 
         elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
             grp_id = query.message.chat.id
             title = query.message.chat.title
 
         else:
-            return await query.answer('Piracy Is Crime')
+            return await safe_answer(query, 'Piracy Is Crime')
 
         st = await client.get_chat_member(grp_id, userid)
         if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
             await del_all(query.message, grp_id, title)
         else:
-            await query.answer("You need to be Group Owner or an Auth User to do that!", show_alert=True)
+            await safe_answer(query, "You need to be Group Owner or an Auth User to do that!", show_alert=True)
+
     elif query.data == "delallcancel":
         userid = query.from_user.id
         chat_type = query.message.chat.type
@@ -195,12 +206,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 except:
                     pass
             else:
-                await query.answer("That's not for you!!", show_alert=True)
+                await safe_answer(query, "That's not for you!!", show_alert=True)
+
     elif "groupcb" in query.data:
-        await query.answer()
-
+        # FIX: removed early query.answer() — only one answer per query
         group_id = query.data.split(":")[1]
-
         act = query.data.split(":")[2]
         hr = await client.get_chat(int(group_id))
         title = hr.title
@@ -224,18 +234,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=keyboard,
             parse_mode=enums.ParseMode.MARKDOWN
         )
-        return await query.answer('Piracy Is Crime')
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif "connectcb" in query.data:
-        await query.answer()
-
+        # FIX: removed early query.answer() — only one answer per query
         group_id = query.data.split(":")[1]
-
         hr = await client.get_chat(int(group_id))
-
         title = hr.title
-
         user_id = query.from_user.id
-
         mkact = await make_active(str(user_id), str(group_id))
 
         if mkact:
@@ -245,17 +251,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
         else:
             await query.message.edit_text('Some error occurred!!', parse_mode=enums.ParseMode.MARKDOWN)
-        return await query.answer('Piracy Is Crime')
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif "disconnect" in query.data:
-        await query.answer()
-
+        # FIX: removed early query.answer() — only one answer per query
         group_id = query.data.split(":")[1]
-
         hr = await client.get_chat(int(group_id))
-
         title = hr.title
         user_id = query.from_user.id
-
         mkinact = await make_inactive(str(user_id))
 
         if mkinact:
@@ -268,36 +271,32 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
-        return await query.answer('Piracy Is Crime')
-    elif "deletecb" in query.data:
-        await query.answer()
+        return await safe_answer(query, 'Piracy Is Crime')
 
+    elif "deletecb" in query.data:
+        # FIX: removed early query.answer() — only one answer per query
         user_id = query.from_user.id
         group_id = query.data.split(":")[1]
-
         delcon = await delete_connection(str(user_id), str(group_id))
 
         if delcon:
-            await query.message.edit_text(
-                "Successfully deleted connection"
-            )
+            await query.message.edit_text("Successfully deleted connection")
         else:
             await query.message.edit_text(
                 f"Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
-        return await query.answer('Piracy Is Crime')
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "backcb":
-        await query.answer()
-
+        # FIX: removed early query.answer() — only one answer per query
         userid = query.from_user.id
-
         groupids = await all_connections(str(userid))
         if groupids is None:
             await query.message.edit_text(
                 "There are no active connections!! Connect to some groups first.",
             )
-            return await query.answer('Piracy Is Crime')
+            return await safe_answer(query, 'Piracy Is Crime')
         buttons = []
         for groupid in groupids:
             try:
@@ -319,6 +318,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 "Your connected group details ;\n\n",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif "alertmessage" in query.data:
         grp_id = query.message.chat.id
         i = query.data.split(":")[1]
@@ -328,12 +329,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
             alerts = ast.literal_eval(alerts)
             alert = alerts[int(i)]
             alert = alert.replace("\\n", "\n").replace("\\t", "\t")
-            await query.answer(alert, show_alert=True)
+            await safe_answer(query, alert, show_alert=True)
+        return  # FIX: early return so the final safe_answer below is skipped
+
+    # ── File handler (uses `if` not `elif` — intentional in original code) ─────
     if query.data.startswith("file"):
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
-            return await query.answer('No such file exist.')
+            return await safe_answer(query, 'No such file exist.')
         files = files_[0]
         title = files.file_name
         size = get_size(files.file_size)
@@ -352,10 +356,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         try:
             if AUTH_CHANNEL and not await is_subscribed(client, query):
-                await query.answer(url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
+                await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
                 return
             elif settings['botpm']:
-                await query.answer(url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
+                await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
                 return
             else:
                 await client.send_cached_media(
@@ -364,21 +368,23 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     caption=f_caption,
                     protect_content=True if ident == "filep" else False
                 )
-                await query.answer('**Already Sent In your Pm**', show_alert=True)
+                await safe_answer(query, '**Already Sent In your Pm**', show_alert=True)
         except UserIsBlocked:
-            await query.answer('Unblock the bot mahn !', show_alert=True)
+            await safe_answer(query, 'Unblock the bot mahn !', show_alert=True)
         except PeerIdInvalid:
-            await query.answer(url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
+            await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
         except Exception as e:
-            await query.answer(url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
+            await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
+        return  # FIX: early return — already answered above
+
     elif query.data.startswith("checksub"):
         if AUTH_CHANNEL and not await is_subscribed(client, query):
-            await query.answer("I Like Your Smartness, But Don't Be Oversmart 😒", show_alert=True)
+            await safe_answer(query, "I Like Your Smartness, But Don't Be Oversmart 😒", show_alert=True)
             return
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
-            return await query.answer('No such file exist.')
+            return await safe_answer(query, 'No such file exist.')
         files = files_[0]
         title = files.file_name
         size = get_size(files.file_size)
@@ -393,7 +399,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f_caption = f_caption
         if f_caption is None:
             f_caption = f"{title}"
-        await query.answer()
+        await safe_answer(query)
         m = await client.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_id,
@@ -406,16 +412,27 @@ async def cb_handler(client: Client, query: CallbackQuery):
         await asyncio.sleep(600)
         await m.delete()
         await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
+        return  # FIX: early return — already answered above
+
     elif query.data == "pages":
-        await query.answer()
+        await safe_answer(query)
+        return
+
     elif query.data == "esp":
-        await query.answer(text=script.ENG_SPELL, show_alert="true")
+        await safe_answer(query, text=script.ENG_SPELL, show_alert=True)
+        return
+
     elif query.data == "msp":
-        await query.answer(text=script.MAL_SPELL, show_alert="true")
+        await safe_answer(query, text=script.MAL_SPELL, show_alert=True)
+        return
+
     elif query.data == "hsp":
-        await query.answer(text=script.HIN_SPELL, show_alert="true")
+        await safe_answer(query, text=script.HIN_SPELL, show_alert=True)
+        return
+
     elif query.data == "tsp":
-        await query.answer(text=script.TAM_SPELL, show_alert="true")
+        await safe_answer(query, text=script.TAM_SPELL, show_alert=True)
+        return
 
     elif query.data == "start":
         buttons = [[
@@ -432,7 +449,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
-        await query.answer('Piracy Is Crime')
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "help":
         buttons = [[
             InlineKeyboardButton('Manual Filter', callback_data='manuelfilter'),
@@ -450,6 +468,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "about":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='start'),
@@ -460,6 +480,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "source":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='about')
@@ -470,6 +492,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "dmca":
         buttons = [[
             InlineKeyboardButton('⟸ Bᴀᴄᴋ', callback_data='start')
@@ -480,6 +504,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "manuelfilter":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help'),
@@ -491,6 +517,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "button":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='manuelfilter')
@@ -501,6 +529,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "autofilter":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help')
@@ -511,6 +541,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "coct":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help')
@@ -521,6 +553,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "extra":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help'),
@@ -532,6 +566,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "admin":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='extra')
@@ -542,6 +578,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "stats":
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help'),
@@ -560,8 +598,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return await safe_answer(query, 'Piracy Is Crime')
+
     elif query.data == "rfrsh":
-        await query.answer("Fetching MongoDb DataBase")
+        await safe_answer(query, "Fetching MongoDb DataBase")
         buttons = [[
             InlineKeyboardButton('👩‍🦯 Back', callback_data='help'),
             InlineKeyboardButton('♻️', callback_data='rfrsh')
@@ -579,13 +619,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        return  # FIX: already answered above
+
     elif query.data.startswith("setgs"):
         ident, set_type, status, grp_id = query.data.split("#")
         grpid = await active_connection(str(query.from_user.id))
 
         if str(grp_id) != str(grpid):
             await query.message.edit("Your Active Connection Has Been Changed. Go To /settings.")
-            return await query.answer('Piracy Is Crime')
+            return await safe_answer(query, 'Piracy Is Crime')
 
         if status == "True":
             await save_group_settings(grpid, set_type, False)
@@ -632,7 +674,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ]
             reply_markup = InlineKeyboardMarkup(buttons)
             await query.message.edit_reply_markup(reply_markup)
-    await query.answer('Piracy Is Crime')
+        return await safe_answer(query, 'Piracy Is Crime')
+
+    # FIX: fallback safe_answer for any unhandled query.data not caught above
+    await safe_answer(query, 'Piracy Is Crime')
 
 
 async def auto_filter(client, msg, spoll=False):
