@@ -154,7 +154,7 @@ async def next_page(bot, query):
     except:
         offset = 0
 
-    search = FRESH.get(key) or BUTTONS.get(key)
+    search = BUTTONS.get(key) or FRESH.get(key)  # BUTTONS first — holds active filter search
     if not search:
         await safe_answer(query, script.OLD_MES, show_alert=True)
         return
@@ -628,7 +628,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
 @Client.on_callback_query(filters.regex(r"^sendfiles#"))
 async def send_all_files(client: Client, query: CallbackQuery):
     _, key = query.data.split("#")
-    search = FRESH.get(key) or BUTTONS.get(key)
+    search = BUTTONS.get(key) or FRESH.get(key)  # BUTTONS first — holds active filter search
     if not search:
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
