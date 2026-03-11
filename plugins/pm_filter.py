@@ -367,47 +367,20 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     if not base_search:
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
-    if ep == "homepage":
-        search = base_search
-    else:
-        # e01 → also try "episode 01" and "episode 1" variants for broader matching
-        ep_num = ep[1:]  # strip leading 'e'
-        ep_num_stripped = str(int(ep_num))  # remove leading zero for "episode 1" style
-        search = f"{base_search} {ep}"
-
+    # Exact match only: e01 → search "title e01"
+    search = base_search if ep == "homepage" else f"{base_search} {ep}"
     BUTTONS[key] = search
 
     req = query.from_user.id
     chat_id = query.message.chat.id
+    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
 
-    all_files = []
-    seen_ids = set()
-
-    if ep != "homepage":
-        search_variants = [
-            f"{base_search} {ep}",                          # e01
-            f"{base_search} episode {ep_num}",              # episode 01
-            f"{base_search} episode {ep_num_stripped}",     # episode 1
-        ]
-        for sq in search_variants:
-            f_list, _, _ = await get_search_results(sq, offset=0, filter=True)
-            for f in f_list:
-                if f.file_id not in seen_ids:
-                    seen_ids.add(f.file_id)
-                    all_files.append(f)
-    else:
-        all_files, offset, total_results = await get_search_results(base_search, offset=0, filter=True)
-
-    if not all_files:
+    if not files:
         return await query.answer("🚫 No Files Found 🚫", show_alert=True)
 
     settings = await get_settings(chat_id)
     pre = 'filep' if settings['file_secure'] else 'file'
-
-    # Use fake offset/total for _build_file_btn when deduplicating manually
-    offset = ""
-    total_results = len(all_files)
-    btn = _build_file_btn(all_files, settings, pre, key, offset, total_results, req)
+    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
 
     if ep != "homepage":
         btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
@@ -542,30 +515,12 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
 
     req = query.from_user.id
     chat_id = query.message.chat.id
-    all_files = []
-    seen_ids = set()
 
-    if seas != "homepage":
-        # seas = "s01", "s02", etc.
-        num = seas[1:]                      # "01"
-        num_stripped = str(int(num))        # "1"
+    # Exact match only: s01 → search "title s01"
+    search = base_search if seas == "homepage" else f"{base_search} {seas}"
+    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
 
-        # Search variants: s01 / season 01 / season 1
-        search_variants = [
-            f"{base_search} {seas}",                     # s01
-            f"{base_search} season {num}",               # season 01
-            f"{base_search} season {num_stripped}",      # season 1
-        ]
-        for sq in search_variants:
-            f_list, _, _ = await get_search_results(sq, offset=0, filter=True)
-            for f in f_list:
-                if f.file_id not in seen_ids:
-                    seen_ids.add(f.file_id)
-                    all_files.append(f)
-    else:
-        all_files, _, _ = await get_search_results(base_search, offset=0, filter=True)
-
-    if not all_files:
+    if not files:
         return await query.answer("🚫 No Files Found 🚫", show_alert=True)
 
     settings = await get_settings(chat_id)
@@ -577,7 +532,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
                 text=f"📁[{get_size(f.file_size)}]-🎭-{f.file_name}",
                 callback_data=f"{pre}#{f.file_id}"
             )]
-            for f in all_files
+            for f in files
         ]
     else:
         btn = [
@@ -585,7 +540,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
                 InlineKeyboardButton(text=f.file_name,           callback_data=f"{pre}#{f.file_id}"),
                 InlineKeyboardButton(text=get_size(f.file_size), callback_data=f"{pre}#{f.file_id}"),
             ]
-            for f in all_files
+            for f in files
         ]
 
     for row in reversed(_filter_rows(key)):
