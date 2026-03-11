@@ -34,24 +34,38 @@ FRESH = {}
 # ── Filter lists ───────────────────────────────────────────────────────────────
 YEARS = [str(y) for y in range(2025, 1999, -1)]
 
+# Language: display label → search keyword
 LANGUAGES = [
-    "Hindi", "English", "Tamil", "Telugu", "Malayalam", "Kannada",
-    "Bengali", "Punjabi", "Marathi", "Gujarati", "Urdu", "Korean",
-    "Japanese", "Chinese", "French", "Spanish", "Arabic", "Russian"
+    ("MAL", "malayalam"),
+    ("TAM", "tamil"),
+    ("KAN", "kannada"),
+    ("ENG", "english"),
+    ("TEL", "telugu"),
+    ("HIN", "hindi"),
+    ("PUN", "punjabi"),
+    ("BEN", "bengali"),
+    ("MAR", "marathi"),
+    ("GUJ", "gujarati"),
+    ("URD", "urdu"),
+    ("KOR", "korean"),
+    ("JAP", "japanese"),
+    ("CHN", "chinese"),
+    ("FRE", "french"),
+    ("SPA", "spanish"),
+    ("ARB", "arabic"),
+    ("RUS", "russian"),
 ]
-# pad to even length so zip-by-2 works
-if len(LANGUAGES) % 2 != 0:
-    LANGUAGES.append("Other")
 
-EPISODES = [f"Episode {i}" for i in range(1, 26)]
+# Seasons: display label → search keyword (s01 format)
+SEASONS = [(f"S{str(i).zfill(2)}", f"s{str(i).zfill(2)}") for i in range(1, 11)]
 
-SEASONS = [f"Season {i}" for i in range(1, 11)]
+# Episodes: display label → search keyword (e01 format)
+EPISODES = [(f"E{str(i).zfill(2)}", f"e{str(i).zfill(2)}") for i in range(1, 26)]
 
 QUALITIES = [
     "4K", "1080p", "720p", "480p", "360p", "BluRay",
     "WEB-DL", "HDRip", "DVDRip", "HDTV", "CAMRip", "HDCam"
 ]
-# pad to even length
 if len(QUALITIES) % 2 != 0:
     QUALITIES.append("Other")
 
@@ -140,7 +154,6 @@ async def next_page(bot, query):
     except:
         offset = 0
 
-    # support filtered searches (FRESH) as well as plain BUTTONS
     search = FRESH.get(key) or BUTTONS.get(key)
     if not search:
         await safe_answer(query, script.OLD_MES, show_alert=True)
@@ -175,7 +188,6 @@ async def next_page(bot, query):
             for file in files
         ]
 
-    # re-inject filter rows on every page turn
     for row in reversed(_filter_rows(key)):
         btn.insert(0, row)
 
@@ -309,7 +321,7 @@ async def filter_years_cb_handler(client: Client, query: CallbackQuery):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  EPISODES FILTER
+#  EPISODES FILTER  (e01, e02, e03 ... format)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @Client.on_callback_query(filters.regex(r"^episodes#"))
@@ -322,14 +334,14 @@ async def episodes_cb_handler(client: Client, query: CallbackQuery):
 
     _, key = query.data.split("#")
     btn = []
-    for i in range(0, len(EPISODES) - 1, 4):
+    # 5 episode buttons per row
+    for i in range(0, len(EPISODES), 5):
         row = []
-        for j in range(4):
-            if i + j < len(EPISODES):
-                row.append(InlineKeyboardButton(
-                    text=EPISODES[i + j],
-                    callback_data=f"fe#{EPISODES[i + j].lower()}#{key}"
-                ))
+        for label, value in EPISODES[i:i+5]:
+            row.append(InlineKeyboardButton(
+                text=label,
+                callback_data=f"fe#{value}#{key}"
+            ))
         btn.append(row)
 
     btn.insert(0, [InlineKeyboardButton("🎬 Sᴇʟᴇᴄᴛ Eᴘɪsᴏᴅᴇ", callback_data="pages")])
@@ -355,18 +367,47 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
     if not base_search:
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
-    search = f"{base_search} {ep}" if ep != "homepage" else base_search
+    if ep == "homepage":
+        search = base_search
+    else:
+        # e01 → also try "episode 01" and "episode 1" variants for broader matching
+        ep_num = ep[1:]  # strip leading 'e'
+        ep_num_stripped = str(int(ep_num))  # remove leading zero for "episode 1" style
+        search = f"{base_search} {ep}"
+
     BUTTONS[key] = search
 
     req = query.from_user.id
     chat_id = query.message.chat.id
-    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
-    if not files:
+
+    all_files = []
+    seen_ids = set()
+
+    if ep != "homepage":
+        search_variants = [
+            f"{base_search} {ep}",                          # e01
+            f"{base_search} episode {ep_num}",              # episode 01
+            f"{base_search} episode {ep_num_stripped}",     # episode 1
+        ]
+        for sq in search_variants:
+            f_list, _, _ = await get_search_results(sq, offset=0, filter=True)
+            for f in f_list:
+                if f.file_id not in seen_ids:
+                    seen_ids.add(f.file_id)
+                    all_files.append(f)
+    else:
+        all_files, offset, total_results = await get_search_results(base_search, offset=0, filter=True)
+
+    if not all_files:
         return await query.answer("🚫 No Files Found 🚫", show_alert=True)
 
     settings = await get_settings(chat_id)
     pre = 'filep' if settings['file_secure'] else 'file'
-    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
+
+    # Use fake offset/total for _build_file_btn when deduplicating manually
+    offset = ""
+    total_results = len(all_files)
+    btn = _build_file_btn(all_files, settings, pre, key, offset, total_results, req)
 
     if ep != "homepage":
         btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
@@ -379,7 +420,8 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LANGUAGES FILTER
+#  LANGUAGES FILTER  (MAL, TAM, KAN, ENG, TEL ... format)
+#  → After selecting a language, results are shown immediately (no extra back button needed)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @Client.on_callback_query(filters.regex(r"^languages#"))
@@ -392,11 +434,15 @@ async def languages_cb_handler(client: Client, query: CallbackQuery):
 
     _, key = query.data.split("#")
     btn = []
-    for i in range(0, len(LANGUAGES) - 1, 2):
-        btn.append([
-            InlineKeyboardButton(text=LANGUAGES[i],     callback_data=f"fl#{LANGUAGES[i].lower()}#{key}"),
-            InlineKeyboardButton(text=LANGUAGES[i + 1], callback_data=f"fl#{LANGUAGES[i + 1].lower()}#{key}"),
-        ])
+    # 3 language buttons per row
+    for i in range(0, len(LANGUAGES), 3):
+        row = []
+        for label, value in LANGUAGES[i:i+3]:
+            row.append(InlineKeyboardButton(
+                text=label,
+                callback_data=f"fl#{value}#{key}"
+            ))
+        btn.append(row)
 
     btn.insert(0, [InlineKeyboardButton("🌐 Sᴇʟᴇᴄᴛ Lᴀɴɢᴜᴀɢᴇ", callback_data="pages")])
     btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fl#homepage#{key}")])
@@ -432,20 +478,22 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
 
     settings = await get_settings(chat_id)
     pre = 'filep' if settings['file_secure'] else 'file'
-    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
 
-    if lang != "homepage":
-        btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fl#homepage#{key}")])
+    # Build result buttons — filter rows already included via _build_file_btn
+    # No extra "Back to Home" button; the filter row's language button lets them re-pick
+    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
 
     try:
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
     except MessageNotModified:
         pass
-    await safe_answer(query)
+    # Auto-answer with a toast showing which language was selected
+    display_label = lang.upper() if lang != "homepage" else "Home"
+    await safe_answer(query, f"✅ {display_label} results loaded!", show_alert=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  SEASONS FILTER
+#  SEASONS FILTER  (S01, S02, S03 ... format)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @Client.on_callback_query(filters.regex(r"^seasons#"))
@@ -458,11 +506,15 @@ async def seasons_cb_handler(client: Client, query: CallbackQuery):
 
     _, key = query.data.split("#")
     btn = []
-    for i in range(0, len(SEASONS) - 1, 2):
-        btn.append([
-            InlineKeyboardButton(text=SEASONS[i],     callback_data=f"fs#{SEASONS[i].lower()}#{key}"),
-            InlineKeyboardButton(text=SEASONS[i + 1], callback_data=f"fs#{SEASONS[i + 1].lower()}#{key}"),
-        ])
+    # 5 season buttons per row
+    for i in range(0, len(SEASONS), 5):
+        row = []
+        for label, value in SEASONS[i:i+5]:
+            row.append(InlineKeyboardButton(
+                text=label,
+                callback_data=f"fs#{value}#{key}"
+            ))
+        btn.append(row)
 
     btn.insert(0, [InlineKeyboardButton("🎞️ Sᴇʟᴇᴄᴛ Sᴇᴀsᴏɴ", callback_data="pages")])
     req = query.from_user.id
@@ -488,31 +540,30 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     if not base_search:
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
-    # Build all season-notation variants so we catch s01 / season 1 / season 01
-    season_map = {
-        "season 1":  ("s01", "season 01"),
-        "season 2":  ("s02", "season 02"),
-        "season 3":  ("s03", "season 03"),
-        "season 4":  ("s04", "season 04"),
-        "season 5":  ("s05", "season 05"),
-        "season 6":  ("s06", "season 06"),
-        "season 7":  ("s07", "season 07"),
-        "season 8":  ("s08", "season 08"),
-        "season 9":  ("s09", "season 09"),
-        "season 10": ("s10", "season 10"),
-    }
-
     req = query.from_user.id
     chat_id = query.message.chat.id
     all_files = []
     seen_ids = set()
 
-    for sq in [f"{base_search} {seas}"] + [f"{base_search} {v}" for v in season_map.get(seas, [])]:
-        f_list, _, _ = await get_search_results(sq, offset=0, filter=True)
-        for f in f_list:
-            if f.file_id not in seen_ids:
-                seen_ids.add(f.file_id)
-                all_files.append(f)
+    if seas != "homepage":
+        # seas = "s01", "s02", etc.
+        num = seas[1:]                      # "01"
+        num_stripped = str(int(num))        # "1"
+
+        # Search variants: s01 / season 01 / season 1
+        search_variants = [
+            f"{base_search} {seas}",                     # s01
+            f"{base_search} season {num}",               # season 01
+            f"{base_search} season {num_stripped}",      # season 1
+        ]
+        for sq in search_variants:
+            f_list, _, _ = await get_search_results(sq, offset=0, filter=True)
+            for f in f_list:
+                if f.file_id not in seen_ids:
+                    seen_ids.add(f.file_id)
+                    all_files.append(f)
+    else:
+        all_files, _, _ = await get_search_results(base_search, offset=0, filter=True)
 
     if not all_files:
         return await query.answer("🚫 No Files Found 🚫", show_alert=True)
@@ -531,8 +582,8 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     else:
         btn = [
             [
-                InlineKeyboardButton(text=f.file_name,              callback_data=f"{pre}#{f.file_id}"),
-                InlineKeyboardButton(text=get_size(f.file_size),    callback_data=f"{pre}#{f.file_id}"),
+                InlineKeyboardButton(text=f.file_name,           callback_data=f"{pre}#{f.file_id}"),
+                InlineKeyboardButton(text=get_size(f.file_size), callback_data=f"{pre}#{f.file_id}"),
             ]
             for f in all_files
         ]
@@ -616,7 +667,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  SEND-ALL HANDLER
+#  SEND-ALL HANDLER  (files auto-deleted from PM after 5 minutes)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @Client.on_callback_query(filters.regex(r"^sendfiles#"))
@@ -633,19 +684,49 @@ async def send_all_files(client: Client, query: CallbackQuery):
     settings = await get_settings(query.message.chat.id)
     pre = 'filep' if settings['file_secure'] else 'file'
 
+    sent_msgs = []
     for file in files:
         try:
-            await client.send_cached_media(
+            m = await client.send_cached_media(
                 chat_id=query.from_user.id,
                 file_id=file.file_id,
                 protect_content=(pre == 'filep')
             )
+            sent_msgs.append(m)
         except UserIsBlocked:
             return await safe_answer(query, "Unblock the bot first!", show_alert=True)
         except Exception:
             pass
 
-    await safe_answer(query, "✅ All files sent to your PM!", show_alert=True)
+    if not sent_msgs:
+        return
+
+    # Send warning notice
+    notice = await client.send_message(
+        chat_id=query.from_user.id,
+        text=(
+            "<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n"
+            f"📦 <b>{len(sent_msgs)} file(s)</b> sent to your PM!\n\n"
+            "⏳ Files will be <b>deleted in 5 minutes</b>\n\n"
+            "📌 Save or forward them before they disappear!</blockquote>"
+        )
+    )
+
+    await safe_answer(query, f"✅ {len(sent_msgs)} file(s) sent! Auto-delete in 5 min.", show_alert=True)
+
+    # Wait 5 minutes then delete all sent files + notice
+    await asyncio.sleep(300)
+
+    for m in sent_msgs:
+        try:
+            await m.delete()
+        except Exception:
+            pass
+
+    try:
+        await notice.edit_text("<b>✅ Files ʜᴀᴠᴇ ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ʏᴏᴜʀ PM</b>")
+    except Exception:
+        pass
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1203,7 +1284,6 @@ async def auto_filter(client, msg, spoll=False):
 
     pre = 'filep' if settings['file_secure'] else 'file'
 
-    # Store key so filter callbacks can look up the original search
     key = f"{message.chat.id}-{message.id}"
     FRESH[key] = search
     BUTTONS[key] = search
@@ -1226,11 +1306,9 @@ async def auto_filter(client, msg, spoll=False):
             for file in files
         ]
 
-    # Prepend filter rows
     for row in reversed(_filter_rows(key)):
         btn.insert(0, row)
 
-    # Pagination
     if offset != "":
         btn.append([
             InlineKeyboardButton(text=f"📃 1/{math.ceil(int(total_results)/10)}", callback_data="pages"),
