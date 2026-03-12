@@ -1,5 +1,5 @@
 import logging
-from pyrogram import Client, emoji, filters
+from pyrogram import Client, filters
 from pyrogram.errors.exceptions.bad_request_400 import QueryIdInvalid
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
@@ -74,7 +74,7 @@ async def answer(bot, query):
                 reply_markup=reply_markup))
 
     if results:
-        switch_pm_text = f"{emoji.FILE_FOLDER} Results "
+        switch_pm_text = f"📁 Results "
         if string:
             switch_pm_text += f" for {string}"
         try:
@@ -89,7 +89,7 @@ async def answer(bot, query):
         except Exception as e:
             logging.exception(str(e))
     else:
-        switch_pm_text = f'{emoji.CROSS_MARK} No results'
+        switch_pm_text = f'❌ No results'
         if string:
             switch_pm_text += f' for "{string}"'
 
@@ -107,7 +107,3 @@ def get_reply_markup(query):
         ]
         ]
     return InlineKeyboardMarkup(buttons)
-
-
-
-
