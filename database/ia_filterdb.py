@@ -154,26 +154,30 @@ async def get_movie_list(max_results=30):
     """
     Returns a list of recent movie file names.
     Movies are identified by NOT having episode/season patterns like S01E01.
+    Cached for 5 minutes to avoid heavy repeated DB fetches.
     """
+    # ✅ FIX: Cache result for 5 minutes (300s) — fetches 150 docs every call otherwise
+    ck = f"_movie_list_{max_results}"
+    cached = _cache_get(ck)
+    if cached:
+        return cached[0]  # cached[0] is the files list we repurpose for movies
+
     try:
-        # Episode pattern — if file name matches this, it's a series not a movie
         series_pattern = re.compile(
             r'(s\d{1,2}[\s\.\-_]*e\d{1,2}|season[\s\.\-_]*\d+|episode[\s\.\-_]*\d+|\b\d+x\d+\b)',
             flags=re.IGNORECASE
         )
         cursor = Media.find({})
         cursor.sort('$natural', -1)
-        cursor.limit(max_results * 5)  # fetch extra to filter down to movies
+        cursor.limit(max_results * 5)
         all_files = await cursor.to_list(length=max_results * 5)
 
         movies = []
         seen = set()
         for file in all_files:
             name = file.file_name or ""
-            # Skip if it looks like a series episode
             if series_pattern.search(name):
                 continue
-            # Clean up name for display
             clean_name = re.sub(r'\.(mkv|mp4|avi|mov|wmv|flv|webm)$', '', name, flags=re.IGNORECASE).strip()
             if clean_name and clean_name not in seen:
                 seen.add(clean_name)
@@ -181,6 +185,8 @@ async def get_movie_list(max_results=30):
             if len(movies) >= max_results:
                 break
 
+        # Store in cache (reuse cache infra with TTL=300s)
+        _SEARCH_CACHE[ck] = (movies, '', 0, time.time())
         return movies
     except Exception as e:
         logger.exception(f"Error in get_movie_list: {e}")
@@ -190,10 +196,15 @@ async def get_movie_list(max_results=30):
 async def get_series_grouped(max_results=50):
     """
     Returns a dict of { series_title: [episode_numbers] } for recent series.
-    Series are identified by having S01E01 or similar patterns in the file name.
+    Cached for 5 minutes to avoid heavy repeated DB fetches (fetches 500 docs otherwise).
     """
+    # ✅ FIX: Cache result for 5 minutes — fetches 500 docs every call otherwise
+    ck = f"_series_grouped_{max_results}"
+    cached = _cache_get(ck)
+    if cached:
+        return cached[0]
+
     try:
-        # Match series episode patterns e.g. S01E01, S1E1, Season 1 Episode 1
         episode_pattern = re.compile(
             r's(\d{1,2})[\s\.\-_]*e(\d{1,2})',
             flags=re.IGNORECASE
@@ -210,28 +221,21 @@ async def get_series_grouped(max_results=50):
             match = episode_pattern.search(name)
             if not match:
                 continue
-
-            ep_num = int(match.group(2))  # episode number
-
-            # Extract series title = everything before the SxxExx match
+            ep_num = int(match.group(2))
             title_raw = name[:match.start()].strip()
-            # Clean up title
             title = re.sub(r'[\._\-]+', ' ', title_raw).strip()
             title = re.sub(r'\s+', ' ', title).strip()
-
             if not title:
                 continue
-
             if title not in series_dict:
                 series_dict[title] = set()
             series_dict[title].add(ep_num)
-
             if len(series_dict) >= max_results:
                 break
 
-        # Convert sets to sorted lists
-        return {title: sorted(eps) for title, eps in series_dict.items()}
-
+        result = {title: sorted(eps) for title, eps in series_dict.items()}
+        _SEARCH_CACHE[ck] = (result, '', 0, time.time())
+        return result
     except Exception as e:
         logger.exception(f"Error in get_series_grouped: {e}")
         return {}
