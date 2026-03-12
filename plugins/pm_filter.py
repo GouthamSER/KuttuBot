@@ -31,6 +31,16 @@ BUTTONS = {}
 SPELL_CHECK = {}
 FRESH = {}
 
+# ✅ FIX: Max size for in-memory dicts — oldest entries dropped when limit hit
+_MAX_DICT_SIZE = 500
+
+def _trim_dict(d: dict):
+    """Remove oldest 20% of entries when dict exceeds max size."""
+    if len(d) > _MAX_DICT_SIZE:
+        keys_to_remove = list(d.keys())[:len(d) // 5]
+        for k in keys_to_remove:
+            d.pop(k, None)
+
 # ── Filter lists ───────────────────────────────────────────────────────────────
 YEARS = [str(y) for y in range(2025, 1999, -1)]
 
@@ -1244,6 +1254,8 @@ async def auto_filter(client, msg, spoll=False):
     key = f"{message.chat.id}-{message.id}"
     FRESH[key] = search
     BUTTONS[key] = search
+    _trim_dict(FRESH)
+    _trim_dict(BUTTONS)
     req = message.from_user.id if message.from_user else 0
 
     if settings["button"]:
@@ -1400,6 +1412,7 @@ async def advantage_spell_chok(client, msg):
         return
 
     SPELL_CHECK[mv_id] = movielist
+    _trim_dict(SPELL_CHECK)
     btn = [
         [InlineKeyboardButton(
             text=movie_name.strip(),
