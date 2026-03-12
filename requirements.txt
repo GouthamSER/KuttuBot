@@ -5,7 +5,6 @@ pymongo[srv]==4.3.2
 motor==3.0.0
 marshmallow==3.18.0
 umongo==3.1.0
-requests
 bs4
-aiohttp==3.8.3
+aiohttp==3.9.5
 psutil
