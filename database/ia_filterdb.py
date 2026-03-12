@@ -2,6 +2,7 @@ import logging
 from struct import pack
 import re
 import base64
+import time
 from pyrogram.file_id import FileId
 from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
@@ -11,6 +12,31 @@ from info import DATABASE_URI, DATABASE_NAME, COLLECTION_NAME, USE_CAPTION_FILTE
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# ── Search Result Cache ────────────────────────────────────────────────────────
+# Stores: { cache_key: (files, next_offset, total_results, timestamp) }
+# TTL: 60 seconds — same query within 60s returns instantly from memory
+_SEARCH_CACHE = {}
+_CACHE_TTL = 60  # seconds
+
+def _cache_key(query, file_type, offset):
+    return f"{query}|{file_type}|{offset}"
+
+def _cache_get(key):
+    entry = _SEARCH_CACHE.get(key)
+    if entry and (time.time() - entry[3]) < _CACHE_TTL:
+        return entry[0], entry[1], entry[2]
+    return None
+
+def _cache_set(key, files, next_offset, total_results):
+    _SEARCH_CACHE[key] = (files, next_offset, total_results, time.time())
+    # Cleanup old entries if cache grows too large
+    if len(_SEARCH_CACHE) > 200:
+        cutoff = time.time() - _CACHE_TTL
+        expired = [k for k, v in _SEARCH_CACHE.items() if v[3] < cutoff]
+        for k in expired:
+            del _SEARCH_CACHE[k]
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 client = AsyncIOMotorClient(DATABASE_URI)
@@ -63,8 +89,17 @@ async def save_file(media):
 
 
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
-    """For given query return (results, next_offset)"""
+    """For given query return (results, next_offset, total_results)"""
     query = query.strip()
+
+    # ── Cache lookup ──────────────────────────────────────────────────────────
+    ck = _cache_key(query, file_type, offset)
+    cached = _cache_get(ck)
+    if cached:
+        logger.info(f"Cache hit for query: '{query}'")
+        return cached
+    # ─────────────────────────────────────────────────────────────────────────
+
     if not query:
         raw_pattern = '.'
     elif ' ' not in query:
@@ -85,16 +120,25 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
     if file_type:
         filter['file_type'] = file_type
 
-    total_results = await Media.count_documents(filter)
-    next_offset = offset + max_results
-
-    if next_offset > total_results:
-        next_offset = ''
+    # ── Run count and fetch in parallel for speed ─────────────────────────────
+    import asyncio as _asyncio
+    total_task = _asyncio.ensure_future(Media.count_documents(filter))
 
     cursor = Media.find(filter)
     cursor.sort('$natural', -1)
     cursor.skip(offset).limit(max_results)
-    files = await cursor.to_list(length=max_results)
+    files_task = _asyncio.ensure_future(cursor.to_list(length=max_results))
+
+    total_results, files = await _asyncio.gather(total_task, files_task)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    next_offset = offset + max_results
+    if next_offset > total_results:
+        next_offset = ''
+
+    # ── Store in cache ────────────────────────────────────────────────────────
+    _cache_set(ck, files, next_offset, total_results)
+    # ─────────────────────────────────────────────────────────────────────────
 
     return files, next_offset, total_results
 
