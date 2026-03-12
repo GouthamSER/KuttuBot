@@ -101,7 +101,8 @@ async def live_usage(bot, update):
         used_hr   = humanbytes(used)
         free_hr   = humanbytes(free)
 
-        cpu_pct  = psutil.cpu_percent(interval=0.5)
+        loop = asyncio.get_event_loop()
+        cpu_pct  = await loop.run_in_executor(None, lambda: psutil.cpu_percent(interval=0.3))  # 2705 FIX: non-blocking
         ram_pct  = psutil.virtual_memory().percent
         disk_pct = psutil.disk_usage('/').percent
 
