@@ -42,6 +42,21 @@ def _trim_dict(d: dict):
             d.pop(k, None)
 
 # ── Filter lists ───────────────────────────────────────────────────────────────
+
+# -- Auto-delete helper --------------------------------------------------------
+async def _auto_delete_result(result_msg, delay: int = 300):
+    """Delete auto-filter result after delay seconds (default 5 min)."""
+    await asyncio.sleep(delay)
+    try:
+        await result_msg.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+    try:
+        await result_msg.delete()
+    except Exception:
+        pass
+# ------------------------------------------------------------------------------
+
 YEARS = [str(y) for y in range(2025, 1999, -1)]
 
 # Language: display label → search keyword
@@ -1323,27 +1338,32 @@ async def auto_filter(client, msg, spoll=False):
     else:
         cap = script.RESULT_TXT.format(search)
 
+    result_msg = None
     if imdb and imdb.get('poster'):
         try:
-            await message.reply_photo(
+            result_msg = await message.reply_photo(
                 photo=imdb.get('poster'), caption=cap[:1024],
                 reply_markup=InlineKeyboardMarkup(btn)
             )
         except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
             pic = imdb.get('poster')
             poster = pic.replace('.jpg', "._V1_UX360.jpg")
-            await message.reply_photo(
+            result_msg = await message.reply_photo(
                 photo=poster, caption=cap[:1024],
                 reply_markup=InlineKeyboardMarkup(btn)
             )
         except Exception as e:
             logger.exception(e)
-            await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
+            result_msg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
     else:
-        await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
+        result_msg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
 
     if spoll:
         await msg.message.delete()
+
+    # ── Auto-delete result after 5 min for copyright protection ───────────────
+    if result_msg:
+        asyncio.create_task(_auto_delete_result(result_msg))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
