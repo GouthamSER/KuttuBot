@@ -1,193 +1,221 @@
 class script(object):
-    START_TXT = """👋🏻 Hᴇʟʟᴏ {},
-𝖨𝗆 𝖺𝗇 𝖺𝗎𝗍𝗈 𝖿𝗂𝗅𝗍𝖾𝗋 𝖻𝗈𝗍 𝗐𝗁𝗂𝖼𝗁 𝖼𝖺𝗇 𝗉𝗋𝗈𝗏𝗂𝖽𝖾 𝗆𝗈𝗏𝗂𝖾𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉𝗌. 𝖠𝖽𝖽 𝖬𝖾 𝖳𝗈 𝖸𝗈𝗎𝗋 𝖦𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗉𝗋𝗈𝗆𝗈𝗍𝖾 𝗆𝖾 𝖺𝗌 𝖺𝖽𝗆𝗂𝗇 𝗍𝗈 𝗅𝖾𝗍 𝗆𝖾 𝗀𝖾𝗍 𝗂𝗇 𝖺𝖼𝗍𝗂𝗈𝗇.
-𝖢𝗅𝗂𝖼𝗄 𝗈𝗇 𝗍𝗁𝖾 𝖧𝖾𝗅𝗉 𝖻𝗎𝗍𝗍𝗈𝗇 𝖿𝗈𝗋 𝖬𝗈𝗋𝖾...
 
-⚡️ Maintained By @im_goutham_josh"""
+    START_TXT = """👋 𝖧𝖾𝗅𝗅𝗈 {}!
 
-    HELP_TXT = """
-🙋🏻‍♂️  𝗪𝗲𝗹𝗰𝗼𝗺𝗲, {}! 🎉
+𝖨'𝗆 𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™ — 𝗬𝗼𝘂𝗿 𝗦𝗺𝗮𝗿𝘁 𝗔𝘂𝘁𝗼 𝗙𝗶𝗹𝘁𝗲𝗿 𝗔𝘀𝘀𝗶𝘀𝘁𝗮𝗻𝘁.
 
-📋 𝗔𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀
-━━━━━━━━━━━━━━━━━━━
+𝖨 𝖼𝖺𝗇 𝗂𝗇𝗌𝗍𝖺𝗇𝗍𝗅𝗒 𝖿𝗂𝗇𝖽 𝗆𝗈𝗏𝗂𝖾𝗌 𝖺𝗇𝖽 𝗌𝖾𝗋𝗂𝖾𝗌 𝖿𝗋𝗈𝗆 𝗆𝗒 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾, 𝗆𝖺𝗇𝖺𝗀𝖾 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖿𝗂𝗅𝗍𝖾𝗋𝗌, 𝖺𝗇𝖽 𝗌𝖾𝗋𝗏𝖾 𝖿𝗂𝗅𝖾𝗌 𝗐𝗂𝗍𝗁 𝗈𝗇𝖾 𝗍𝖺𝗉.
 
- /start   » 𝘊𝘩𝘦𝘤𝘬 𝘐'𝘮 𝘈𝘭𝘪𝘷𝘦
- /status  » 𝘉𝘰𝘵 𝘚𝘵𝘢𝘵𝘶𝘴
- /info    » 𝘜𝘴𝘦𝘳 𝘐𝘯𝘧𝘰
- /id      » 𝘜𝘴𝘦𝘳 𝘐𝘋
- /stats   » 𝘋𝘣 𝘚𝘵𝘢𝘵𝘶𝘴
- /broadcast » 𝘉𝘳𝘰𝘢𝘥𝘤𝘢𝘴𝘵 (𝘖𝘸𝘯𝘦𝘳 𝘖𝘯𝘭𝘺)
+𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗉𝗋𝗈𝗆𝗈𝗍𝖾 𝗆𝖾 𝖺𝗌 𝖺𝖽𝗆𝗂𝗇 𝗍𝗈 𝗀𝖾𝗍 𝗌𝗍𝖺𝗋𝗍𝖾𝖽.
 
-⚠️ 𝗡𝗼𝘁𝗶𝗰𝗲:
-🔇 𝘋𝘰𝘯'𝘵 𝘚𝘱𝘢𝘮 𝘔𝘦... 😅
+⚡ 𝖬𝖺𝗂𝗇𝗍𝖺𝗂𝗇𝖾𝖽 𝖡𝗒 @im_goutham_josh"""
+
+    HELP_TXT = """🙋 𝗛𝗲𝗹𝗹𝗼, {}!
+
+𝖧𝖾𝗋𝖾 𝗂𝗌 𝖺 𝗊𝗎𝗂𝖼𝗄 𝗈𝗏𝖾𝗋𝗏𝗂𝖾𝗐 𝗈𝖿 𝗐𝗁𝖺𝗍 𝖨 𝖼𝖺𝗇 𝖽𝗈.
+𝖴𝗌𝖾 𝗍𝗁𝖾 𝖻𝗎𝗍𝗍𝗈𝗇𝗌 𝖻𝖾𝗅𝗈𝗐 𝗍𝗈 𝖾𝗑𝗉𝗅𝗈𝗋𝖾 𝖾𝖺𝖼𝗁 𝗆𝗈𝖽𝗎𝗅𝖾.
+
+━━━━━━━━━━━━━━━━━━
+📌 𝗤𝘂𝗶𝗰𝗸 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀
+━━━━━━━━━━━━━━━━━━
+
+  /start    » 𝖢𝗁𝖾𝖼𝗄 𝗂𝖿 𝖨'𝗆 𝗈𝗇𝗅𝗂𝗇𝖾
+  /id       » 𝖦𝖾𝗍 𝗒𝗈𝗎𝗋 𝖳𝖾𝗅𝖾𝗀𝗋𝖺𝗆 𝖨𝖣
+  /info     » 𝖦𝖾𝗍 𝗎𝗌𝖾𝗋 𝗂𝗇𝖿𝗈𝗋𝗆𝖺𝗍𝗂𝗈𝗇
+  /imdb     » 𝖲𝖾𝖺𝗋𝖼𝗁 𝗆𝗈𝗏𝗂𝖾 𝗈𝗇 𝖨𝖬𝖣𝖡
+  /ping     » 𝖡𝗈𝗍 𝗅𝖺𝗍𝖾𝗇𝖼𝗒 𝖼𝗁𝖾𝖼𝗄
+  /stats    » 𝖣𝖺𝗍𝖺𝖻𝖺𝗌𝖾 𝗌𝗍𝖺𝗍𝗎𝗌
+
+⚠️ 𝖯𝗅𝖾𝖺𝗌𝖾 𝖽𝗈 𝗇𝗈𝗍 𝗌𝗉𝖺𝗆 𝗆𝖾. 𝖱𝖾𝗌𝗉𝖾𝖼𝗍 𝗀𝗈𝖾𝗌 𝖻𝗈𝗍𝗁 𝗐𝖺𝗒𝗌 😊"""
+
+    ABOUT_TXT = """<b>𝗔𝗯𝗼𝘂𝘁 𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™</b>
+
+━━━━━━━━━━━━━━━━━━
+🤖 𝖭𝖺𝗆𝖾       : 𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™
+👨‍💻 𝖢𝗋𝖾𝖺𝗍𝗈𝗋    : <a href="https://t.me/wudixh15">𝖦𝗈𝗎𝗍𝗁𝖺𝗆 𝖲𝖤𝖱</a>
+🐍 𝖫𝖺𝗇𝗀𝗎𝖺𝗀𝖾   : 𝖯𝗒𝗍𝗁𝗈𝗇 𝟥
+🗄️ 𝖣𝖺𝗍𝖺𝖻𝖺𝗌𝖾   : 𝖬𝗈𝗇𝗀𝗈𝖣𝖡
+☁️ 𝖲𝖾𝗋𝗏𝖾𝗋     : 𝖪𝗈𝗒𝖾𝖻
+📚 𝖫𝗂𝖻𝗋𝖺𝗋𝗒    : 𝖯𝗒𝗋𝗈𝗀𝗋𝖺𝗆
+━━━━━━━━━━━━━━━━━━
+
+{}"""
+
+    SOURCE_TXT = """<b>📌 𝗢𝗽𝗲𝗻 𝗦𝗼𝘂𝗿𝗰𝗲 𝗡𝗼𝘁𝗶𝗰𝗲</b>
+
+𝖪𝗎𝗍𝗍𝗎 𝖡𝗈𝗍™ 𝗂𝗌 𝖺𝗇 𝗈𝗉𝖾𝗇-𝗌𝗈𝗎𝗋𝖼𝖾 𝗉𝗋𝗈𝗃𝖾𝖼𝗍 𝖻𝗎𝗂𝗅𝗍 𝗐𝗂𝗍𝗁 𝗅𝗈𝗏𝖾 𝖿𝗈𝗋 𝗍𝗁𝖾 𝖳𝖾𝗅𝖾𝗀𝗋𝖺𝗆 𝖼𝗈𝗆𝗆𝗎𝗇𝗂𝗍𝗒.
+
+🔗 𝖲𝗈𝗎𝗋𝖼𝖾 → <a href="https://github.com/GouthamSER/KuttuBot">𝖵𝗂𝖾𝗐 𝗈𝗇 𝖦𝗂𝗍𝖧𝗎𝖻 🚀</a>
+
+<b>👨‍💻 𝖣𝖾𝗏𝖾𝗅𝗈𝗉𝖾𝗋</b>
+• <a href="https://t.me/wudixh15">𝖦𝗈𝗎𝗍𝗁𝖺𝗆 𝖲𝖤𝖱</a>"""
+
+    MANUELFILTER_TXT = """🔧 <b>𝗛𝗲𝗹𝗽 — 𝗠𝗮𝗻𝘂𝗮𝗹 𝗙𝗶𝗹𝘁𝗲𝗿𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+𝖥𝗂𝗅𝗍𝖾𝗋𝗌 𝗅𝖾𝗍 𝗒𝗈𝗎 𝗌𝖾𝗍 𝖺𝗎𝗍𝗈𝗆𝖺𝗍𝗂𝖼 𝗋𝖾𝗉𝗅𝗂𝖾𝗌 𝗍𝗈 𝗌𝗉𝖾𝖼𝗂𝖿𝗂𝖼 𝗄𝖾𝗒𝗐𝗈𝗋𝖽𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉.
+
+⚠️ <b>𝖭𝗈𝗍𝖾</b>
+  𝟣. 𝖡𝗈𝗍 𝗆𝗎𝗌𝗍 𝗁𝖺𝗏𝖾 𝖺𝖽𝗆𝗂𝗇 𝗉𝗋𝗂𝗏𝗂𝗅𝖾𝗀𝖾𝗌
+  𝟤. 𝖮𝗇𝗅𝗒 𝗀𝗋𝗈𝗎𝗉 𝖺𝖽𝗆𝗂𝗇𝗌 𝖼𝖺𝗇 𝖺𝖽𝖽 𝖿𝗂𝗅𝗍𝖾𝗋𝗌
+  𝟥. 𝖠𝗅𝖾𝗋𝗍 𝖻𝗎𝗍𝗍𝗈𝗇 𝗍𝖾𝗑𝗍 𝗂𝗌 𝗅𝗂𝗆𝗂𝗍𝖾𝖽 𝗍𝗈 𝟨𝟦 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌
+
+📌 <b>𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝗌</b>
+  /filter   — <code>𝖺𝖽𝖽 𝖺 𝖿𝗂𝗅𝗍𝖾𝗋</code>
+  /filters  — <code>𝗅𝗂𝗌𝗍 𝖺𝗅𝗅 𝖿𝗂𝗅𝗍𝖾𝗋𝗌</code>
+  /del      — <code>𝖽𝖾𝗅𝖾𝗍𝖾 𝖺 𝖿𝗂𝗅𝗍𝖾𝗋</code>
+  /delall   — <code>𝖽𝖾𝗅𝖾𝗍𝖾 𝖺𝗅𝗅 𝖿𝗂𝗅𝗍𝖾𝗋𝗌 (𝗈𝗐𝗇𝖾𝗋 𝗈𝗇𝗅𝗒)</code>"""
+
+    BUTTON_TXT = """🔘 <b>𝗛𝗲𝗹𝗽 — 𝗜𝗻𝗹𝗶𝗻𝗲 𝗕𝘂𝘁𝘁𝗼𝗻𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+𝖲𝗎𝗉𝗉𝗈𝗋𝗍𝗌 𝖴𝖱𝖫 𝖺𝗇𝖽 𝖠𝗅𝖾𝗋𝗍 𝗂𝗇𝗅𝗂𝗇𝖾 𝖻𝗎𝗍𝗍𝗈𝗇𝗌 𝗐𝗂𝗍𝗁 𝖺𝗇𝗒 𝗆𝖾𝖽𝗂𝖺 𝗍𝗒𝗉𝖾.
+
+⚠️ <b>𝖭𝗈𝗍𝖾</b>
+  𝟣. 𝖢𝗈𝗇𝗍𝖾𝗇𝗍 𝗂𝗌 𝗋𝖾𝗊𝗎𝗂𝗋𝖾𝖽 𝖺𝗅𝗈𝗇𝗀𝗌𝗂𝖽𝖾 𝖺𝗇𝗒 𝖻𝗎𝗍𝗍𝗈𝗇
+  𝟤. 𝖲𝗎𝗉𝗉𝗈𝗋𝗍𝗌 𝖺𝗅𝗅 𝖳𝖾𝗅𝖾𝗀𝗋𝖺𝗆 𝗆𝖾𝖽𝗂𝖺 𝗍𝗒𝗉𝖾𝗌
+
+🔗 <b>𝖴𝖱𝖫 𝖡𝗎𝗍𝗍𝗈𝗇</b>
+<code>[𝖡𝗎𝗍𝗍𝗈𝗇 𝖳𝖾𝗑𝗍](buttonurl:https://t.me/wudixh15)</code>
+
+🔔 <b>𝖠𝗅𝖾𝗋𝗍 𝖡𝗎𝗍𝗍𝗈𝗇</b>
+<code>[𝖡𝗎𝗍𝗍𝗈𝗇 𝖳𝖾𝗑𝗍](buttonalert:𝖸𝗈𝗎𝗋 𝖺𝗅𝖾𝗋𝗍 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝗁𝖾𝗋𝖾)</code>"""
+
+    AUTOFILTER_TXT = """🎬 <b>𝗛𝗲𝗹𝗽 — 𝗔𝘂𝘁𝗼 𝗙𝗶𝗹𝘁𝗲𝗿</b>
+
+━━━━━━━━━━━━━━━━━━
+𝖠𝗎𝗍𝗈 𝖥𝗂𝗅𝗍𝖾𝗋 𝗂𝗇𝗌𝗍𝖺𝗇𝗍𝗅𝗒 𝗌𝖾𝖺𝗋𝖼𝗁𝖾𝗌 𝗍𝗁𝖾 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾 𝗐𝗁𝖾𝗇 𝖺 𝗎𝗌𝖾𝗋 𝗌𝖾𝗇𝖽𝗌 𝖺 𝗆𝗈𝗏𝗂𝖾 𝗇𝖺𝗆𝖾.
+
+⚠️ <b>𝖭𝗈𝗍𝖾</b>
+  𝟣. 𝖬𝖺𝗄𝖾 𝗆𝖾 𝖺𝖽𝗆𝗂𝗇 𝗈𝖿 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺𝗇𝗇𝖾𝗅 𝗂𝖿 𝗂𝗍 𝗂𝗌 𝗉𝗋𝗂𝗏𝖺𝗍𝖾
+  𝟤. 𝖭𝗈 𝖼𝖺𝗆𝗋𝗂𝗉𝗌, 𝖺𝖽𝗎𝗅𝗍 𝖼𝗈𝗇𝗍𝖾𝗇𝗍, 𝗈𝗋 𝖿𝖺𝗄𝖾 𝖿𝗂𝗅𝖾𝗌
+  𝟥. 𝖥𝗈𝗋𝗐𝖺𝗋𝖽 𝗍𝗁𝖾 𝗅𝖺𝗌𝗍 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝗍𝗈 𝗂𝗇𝖽𝖾𝗑 𝖺 𝗐𝗁𝗈𝗅𝖾 𝖼𝗁𝖺𝗇𝗇𝖾𝗅"""
+
+    CONNECTION_TXT = """🔗 <b>𝗛𝗲𝗹𝗽 — 𝗖𝗼𝗻𝗻𝗲𝗰𝘁𝗶𝗼𝗻𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+𝖢𝗈𝗇𝗇𝖾𝖼𝗍 𝗍𝗁𝖾 𝖻𝗈𝗍 𝗍𝗈 𝗒𝗈𝗎𝗋 𝖯𝖬 𝗌𝗈 𝗒𝗈𝗎 𝖼𝖺𝗇 𝗆𝖺𝗇𝖺𝗀𝖾 𝗀𝗋𝗈𝗎𝗉 𝖿𝗂𝗅𝗍𝖾𝗋𝗌 𝗐𝗂𝗍𝗁𝗈𝗎𝗍 𝗌𝗉𝖺𝗆𝗆𝗂𝗇𝗀 𝗍𝗁𝖾 𝗀𝗋𝗈𝗎𝗉.
+
+⚠️ <b>𝖭𝗈𝗍𝖾</b>
+  𝟣. 𝖮𝗇𝗅𝗒 𝗀𝗋𝗈𝗎𝗉 𝖺𝖽𝗆𝗂𝗇𝗌 𝖼𝖺𝗇 𝖼𝗈𝗇𝗇𝖾𝖼𝗍
+  𝟤. 𝖴𝗌𝖾 <code>/connect</code> 𝗂𝗇𝗌𝗂𝖽𝖾 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖿𝗂𝗋𝗌𝗍
+
+📌 <b>𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝗌</b>
+  /connect      — <code>𝖼𝗈𝗇𝗇𝖾𝖼𝗍 𝖺 𝗀𝗋𝗈𝗎𝗉 𝗍𝗈 𝖯𝖬</code>
+  /disconnect   — <code>𝖽𝗂𝗌𝖼𝗈𝗇𝗇𝖾𝖼𝗍 𝗍𝗁𝖾 𝖼𝗎𝗋𝗋𝖾𝗇𝗍 𝗀𝗋𝗈𝗎𝗉</code>
+  /connections  — <code>𝗏𝗂𝖾𝗐 𝖺𝗅𝗅 𝖼𝗈𝗇𝗇𝖾𝖼𝗍𝗂𝗈𝗇𝗌</code>"""
+
+    EXTRAMOD_TXT = """🧩 <b>𝗛𝗲𝗹𝗽 — 𝗘𝘅𝘁𝗿𝗮 𝗠𝗼𝗱𝘂𝗹𝗲𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+
+📌 <b>𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝗌</b>
+  /id      — <code>𝗀𝖾𝗍 𝗒𝗈𝗎𝗋 𝖳𝖾𝗅𝖾𝗀𝗋𝖺𝗆 𝖨𝖣</code>
+  /info    — <code>𝗀𝖾𝗍 𝗂𝗇𝖿𝗈 𝖺𝖻𝗈𝗎𝗍 𝖺 𝗎𝗌𝖾𝗋</code>
+  /imdb    — <code>𝗌𝖾𝖺𝗋𝖼𝗁 𝖺 𝗆𝗈𝗏𝗂𝖾 𝗈𝗇 𝖨𝖬𝖣𝖡</code>
+  /search  — <code>𝗌𝖾𝖺𝗋𝖼𝗁 𝖿𝗂𝗅𝖾𝗌 𝖿𝗋𝗈𝗆 𝗏𝖺𝗋𝗂𝗈𝗎𝗌 𝗌𝗈𝗎𝗋𝖼𝖾𝗌</code>
+  /ping    — <code>𝖼𝗁𝖾𝖼𝗄 𝖻𝗈𝗍 𝗅𝖺𝗍𝖾𝗇𝖼𝗒</code>
+  /usage   — <code>𝗅𝗂𝗏𝖾 𝗌𝖾𝗋𝗏𝖾𝗋 𝗋𝖾𝗌𝗈𝗎𝗋𝖼𝖾 𝗆𝗈𝗇𝗂𝗍𝗈𝗋</code>"""
+
+    ADMIN_TXT = """🛡️ <b>𝗛𝗲𝗹𝗽 — 𝗔𝗱𝗺𝗶𝗻 𝗠𝗼𝗱𝘂𝗹𝗲𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+⚠️ <i>𝖳𝗁𝗂𝗌 𝗆𝗈𝖽𝗎𝗅𝖾 𝗂𝗌 𝗋𝖾𝗌𝖾𝗋𝗏𝖾𝖽 𝖿𝗈𝗋 𝖻𝗈𝗍 𝖺𝖽𝗆𝗂𝗇𝗌 𝗈𝗇𝗅𝗒.</i>
+
+📌 <b>𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝗌</b>
+  /broadcast — <code>𝗌𝖾𝗇𝖽 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝗍𝗈 𝖺𝗅𝗅 𝗎𝗌𝖾𝗋𝗌</code>
+  /index     — <code>𝗂𝗇𝖽𝖾𝗑 𝗍𝗁𝖾 𝖿𝗂𝗅𝖾𝗌 𝗈𝖿 𝖺 𝖼𝗁𝖺𝗇𝗇𝖾𝗅</code>
+  /stats     — <code>𝖿𝗂𝗅𝖾 𝖼𝗈𝗎𝗇𝗍 𝖺𝗇𝖽 𝖣𝖡 𝗌𝗍𝖺𝗍𝗎𝗌</code>
+  /logs      — <code>𝗀𝖾𝗍 𝗋𝖾𝖼𝖾𝗇𝗍 𝖾𝗋𝗋𝗈𝗋 𝗅𝗈𝗀𝗌</code>
+  /delete    — <code>𝖽𝖾𝗅𝖾𝗍𝖾 𝖺 𝗌𝗉𝖾𝖼𝗂𝖿𝗂𝖼 𝖿𝗂𝗅𝖾 𝖿𝗋𝗈𝗆 𝖣𝖡</code>
+  /users     — <code>𝗅𝗂𝗌𝗍 𝖺𝗅𝗅 𝗎𝗌𝖾𝗋𝗌</code>
+  /chats     — <code>𝗅𝗂𝗌𝗍 𝖺𝗅𝗅 𝖼𝗁𝖺𝗍𝗌</code>
+  /ban       — <code>𝖻𝖺𝗇 𝖺 𝗎𝗌𝖾𝗋</code>
+  /unban     — <code>𝗎𝗇𝖻𝖺𝗇 𝖺 𝗎𝗌𝖾𝗋</code>
+  /leave     — <code>𝗅𝖾𝖺𝗏𝖾 𝖺 𝖼𝗁𝖺𝗍</code>
+  /disable   — <code>𝖽𝗂𝗌𝖺𝖻𝗅𝖾 𝖻𝗈𝗍 𝗂𝗇 𝖺 𝖼𝗁𝖺𝗍</code>
+  /enable    — <code>𝗋𝖾-𝖾𝗇𝖺𝖻𝗅𝖾 𝖻𝗈𝗍 𝗂𝗇 𝖺 𝖼𝗁𝖺𝗍</code>
+  /channel   — <code>𝗅𝗂𝗌𝗍 𝖼𝗈𝗇𝗇𝖾𝖼𝗍𝖾𝖽 𝖼𝗁𝖺𝗇𝗇𝖾𝗅𝗌</code>"""
+
+    STATUS_TXT = """📊 <b>𝗕𝗼𝘁 𝗦𝘁𝗮𝘁𝘂𝘀</b>
+
+━━━━━━━━━━━━━━━━━━
+🎞️ 𝖳𝗈𝗍𝖺𝗅 𝖥𝗂𝗅𝖾𝗌    : <code>{}</code>
+👥 𝖳𝗈𝗍𝖺𝗅 𝖴𝗌𝖾𝗋𝗌    : <code>{}</code>
+💬 𝖳𝗈𝗍𝖺𝗅 𝖢𝗁𝖺𝗍𝗌    : <code>{}</code>
+🗄️ 𝖴𝗌𝖾𝖽 𝖲𝗍𝗈𝗋𝖺𝗀𝖾  : <code>{}</code>
+💾 𝖥𝗋𝖾𝖾 𝖲𝗍𝗈𝗋𝖺𝗀𝖾  : <code>{}</code>
+━━━━━━━━━━━━━━━━━━"""
+
+    LOG_TEXT_G = """#𝖭𝖾𝗐𝖦𝗋𝗈𝗎𝗉
+
+🏘️ 𝖦𝗋𝗈𝗎𝗉   : {}  (<code>{}</code>)
+👥 𝖬𝖾𝗆𝖻𝖾𝗋𝗌 : <code>{}</code>
+➕ 𝖠𝖽𝖽𝖾𝖽 𝖡𝗒 : {}
 """
 
-    ABOUT_TXT = """<b>🔷 Nᴀᴍᴇ : ᴋᴜᴛᴛᴜ ʙᴏᴛ™
-🔷 Cʀᴇᴀᴛᴏʀ : <a href=https://t.me/wudixh13>Goutham SER</a>
-🔷 Lᴀɴɢᴜᴀɢᴇ : Pʏᴛʜᴏɴ 3
-🔷 Dᴀᴛᴀʙᴀsᴇ : Mᴏɴɢᴏ DB
-🔷 Sᴇʀᴠᴇʀ : KoYeb</b>"""
+    LOG_TEXT_P = """#𝖭𝖾𝗐𝖴𝗌𝖾𝗋
 
-    SOURCE_TXT = """<b>📌 NOTE:</b>
-• ᴋᴜᴛᴛᴜ ʙᴏᴛ™ is an open source project.
-• Source → <a href=https://github.com/GouthamSER>𝘊𝘭𝘪𝘤𝘬 𝘏𝘦𝘳𝘦 🚀</a>
-
-<b>👨‍💻 DEVS:</b>
-• <a href=https://t.me/wudixh1>𝔊𝔬𝔲𝔱𝔥𝔞𝔪 𝔖𝔢𝔯 ⚠️</a>"""
-
-    MANUELFILTER_TXT = """🔧 Help: <b>Filters</b>
-━━━━━━━━━━━━━━━━━━━
-𝘍𝘪𝘭𝘵𝘦𝘳𝘴 𝘢𝘭𝘭𝘰𝘸 𝘢𝘶𝘵𝘰𝘮𝘢𝘵𝘦𝘥 𝘳𝘦𝘱𝘭𝘪𝘦𝘴 𝘧𝘰𝘳 𝘴𝘱𝘦𝘤𝘪𝘧𝘪𝘤 𝘬𝘦𝘺𝘸𝘰𝘳𝘥𝘴.
-
-<b>⚠️ NOTE:</b>
-1️⃣ Bot must have admin privileges.
-2️⃣ Only admins can add filters.
-3️⃣ Alert buttons have a 64-character limit.
-
-<b>📌 Commands & Usage:</b>
-• /filter   — <code>add a filter in chat</code>
-• /filters  — <code>list all filters of a chat</code>
-• /del      — <code>delete a specific filter</code>
-• /delall   — <code>delete all filters (owner only)</code>"""
-
-    BUTTON_TXT = """🔘 Help: <b>Buttons</b>
-━━━━━━━━━━━━━━━━━━━
-𝘚𝘶𝘱𝘱𝘰𝘳𝘵𝘴 𝘣𝘰𝘵𝘩 𝘜𝘙𝘓 𝘢𝘯𝘥 𝘈𝘭𝘦𝘳𝘵 𝘪𝘯𝘭𝘪𝘯𝘦 𝘣𝘶𝘵𝘵𝘰𝘯𝘴.
-
-<b>⚠️ NOTE:</b>
-1️⃣ Content is mandatory with buttons.
-2️⃣ Supports all Telegram media types.
-3️⃣ Use proper Markdown formatting.
-
-<b>🔗 URL Buttons:</b>
-<code>[Button Text](buttonurl:https://t.me/sources_cods)</code>
-
-<b>🔔 Alert Buttons:</b>
-<code>[Button Text](buttonalert:This is an alert message)</code>"""
-
-    AUTOFILTER_TXT = """🎬 Help: <b>Auto Filter</b>
-━━━━━━━━━━━━━━━━━━━
-
-<b>⚠️ NOTE:</b>
-1️⃣ Make me admin of your channel if it's private.
-2️⃣ No camrips, adult content or fake files.
-3️⃣ Forward the last message to me with quotes.
-    ✅ I'll index all files from that channel into my DB."""
-
-    CONNECTION_TXT = """🔗 Help: <b>Connections</b>
-━━━━━━━━━━━━━━━━━━━
-𝘊𝘰𝘯𝘯𝘦𝘤𝘵 𝘣𝘰𝘵 𝘵𝘰 𝘗𝘔 𝘵𝘰 𝘮𝘢𝘯𝘢𝘨𝘦 𝘧𝘪𝘭𝘵𝘦𝘳𝘴 & 𝘢𝘷𝘰𝘪𝘥 𝘨𝘳𝘰𝘶𝘱 𝘴𝘱𝘢𝘮.
-
-<b>⚠️ NOTE:</b>
-1️⃣ Only admins can add a connection.
-2️⃣ Send <code>/connect</code> to connect via PM.
-
-<b>📌 Commands & Usage:</b>
-• /connect     — <code>connect a chat to your PM</code>
-• /disconnect  — <code>disconnect from a chat</code>
-• /connections — <code>list all your connections</code>"""
-
-    EXTRAMOD_TXT = """🧩 Help: <b>Extra Modules</b>
-━━━━━━━━━━━━━━━━━━━
-
-<b>📌 Commands & Usage:</b>
-• /id     — <code>get ID of a user</code>
-• /info   — <code>get information about a user</code>
-• /imdb   — <code>get film info from IMDb</code>
-• /search — <code>get film info from various sources</code>"""
-
-    ADMIN_TXT = """🛡️ Help: <b>Admin Modules</b>
-━━━━━━━━━━━━━━━━━━━
-⚠️ <i>This module is for bot admins only.</i>
-
-<b>📌 Commands & Usage:</b>
-• /logs      — <code>get recent errors</code>
-• /stats     — <code>file count in DB</code>
-• /delete    — <code>delete a specific file from DB</code>
-• /users     — <code>list users and IDs</code>
-• /chats     — <code>list chats and IDs</code>
-• /leave     — <code>leave from a chat</code>
-• /disable   — <code>disable a chat</code>
-• /ban       — <code>ban a user</code>
-• /unban     — <code>unban a user</code>
-• /channel   — <code>list connected channels</code>
-• /broadcast — <code>broadcast a message to all users</code>"""
-
-    STATUS_TXT = """╔══════════════════════╗
-   📊  𝗕𝗢𝗧  𝗦𝗧𝗔𝗧𝗨𝗦
-╚══════════════════════╝
-🎞️ 𝚃𝙾𝚃𝙰𝙻 𝙵𝙸𝙻𝙴𝚂  : <code>{}</code>
-👥 𝚃𝙾𝚃𝙰𝙻 𝚄𝚂𝙴𝚁𝚂  : <code>{}</code>
-💬 𝚃𝙾𝚃𝙰𝙻 𝙲𝙷𝙰𝚃𝚂  : <code>{}</code>
-🗄️ 𝚄𝚂𝙴𝙳 𝚂𝚃𝙾𝚁𝙰𝙶𝙴 : <code>{}</code>
-💾 𝙵𝚁𝙴𝙴 𝚂𝚃𝙾𝚁𝙰𝙶𝙴 : <code>{}</code>"""
-
-    LOG_TEXT_G = """#️⃣ #NewGroup
-🏘️ Group  = {}(<code>{}</code>)
-👥 Members = <code>{}</code>
-➕ Added By = {}
+🆔 𝖨𝖣   : <code>{}</code>
+👤 𝖭𝖺𝗆𝖾 : {}
 """
 
-    RESULT_TXT = """✅ 𝓗𝓮𝔂 {}! 𝓘 𝓕𝓸𝓾𝓷𝓭 𝓘𝓽 𝓘𝓷 𝓜𝔂 𝓓𝓪𝓽𝓪𝓫𝓪𝓼𝓮 🎯"""
+    RESULT_TXT = """✅ <b>𝖧𝖾𝗒 {}!  𝖨 𝖿𝗈𝗎𝗇𝖽 𝗂𝗍 𝗂𝗇 𝗆𝗒 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾 🎯</b>"""
 
-    CUSTOM_FILE_CAPTION = """<b>📁 Fɪʟᴇɴᴀᴍᴇ  : {file_name}
-📦 Fɪʟᴇ Sɪᴢᴇ : {file_size}
+    CUSTOM_FILE_CAPTION = """<b>📁 𝖥𝗂𝗅𝖾 𝖭𝖺𝗆𝖾  :  {file_name}
+📦 𝖥𝗂𝗅𝖾 𝖲𝗂𝗓𝖾  :  {file_size}
 
-╔══ 🌐 ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ══╗
-✨ <a href=https://t.me/+53lB8qzQaGFlNDll> ᴇʟᴅᴏʀᴀᴅᴏ </a>
-╚══ 🌐 ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ══╝</b>"""
+┌─────────────────────┐
+  ✨ <a href="https://t.me/+53lB8qzQaGFlNDll">𝖩𝗈𝗂𝗇 𝖤𝗅𝖽𝗈𝗋𝖺𝖽𝗈</a>
+└─────────────────────┘</b>"""
 
-    RESTART_TXT = """
-<b>🔄 Bᴏᴛ Rᴇsᴛᴀʀᴛᴇᴅ ✅
-⚡️ @im_goutham_josh</b>"""
+    RESTART_TXT = """✅ <b>𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™  𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗲𝗱  🔄</b>
 
-    LOG_TEXT_P = """#️⃣ #NewUser
-🆔 ID   — <code>{}</code>
-👤 Name — {}
+⚡ @im_goutham_josh"""
+
+    SPOLL_NOT_FND = """😔 <b>𝖭𝗈𝗍𝗁𝗂𝗇𝗀 𝖥𝗈𝗎𝗇𝖽 🤷</b>
+
+𝖨 𝖼𝗈𝗎𝗅𝖽𝗇'𝗍 𝖿𝗂𝗇𝖽 𝖺𝗇𝗒𝗍𝗁𝗂𝗇𝗀 𝗆𝖺𝗍𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗋𝖾𝗊𝗎𝖾𝗌𝗍.
+𝖳𝗋𝗒 𝗍𝗁𝖾 𝗌𝗉𝖾𝗅𝗅 𝗍𝗂𝗉𝗌 𝖻𝖾𝗅𝗈𝗐 👇"""
+
+    ENG_SPELL = """📖 <b>𝖯𝗅𝖾𝖺𝗌𝖾 𝖭𝗈𝗍𝖾</b>
+
+  𝟣. 𝖴𝗌𝖾 𝖼𝗈𝗋𝗋𝖾𝖼𝗍 𝗌𝗉𝖾𝗅𝗅𝗂𝗇𝗀 𝗐𝗁𝖾𝗇 𝗌𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀
+  𝟤. 𝖣𝗈 𝗇𝗈𝗍 𝗋𝖾𝗊𝗎𝖾𝗌𝗍 𝗆𝗈𝗏𝗂𝖾𝗌 𝗇𝗈𝗍 𝗋𝖾𝗅𝖾𝖺𝗌𝖾𝖽 𝗈𝗇 𝖮𝖳𝖳
+  𝟥. 𝖳𝗋𝗒:  [𝗆𝗈𝗏𝗂𝖾 𝗇𝖺𝗆𝖾  𝗅𝖺𝗇𝗀𝗎𝖺𝗀𝖾]  𝗈𝗋  [𝗆𝗈𝗏𝗂𝖾 𝗇𝖺𝗆𝖾  𝗒𝖾𝖺𝗋]"""
+
+    MAL_SPELL = """📖 <b>ദയവായി ശ്രദ്ധിക്കുക</b>
+
+  𝟣. ശരിയായ അക്ഷരവിന്യാസത്തിൽ തിരയുക
+  𝟤. OTT-ൽ റിലീസ് ചെയ്യാത്ത സിനിമകൾ ചോദിക്കരുത്
+  𝟥. ഇങ്ങനെ ആവശ്യപ്പെടുക:  [സിനിമ  ഭാഷ]  അല്ലെങ്കിൽ  [സിനിമ  വർഷം]"""
+
+    HIN_SPELL = """📖 <b>कृपया ध्यान दें</b>
+
+  𝟣. सही वर्तनी में खोजें
+  𝟤. OTT पर रिलीज़ न हुई फ़िल्में न माँगें
+  𝟥. इस तरह खोजें:  [फ़िल्म  भाषा]  या  [फ़िल्म  वर्ष]"""
+
+    TAM_SPELL = """📖 <b>கவனிக்கவும்</b>
+
+  𝟣. சரியான எழுத்துப்பிழையில் தேடுங்கள்
+  𝟤. OTT-இல் வெளியாகாத படங்களை கேட்காதீர்கள்
+  𝟥. இந்த வடிவில் கேளுங்கள்:  [படம்  மொழி]  அல்லது  [படம்  ஆண்டு]"""
+
+    CHK_MOV_ALRT = """🔍 𝖲𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗋𝖾𝗊𝗎𝖾𝗌𝗍 𝗂𝗇 𝗆𝗒 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾... ⏳"""
+
+    OLD_MES = """⚠️ 𝖳𝗁𝗂𝗌 𝗂𝗌 𝖺𝗇 𝗈𝗅𝖽 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 🕰️
+
+🔁 𝖯𝗅𝖾𝖺𝗌𝖾 𝗌𝖾𝗇𝖽 𝗒𝗈𝗎𝗋 𝗋𝖾𝗊𝗎𝖾𝗌𝗍 𝖺𝗀𝖺𝗂𝗇."""
+
+    MOV_NT_FND = """<b>❌ 𝖳𝗁𝗂𝗌 𝗆𝗈𝗏𝗂𝖾 𝗂𝗌 𝗇𝗈𝗍 𝗒𝖾𝗍 𝖺𝗏𝖺𝗂𝗅𝖺𝖻𝗅𝖾 𝗂𝗇 𝗈𝗎𝗋 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾 🎬</b>
+
+📩 𝖱𝖾𝗉𝗈𝗋𝗍 𝗍𝗈 𝖠𝖽𝗆𝗂𝗇 — @im_goutham_josh
 """
 
-    SPOLL_NOT_FND = """😔 𝓞𝓸𝓹𝓼! 𝓝𝓸𝓽𝓱𝓲𝓷𝓰 𝓕𝓸𝓾𝓷𝓭 🤷‍♂️
-I couldn't find anything related to your request.
-👇🏼 𝘛𝘳𝘺 𝘳𝘦𝘢𝘥𝘪𝘯𝘨 𝘵𝘩𝘦 𝘪𝘯𝘴𝘵𝘳𝘶𝘤𝘵𝘪𝘰𝘯𝘴 𝘣𝘦𝘭𝘰𝘸 👇🏼
-    """
+    DMCA_TXT = """<b><u>⚖️ 𝗗𝗠𝗖𝗔 𝗖𝗼𝗺𝗽𝗹𝗶𝗮𝗻𝗰𝗲 𝗡𝗼𝘁𝗶𝗰𝗲</u></b>
 
-    ENG_SPELL = """📖 𝗣𝗹𝗲𝗮𝘀𝗲 𝗡𝗼𝘁𝗲:
-1️⃣ Ask with correct spelling
-2️⃣ Don't ask for movies not released on OTT platforms
-3️⃣ Try: [movie name language] or [movie name year]
-    """
+<blockquote>🛡️ 𝖳𝗁𝗂𝗌 𝖻𝗈𝗍 𝗈𝗉𝖾𝗋𝖺𝗍𝖾𝗌 𝗎𝗇𝖽𝖾𝗋 𝖣𝖬𝖢𝖠 𝗀𝗎𝗂𝖽𝖾𝗅𝗂𝗇𝖾𝗌 𝖺𝗇𝖽 𝖿𝗎𝗅𝗅𝗒 𝗋𝖾𝗌𝗉𝖾𝖼𝗍𝗌 𝗂𝗇𝗍𝖾𝗅𝗅𝖾𝖼𝗍𝗎𝖺𝗅 𝗉𝗋𝗈𝗉𝖾𝗋𝗍𝗒 𝗋𝗂𝗀𝗁𝗍𝗌. 𝖠𝗅𝗅 𝗏𝖺𝗅𝗂𝖽 𝗍𝖺𝗄𝖾𝖽𝗈𝗐𝗇 𝗇𝗈𝗍𝗂𝖼𝖾𝗌 𝗐𝗂𝗅𝗅 𝖻𝖾 𝗁𝖺𝗇𝖽𝗅𝖾𝖽 𝗉𝗋𝗈𝗆𝗉𝗍𝗅𝗒.</blockquote>
 
-    MAL_SPELL = """📖 ദയവായി ശ്രദ്ധിക്കുക:
-1️⃣ ശരിയായ അക്ഷരവിന്യാസത്തിൽ ചോദിക്കുക
-2️⃣ OTT പ്ലാറ്റ്‌ഫോമുകളിൽ റിലീസ് ചെയ്യാത്ത സിനിമകൾ ചോദിക്കരുത്
-3️⃣ ഇത് പോലെ [സിനിമയുടെ പേര് ഭാഷ] അല്ലെങ്കിൽ [സിനിമ വർഷം] ചോദിക്കാം
-    """
-
-    HIN_SPELL = """📖 कृपया ध्यान दें:
-1️⃣ सही वर्तनी में पूछें
-2️⃣ OTT पर रिलीज़ न हुई फ़िल्में न पूछें
-3️⃣ इस तरह पूछें: [फ़िल्म का नाम भाषा] या [फ़िल्म वर्ष]
-    """
-
-    TAM_SPELL = """📖 கவனிக்கவும்:
-1️⃣ சரியான எழுத்துப்பிழையில் கேளுங்கள்
-2️⃣ OTT-இல் வெளியாகாத திரைப்படங்களைக் கேட்காதீர்கள்
-3️⃣ இந்த வடிவத்தில் கேளுங்கள்: [திரைப்படத்தின் பெயர், ஆண்டு]
-    """
-
-    CHK_MOV_ALRT = """🔍 𝓢𝓮𝓪𝓻𝓬𝓱𝓲𝓷𝓰 𝓨𝓸𝓾𝓻 𝓕𝓲𝓵𝓮 𝓘𝓷 𝓜𝔂 𝓓𝓪𝓽𝓪𝓫𝓪𝓼𝓮... ⏳"""
-
-    OLD_MES = """⚠️ 𝘠𝘰𝘶 𝘢𝘳𝘦 𝘶𝘴𝘪𝘯𝘨 𝘰𝘯𝘦 𝘰𝘧 𝘮𝘺 𝘰𝘭𝘥 𝘮𝘦𝘴𝘴𝘢𝘨𝘦𝘴 🕰️
-🔁 𝘗𝘭𝘦𝘢𝘴𝘦 𝘴𝘦𝘯𝘥 𝘺𝘰𝘶𝘳 𝘳𝘦𝘲𝘶𝘦𝘴𝘵 𝘢𝘨𝘢𝘪𝘯."""
-
-    MOV_NT_FND = """<b>❌ 𝓣𝓱𝓲𝓼 𝓜𝓸𝓿𝓲𝓮 𝓘𝓼 𝓝𝓸𝓽 𝓨𝓮𝓽 𝓡𝓮𝓵𝓮𝓪𝓼𝓮𝓭 𝓸𝓻 𝓐𝓭𝓭𝓮𝓭 𝓣𝓸 𝓓𝓑 🎬</b>
-📩 Report To Admin — @im_goutham_josh
-"""
-
-    DMCA_TXT = """<b><u>⚖️ DMCA Compliance Notice</u></b>
-
-<blockquote>🛡️ This Telegram bot operates within the guidelines of the Digital Millennium Copyright Act (DMCA) and fully respects intellectual property rights. We respond promptly to all valid DMCA takedown notices.</blockquote>
-
-📧 <b>Send your DMCA takedown notice to:</b>
-<code>dmcarexie@proton.me</code>
-"""
+📧 <b>𝖲𝖾𝗇𝖽 𝗒𝗈𝗎𝗋 𝗍𝖺𝗄𝖾𝖽𝗈𝗐𝗇 𝗇𝗈𝗍𝗂𝖼𝖾 𝗍𝗈:</b>
+<code>dmcarexie@proton.me</code>"""
