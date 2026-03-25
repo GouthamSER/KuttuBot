@@ -41,8 +41,6 @@ def _trim_dict(d: dict):
         for k in keys_to_remove:
             d.pop(k, None)
 
-# ── Filter lists ───────────────────────────────────────────────────────────────
-
 # -- Auto-delete helper --------------------------------------------------------
 async def _auto_delete_result(result_msg, delay: int = 300):
     """Delete auto-filter result after delay seconds (default 5 min)."""
@@ -56,8 +54,6 @@ async def _auto_delete_result(result_msg, delay: int = 300):
     except Exception:
         pass
 # ------------------------------------------------------------------------------
-
-YEARS = [str(y) for y in range(2025, 1999, -1)]
 
 # Language: display label → search keyword
 LANGUAGES = [
@@ -81,12 +77,6 @@ LANGUAGES = [
     ("RUS", "rus"),
 ]
 
-# Seasons: display label → search keyword (s01 format)
-SEASONS = [(f"S{str(i).zfill(2)}", f"s{str(i).zfill(2)}") for i in range(1, 11)]
-
-# Episodes: display label → search keyword (e01 format)
-EPISODES = [(f"E{str(i).zfill(2)}", f"e{str(i).zfill(2)}") for i in range(1, 26)]
-
 QUALITIES = [
     "4K", "1080p", "720p", "480p", "360p", "BluRay",
     "WEB-DL", "HDRip", "DVDRip", "HDTV", "CAMRip", "HDCam"
@@ -107,14 +97,8 @@ async def safe_answer(query, *args, **kwargs):
 def _filter_rows(key):
     return [
         [
-            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥",   callback_data=f"sendfiles#{key}"),
             InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("ʏᴇᴀʀs",      callback_data=f"years#{key}"),
-        ],
-        [
-            InlineKeyboardButton("ǫᴜᴀʟɪᴛʏ",  callback_data=f"qualities#{key}"),
-            InlineKeyboardButton("ᴇᴘɪsᴏᴅᴇs", callback_data=f"episodes#{key}"),
-            InlineKeyboardButton("sᴇᴀsᴏɴs",  callback_data=f"seasons#{key}"),
+            InlineKeyboardButton("ǫᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
         ],
     ]
 
@@ -276,148 +260,6 @@ async def advantage_spoll_choker(bot, query):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  YEARS FILTER
-# ══════════════════════════════════════════════════════════════════════════════
-
-@Client.on_callback_query(filters.regex(r"^years#"))
-async def years_cb_handler(client: Client, query: CallbackQuery):
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    _, key = query.data.split("#")
-    btn = []
-    for i in range(0, len(YEARS) - 1, 4):
-        row = []
-        for j in range(4):
-            if i + j < len(YEARS):
-                row.append(InlineKeyboardButton(
-                    text=YEARS[i + j],
-                    callback_data=f"fy#{YEARS[i + j]}#{key}"
-                ))
-        btn.append(row)
-
-    btn.insert(0, [InlineKeyboardButton("📅 Sᴇʟᴇᴄᴛ Yᴇᴀʀ", callback_data="pages")])
-    btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fy#homepage#{key}")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-@Client.on_callback_query(filters.regex(r"^fy#"))
-async def filter_years_cb_handler(client: Client, query: CallbackQuery):
-    _, year, key = query.data.split("#")
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    base_search = FRESH.get(key)
-    if not base_search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    search = f"{base_search} {year}" if year != "homepage" else base_search
-    BUTTONS[key] = search
-
-    req = query.from_user.id
-    chat_id = query.message.chat.id
-    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
-    if not files:
-        return await query.answer("🚫 No Files Found 🚫", show_alert=True)
-
-    settings = await get_settings(chat_id)
-    pre = 'filep' if settings['file_secure'] else 'file'
-    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
-
-    if year != "homepage":
-        btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fy#homepage#{key}")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  EPISODES FILTER  (e01, e02, e03 ... format)
-# ══════════════════════════════════════════════════════════════════════════════
-
-@Client.on_callback_query(filters.regex(r"^episodes#"))
-async def episodes_cb_handler(client: Client, query: CallbackQuery):
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    _, key = query.data.split("#")
-    btn = []
-    # 5 episode buttons per row
-    for i in range(0, len(EPISODES), 5):
-        row = []
-        for label, value in EPISODES[i:i+5]:
-            row.append(InlineKeyboardButton(
-                text=label,
-                callback_data=f"fe#{value}#{key}"
-            ))
-        btn.append(row)
-
-    btn.insert(0, [InlineKeyboardButton("🎬 Sᴇʟᴇᴄᴛ Eᴘɪsᴏᴅᴇ", callback_data="pages")])
-    btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-@Client.on_callback_query(filters.regex(r"^fe#"))
-async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
-    _, ep, key = query.data.split("#")
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    base_search = FRESH.get(key)
-    if not base_search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    # Exact match only: e01 → search "title e01"
-    search = base_search if ep == "homepage" else f"{base_search} {ep}"
-    BUTTONS[key] = search
-
-    req = query.from_user.id
-    chat_id = query.message.chat.id
-    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
-
-    if not files:
-        return await query.answer("🚫 No Files Found 🚫", show_alert=True)
-
-    settings = await get_settings(chat_id)
-    pre = 'filep' if settings['file_secure'] else 'file'
-    btn = _build_file_btn(files, settings, pre, key, offset, total_results, req)
-
-    if ep != "homepage":
-        btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"fe#homepage#{key}")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #  LANGUAGES FILTER  (MAL, TAM, KAN, ENG, TEL ... format)
 #  → After selecting a language, results are shown immediately (no extra back button needed)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -491,96 +333,6 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  SEASONS FILTER  (S01, S02, S03 ... format)
-# ══════════════════════════════════════════════════════════════════════════════
-
-@Client.on_callback_query(filters.regex(r"^seasons#"))
-async def seasons_cb_handler(client: Client, query: CallbackQuery):
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    _, key = query.data.split("#")
-    btn = []
-    # 5 season buttons per row
-    for i in range(0, len(SEASONS), 5):
-        row = []
-        for label, value in SEASONS[i:i+5]:
-            row.append(InlineKeyboardButton(
-                text=label,
-                callback_data=f"fs#{value}#{key}"
-            ))
-        btn.append(row)
-
-    btn.insert(0, [InlineKeyboardButton("🎞️ Sᴇʟᴇᴄᴛ Sᴇᴀsᴏɴ", callback_data="pages")])
-    req = query.from_user.id
-    btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"next_{req}_{key}_0")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-@Client.on_callback_query(filters.regex(r"^fs#"))
-async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
-    _, seas, key = query.data.split("#")
-    try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
-            return await query.answer("⚠️ This is not your request!", show_alert=True)
-    except:
-        pass
-
-    base_search = FRESH.get(key)
-    if not base_search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    req = query.from_user.id
-    chat_id = query.message.chat.id
-
-    # Exact match only: s01 → search "title s01"
-    search = base_search if seas == "homepage" else f"{base_search} {seas}"
-    files, offset, total_results = await get_search_results(search, offset=0, filter=True)
-
-    if not files:
-        return await query.answer("🚫 No Files Found 🚫", show_alert=True)
-
-    settings = await get_settings(chat_id)
-    pre = 'filep' if settings['file_secure'] else 'file'
-
-    if settings["button"]:
-        btn = [
-            [InlineKeyboardButton(
-                text=f"📁[{get_size(f.file_size)}]-🎭-{f.file_name}",
-                callback_data=f"{pre}#{f.file_id}"
-            )]
-            for f in files
-        ]
-    else:
-        btn = [
-            [
-                InlineKeyboardButton(text=f.file_name,           callback_data=f"{pre}#{f.file_id}"),
-                InlineKeyboardButton(text=get_size(f.file_size), callback_data=f"{pre}#{f.file_id}"),
-            ]
-            for f in files
-        ]
-
-    for row in reversed(_filter_rows(key)):
-        btn.insert(0, row)
-
-    btn.append([InlineKeyboardButton("↭ ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ ↭", callback_data=f"next_{req}_{key}_0")])
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #  QUALITIES FILTER
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -644,69 +396,6 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
     await safe_answer(query)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  SEND-ALL HANDLER  (files auto-deleted from PM after 5 minutes)
-# ══════════════════════════════════════════════════════════════════════════════
-
-@Client.on_callback_query(filters.regex(r"^sendfiles#"))
-async def send_all_files(client: Client, query: CallbackQuery):
-    _, key = query.data.split("#")
-    search = BUTTONS.get(key) or FRESH.get(key)  # BUTTONS first — holds active filter search
-    if not search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    files, _, _ = await get_search_results(search, offset=0, filter=True)
-    if not files:
-        return await safe_answer(query, "No files to send!", show_alert=True)
-
-    settings = await get_settings(query.message.chat.id)
-    pre = 'filep' if settings['file_secure'] else 'file'
-
-    sent_msgs = []
-    for file in files:
-        try:
-            m = await client.send_cached_media(
-                chat_id=query.from_user.id,
-                file_id=file.file_id,
-                protect_content=(pre == 'filep')
-            )
-            sent_msgs.append(m)
-        except UserIsBlocked:
-            return await safe_answer(query, "Unblock the bot first!", show_alert=True)
-        except Exception:
-            pass
-
-    if not sent_msgs:
-        return
-
-    # Send warning notice
-    notice = await client.send_message(
-        chat_id=query.from_user.id,
-        text=(
-            "<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n"
-            f"📦 <b>{len(sent_msgs)} file(s)</b> sent to your PM!\n\n"
-            "⏳ Files will be <b>deleted in 5 minutes</b>\n\n"
-            "📌 Save or forward them before they disappear!</blockquote>"
-        )
-    )
-
-    await safe_answer(query, f"✅ {len(sent_msgs)} file(s) sent! Auto-delete in 5 min.", show_alert=True)
-
-    # Wait 5 minutes then delete all sent files + notice
-    await asyncio.sleep(300)
-
-    for m in sent_msgs:
-        try:
-            await m.delete()
-        except Exception:
-            pass
-
-    try:
-        await notice.edit_text("<b>✅ Files ʜᴀᴠᴇ ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ғʀᴏᴍ ʏᴏᴜʀ PM</b>")
-    except Exception:
-        pass
 
 
 # ══════════════════════════════════════════════════════════════════════════════
