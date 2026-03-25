@@ -57,29 +57,16 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("MAL", "mal"),
-    ("TAM", "tam"),
-    ("KAN", "kan"),
-    ("ENG", "eng"),
-    ("TEL", "tel"),
-    ("HIN", "hin"),
-    ("PUN", "pun"),
-    ("BEN", "ben"),
-    ("MAR", "mar"),
-    ("GUJ", "guj"),
-    ("URD", "urd"),
-    ("KOR", "kor"),
-    ("JAP", "jap"),
-    ("CHN", "chn"),
-    ("FRE", "fre"),
-    ("SPA", "spa"),
-    ("ARB", "arb"),
-    ("RUS", "rus"),
+    ("Maʟᴀʏᴀʟᴀᴍ", "mal"),
+    ("Taᴍɪʟ", "tam"),
+    ("Kaɴɴᴀᴅᴀ", "kan"),
+    ("Enɢʟɪꜱʜ", "eng"),
+    ("Teʟᴜɢᴜ", "tel"),
+    ("Hiɴᴅɪ", "hin"),
 ]
 
 QUALITIES = [
-    "4K", "1080p", "720p", "480p", "360p", "BluRay",
-    "WEB-DL", "HDRip", "DVDRip", "HDTV", "CAMRip", "HDCam"
+    "2160p", "1080p", "720p", "480p", "360p"
 ]
 if len(QUALITIES) % 2 != 0:
     QUALITIES.append("Other")
@@ -97,8 +84,8 @@ async def safe_answer(query, *args, **kwargs):
 def _filter_rows(key):
     return [
         [
-            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("ǫᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
+            InlineKeyboardButton("Laɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("Quᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
         ],
     ]
 
