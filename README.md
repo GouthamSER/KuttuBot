@@ -33,8 +33,7 @@
 | IMDB Info & Search | ✅ |
 | Inline Search | ✅ |
 | Spelling Check & Suggestions | ✅ |
-| Language / Year / Quality / Season / Episode Filters | ✅ |
-| Send All Files to PM (Auto-Delete in 5 min) | ✅ |
+| Language & Quality Filters | ✅ |
 | File Store with Auto-Delete | ✅ |
 | Fast Broadcast to All Users | ✅ |
 | Index Channels | ✅ |
@@ -215,7 +214,7 @@ KuttuBot/
 ├── Dockerfile              # Docker container config
 ├── docker-compose.yml      # Docker Compose config
 ├── plugins/
-│   ├── pm_filter.py        # Callback query handler & auto filter
+│   ├── pm_filter.py        # Auto filter, Language & Quality callbacks
 │   ├── filters.py          # Manual filter management
 │   ├── broadcast.py        # Fast broadcast system
 │   ├── index.py            # Channel indexing
@@ -229,7 +228,7 @@ KuttuBot/
 │   ├── mov_ser_latest.py   # Latest movies & series listing
 │   └── etc.py              # Extra/miscellaneous commands
 └── database/
-    ├── ia_filterdb.py      # Indexed file database
+    ├── ia_filterdb.py      # Indexed file database (with search cache)
     ├── filters_mdb.py      # Manual filter database
     ├── users_chats_db.py   # Users & chats database
     └── connections_mdb.py  # PM–group connection database
@@ -239,12 +238,15 @@ KuttuBot/
 
 ## 🔄 Recent Improvements
 
+- ⚡ **Auto-filter speed** — `get_settings` and `get_search_results` now run in parallel via `asyncio.gather`; typing action fires as a background task so the DB query starts instantly
+- 🗑️ **Cleaned filter buttons** — removed Years, Seasons, Episodes and Send All; only Language & Quality filters remain
+- 🧹 **Dead code removed** — ~300 lines of unused handlers and data lists eliminated from `pm_filter.py`
+- 🔍 **Search cache** — repeated queries within 60 s return instantly from memory (no DB round-trip)
 - ⚡ **Broadcast speed** — removed per-user 2-second delay; broadcasts are now ~40× faster
 - 🔧 **FloodWait fix** — updated `e.x` → `e.value` for Pyrogram v2+ compatibility
 - 🌐 **Async HTTP** — replaced blocking `requests` library with `aiohttp` for non-blocking searches
 - 🐛 **Search result bug** — fixed crash when regex fails in `get_search_results()` (wrong return type)
 - 📦 **Inline search fix** — removed deprecated `pyrogram.emoji` import that caused startup crash
-- 🧹 **Regex warnings** — fixed invalid escape sequences in search pattern strings
 
 ---
 
