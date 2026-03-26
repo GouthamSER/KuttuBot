@@ -57,16 +57,29 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("Maʟᴀʏᴀʟᴀᴍ", "mal"),
-    ("Taᴍɪʟ", "tam"),
-    ("Kaɴɴᴀᴅᴀ", "kan"),
-    ("Enɢʟɪꜱʜ", "eng"),
-    ("Teʟᴜɢᴜ", "tel"),
-    ("Hiɴᴅɪ", "hin"),
+    ("MAL", "mal"),
+    ("TAM", "tam"),
+    ("KAN", "kan"),
+    ("ENG", "eng"),
+    ("TEL", "tel"),
+    ("HIN", "hin"),
+    ("PUN", "pun"),
+    ("BEN", "ben"),
+    ("MAR", "mar"),
+    ("GUJ", "guj"),
+    ("URD", "urd"),
+    ("KOR", "kor"),
+    ("JAP", "jap"),
+    ("CHN", "chn"),
+    ("FRE", "fre"),
+    ("SPA", "spa"),
+    ("ARB", "arb"),
+    ("RUS", "rus"),
 ]
 
 QUALITIES = [
-    "2160p", "1080p", "720p", "480p", "360p"
+    "4K", "1080p", "720p", "480p", "360p", "BluRay",
+    "WEB-DL", "HDRip", "DVDRip", "HDTV", "CAMRip", "HDCam"
 ]
 if len(QUALITIES) % 2 != 0:
     QUALITIES.append("Other")
@@ -84,8 +97,8 @@ async def safe_answer(query, *args, **kwargs):
 def _filter_rows(key):
     return [
         [
-            InlineKeyboardButton("Laɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("Quᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
+            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("ǫᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
         ],
     ]
 
@@ -918,23 +931,31 @@ async def cb_handler(client: Client, query: CallbackQuery):
 async def auto_filter(client, msg, spoll=False):
     if not spoll:
         message = msg
-        settings = await get_settings(message.chat.id)
         if message.text.startswith("/"):
             return
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
-        if 2 < len(message.text) < 100:
-            search = message.text
-            # Show typing action while fetching results from DB
-            await client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
-            files, offset, total_results = await get_search_results(search.lower(), offset=0, filter=True)
-            if not files:
-                if settings["spell_check"]:
-                    return await advantage_spell_chok(client, msg)
-                else:
-                    return
-        else:
+        if not (2 < len(message.text) < 100):
             return
+
+        search = message.text.strip().lower()
+
+        # Fire typing action as background task — don't block the DB fetch
+        asyncio.create_task(
+            client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
+        )
+
+        # ⚡ Fetch settings and search results in parallel
+        settings, (files, offset, total_results) = await asyncio.gather(
+            get_settings(message.chat.id),
+            get_search_results(search, offset=0, filter=True),
+        )
+
+        if not files:
+            if settings["spell_check"]:
+                return await advantage_spell_chok(client, msg)
+            else:
+                return
     else:
         settings = await get_settings(msg.message.chat.id)
         message = msg.message.reply_to_message
