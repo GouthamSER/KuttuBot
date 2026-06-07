@@ -176,55 +176,64 @@ async def _tmdb_get_details(media_type, tmdb_id):
 
 
 async def get_poster(query, bulk=False, id=False, file=None):
-    # ── TMDB direct-ID lookup ────────────────────────────────────────────────
-    if id and isinstance(query, str) and query.startswith("tmdb_"):
-        # format: tmdb_<media_type>_<id>
-        parts = query.split("_")
-        if len(parts) == 3:
-            return await _tmdb_get_details(parts[1], parts[2])
-        return None
+    # ── Direct ID lookups ────────────────────────────────────────────────────
+    if id:
+        if isinstance(query, str) and query.startswith("tmdb_"):
+            # format: tmdb_<media_type>_<numeric_id>
+            parts = query.split("_", 2)
+            if len(parts) == 3:
+                return await _tmdb_get_details(parts[1], parts[2])
+            return None
+        # plain IMDb numeric ID
+        return await _imdb_get_details(query)
 
-    # ── Normal search flow ──────────────────────────────────────────────────
-    if not id:
-        query = (query.strip()).lower()
-        title = query
-        year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
+    # ── Parse title + year from query ───────────────────────────────────────
+    query = (query.strip()).lower()
+    title = query
+    year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
+    if year:
+        year = list_to_str(year[:1])
+        title = (query.replace(year, "")).strip()
+    elif file is not None:
+        year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
         if year:
             year = list_to_str(year[:1])
-            title = (query.replace(year, "")).strip()
-        elif file is not None:
-            year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
-            if year:
-                year = list_to_str(year[:1])
-        else:
-            year = None
-
-        # ── Try IMDb first ──────────────────────────────────────────────────
-        try:
-            movieid = imdb.search_movie(title.lower(), results=10)
-        except Exception as e:
-            logger.exception(f"IMDb search error: {e}")
-            movieid = []
-
-        if movieid:
-            if year:
-                filtered = list(filter(lambda k: str(k.get('year')) == str(year), movieid))
-                if not filtered:
-                    filtered = movieid
-            else:
-                filtered = movieid
-            filtered = list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered)) or filtered
-            if bulk:
-                return filtered
-            movieid = filtered[0].movieID
-        else:
-            # ── IMDb returned nothing → fallback to TMDB ────────────────────
-            logger.info(f"IMDb no results for '{title}', trying TMDB fallback")
-            return await _tmdb_search(title, year=year, bulk=bulk)
     else:
-        movieid = query
+        year = None
 
-    # ── Fetch IMDb movie details ────────────────────────────────────────────
+    # ── TMDB primary (if key set) ────────────────────────────────────────────
+    if TMDB_API_KEY:
+        tmdb_result = await _tmdb_search(title, year=year, bulk=bulk)
+        if tmdb_result:
+            return tmdb_result
+        logger.info(f"TMDB no results for '{title}', trying IMDb fallback")
+
+    # ── IMDb fallback (always runs if no TMDB key, or TMDB empty) ───────────
+    try:
+        movieid = imdb.search_movie(title.lower(), results=10)
+    except Exception as e:
+        logger.exception(f"IMDb search error: {e}")
+        return None
+
+    if not movieid:
+        return None
+
+    if year:
+        filtered = list(filter(lambda k: str(k.get('year')) == str(year), movieid))
+        if not filtered:
+            filtered = movieid
+    else:
+        filtered = movieid
+    filtered = list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered)) or filtered
+
+    if bulk:
+        return filtered
+
+    return await _imdb_get_details(filtered[0].movieID)
+
+
+async def _imdb_get_details(movieid):
+    """Fetch full IMDb details by movieID and return poster-compatible dict."""
     try:
         movie = imdb.get_movie(movieid)
     except Exception as e:
