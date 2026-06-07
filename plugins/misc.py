@@ -156,7 +156,7 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     if not data:
         await quer_y.answer("❌ Could not fetch details.", show_alert=True)
         return
-    source_label = "TMDb" if data.get('_source') == 'tmdb' else "IMDb"
+    source_label = "TMDb" if data.get('_source') == 'tmdb' else ("OMDb/IMDb" if data.get('_source') == 'omdb' else "IMDb")
     btn = [
             [
                 InlineKeyboardButton(
