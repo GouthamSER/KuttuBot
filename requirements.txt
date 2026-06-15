@@ -9,4 +9,5 @@ bs4
 aiohttp==3.9.5
 psutil
 telegraph
+httpx
 aiofiles
