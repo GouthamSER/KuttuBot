@@ -57,6 +57,35 @@ def _parse_mediainfo(raw: str) -> str:
     return tc
 
 
+async def auto_delete_routine(original_message, bot_reply, page_path):
+    """Waits 5 minutes (300s), wipes the Telegraph page, and deletes the Telegram messages."""
+    await asyncio.sleep(300) 
+    
+    # 1. Wipe the Telegraph page content
+    try:
+        await telegraph.edit_page(
+            path=page_path,
+            title="Link Expired",
+            html_content="<h3>🚫 This MediaInfo page has been permanently removed for copyright protection.</h3>",
+            author_name="Goutham Josh",
+            author_url="https://t.me/im_goutham_josh"
+        )
+    except Exception as e:
+        LOGGER.warning(f"Failed to edit Telegraph page: {e}")
+
+    # 2. Delete the bot's reply containing the link
+    try:
+        await bot_reply.delete()
+    except Exception:
+        pass
+
+    # 3. Delete the original message containing the video/document
+    try:
+        await original_message.delete()
+    except Exception:
+        pass
+
+
 async def gen_mediainfo(client, message, link=None, media=None, media_msg=None):
     status = await message.reply_text("<i>Generating MediaInfo…</i>")
     des_path = None
@@ -113,12 +142,20 @@ async def gen_mediainfo(client, message, link=None, media=None, media_msg=None):
             author_url="https://t.me/im_goutham_josh"
         )
         
-        # graph.org is often preferred in bots over telegra.ph
         graph_url = f"https://graph.org/{page['path']}"
         
         await status.edit_text(
-            f"<b>MediaInfo:</b>\n\n➲ <b>Link:</b> {graph_url}",
+            f"<b>MediaInfo:</b>\n\n➲ <b>Link:</b> {graph_url}\n\n<i>⏳ This link and the original file will be auto-deleted in 5 minutes.</i>",
             disable_web_page_preview=False,
+        )
+
+        # Trigger the 5-minute background auto-delete timer
+        asyncio.create_task(
+            auto_delete_routine(
+                original_message=message.reply_to_message if message.reply_to_message else message,
+                bot_reply=status,
+                page_path=page['path']
+            )
         )
 
     except Exception as exc:
