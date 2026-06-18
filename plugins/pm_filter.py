@@ -32,7 +32,7 @@ SPELL_CHECK = {}
 FRESH = {}
 
 # ✅ FIX: Max size for in-memory dicts — oldest entries dropped when limit hit
-_MAX_DICT_SIZE = 500
+_MAX_DICT_SIZE = 250
 
 def _trim_dict(d: dict):
     """Remove oldest 20% of entries when dict exceeds max size."""
@@ -57,9 +57,9 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("Maʟᴀʏᴀʟᴀᴍ", "mal"),
+    ("Maʟᴀʏaʟᴀᴍ", "mal"),
     ("Taᴍɪʟ", "tam"),
-    ("Kaɴɴᴀᴅᴀ", "kan"),
+    ("Kaɴɴaᴅᴀ", "kan"),
     ("Enɢʟɪꜱʜ", "eng"),
     ("Teʟᴜɢᴜ", "tel"),
     ("Hiɴᴅɪ", "hin"),
@@ -84,8 +84,8 @@ async def safe_answer(query, *args, **kwargs):
 def _filter_rows(key):
     return [
         [
-            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("ǫᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
+            InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("Qᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
         ],
     ]
 
@@ -922,7 +922,7 @@ async def auto_filter(client, msg, spoll=False):
             return
         if re.findall(r"((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
-        if not (2 < len(message.text) < 100):
+        if not (1 < len(message.text) < 100):
             return
 
         search = message.text.strip().lower()
