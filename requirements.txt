@@ -1,4 +1,4 @@
-git+https://github.com/cinemagoer/cinemagoer
+cinemagoer==2023.05.01
 pyrotgfork
 tgcrypto
 pymongo[srv]==4.3.2
