@@ -163,12 +163,14 @@ class script(object):
 
     RESULT_TXT = """✅ <b>𝖧𝖾𝗒 {}!  𝖨 𝖿𝗈𝗎𝗇𝖽 𝗂𝗍 𝗂𝗇 𝗆𝗒 𝖽𝖺𝗍𝖺𝖻𝖺𝗌𝖾 🎯</b>"""
 
-    CUSTOM_FILE_CAPTION = """<b>📁 𝖥𝗂𝗅𝖾 𝖭𝖺𝗆𝖾  :  {file_name}
-📦 𝖥𝗂𝗅𝖾 𝖲𝗂𝗓𝖾  :  {file_size}
+    CUSTOM_FILE_CAPTION = """<b>📁 𝖥𝗂𝗅𝖾 𝖭𝖺𝗆𝖾 : {file_name}
+📦 𝖥𝗂𝗅𝖾 𝖲𝗂𝗓𝖾 : {file_size}
 
 ┌─────────────────────┐
-  ✨ <a href="https://t.me/+53lB8qzQaGFlNDll">𝖩𝗈𝗂𝗇 𝖤𝗅𝖽𝗈𝗋𝖺𝖽𝗈</a>
-└─────────────────────┘</b>"""
+  ✨ <a href="https://t.me/+53lB8qzQaGFlNDll">𝖩𝗈𝗂𝗇 𝖤𝗅𝖽𝗈𝗋𝖺𝖽𝗈 :)</a>
+└─────────────────────┘
+
+<u><i>📌 Download This File And Play on VLC or MX Player For Better Experience And Without Sound Issues.</u></i></b>"""
 
     RESTART_TXT = """✅ <b>𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™  𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗲𝗱  🔄</b>
 
