@@ -1,4 +1,5 @@
 cinemagoer==2023.05.01
+imdbio
 pyrotgfork
 tgcrypto
 pymongo[srv]==4.3.2
