@@ -1,7 +1,6 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, USE_IMDBIO
-from imdb import Cinemagoer
+from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
 import imdbio
 from imdbio import TitleType
 import asyncio
@@ -22,8 +21,6 @@ logger.setLevel(logging.INFO)
 BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
 )
-
-imdb = Cinemagoer()
 
 BANNED = {}
 SMART_OPEN = '“'
@@ -154,12 +151,10 @@ async def _imdbio_get_details(imdb_id):
 async def get_poster(query, bulk=False, id=False, file=None):
     # ── Direct ID lookups ────────────────────────────────────────────────────
     if id:
+        imdb_id = query
         if isinstance(query, str) and query.startswith("imdbio_"):
-            # format: imdbio_tt1234567
             imdb_id = query[len("imdbio_"):]  # strip "imdbio_" prefix
-            return await _imdbio_get_details(imdb_id)
-        # plain IMDb numeric ID → use IMDb detail fetch
-        return await _imdb_get_details(query)
+        return await _imdbio_get_details(imdb_id)
 
     # ── Parse title + year ───────────────────────────────────────────────────
     query = (query.strip()).lower()
@@ -175,92 +170,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
     else:
         year = None
 
-    # ── imdbio primary (no API key needed) ───────────────────────────────────
-    if USE_IMDBIO:
-        imdbio_result = await _imdbio_search(title, year=year, bulk=bulk)
-        if imdbio_result:
-            return imdbio_result
-        logger.info(f"imdbio no results for '{title}', trying Cinemagoer IMDb fallback")
-
-    # ── IMDb fallback ────────────────────────────────────────────────────────
-    try:
-        movieid = imdb.search_movie(title.lower(), results=10)
-    except Exception as e:
-        logger.exception(f"IMDb search error: {e}")
-        return None
-
-    if not movieid:
-        return None
-
-    if year:
-        filtered = list(filter(lambda k: str(k.get('year')) == str(year), movieid))
-        if not filtered:
-            filtered = movieid
-    else:
-        filtered = movieid
-    filtered = list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered)) or filtered
-
-    if bulk:
-        return filtered
-
-    return await _imdb_get_details(filtered[0].movieID)
-
-
-async def _imdb_get_details(movieid):
-    """Fetch full IMDb details by movieID and return poster-compatible dict."""
-    try:
-        movie = imdb.get_movie(movieid)
-    except Exception as e:
-        logger.exception(f"IMDb get_movie error: {e}")
-        return None
-
-    if movie.get("original air date"):
-        date = movie["original air date"]
-    elif movie.get("year"):
-        date = movie.get("year")
-    else:
-        date = "N/A"
-    plot = ""
-    if not LONG_IMDB_DESCRIPTION:
-        plot = movie.get('plot')
-        if plot and len(plot) > 0:
-            plot = plot[0]
-    else:
-        plot = movie.get('plot outline')
-    if plot and len(plot) > 800:
-        plot = plot[0:800] + "..."
-
-    return {
-        'title': movie.get('title'),
-        'votes': movie.get('votes'),
-        "aka": list_to_str(movie.get("akas")),
-        "seasons": movie.get("number of seasons"),
-        "box_office": movie.get('box office'),
-        'localized_title': movie.get('localized title'),
-        'kind': movie.get("kind"),
-        "imdb_id": f"tt{movie.get('imdbID')}",
-        "cast": list_to_str(movie.get("cast")),
-        "runtime": list_to_str(movie.get("runtimes")),
-        "countries": list_to_str(movie.get("countries")),
-        "certificates": list_to_str(movie.get("certificates")),
-        "languages": list_to_str(movie.get("languages")),
-        "director": list_to_str(movie.get("director")),
-        "writer": list_to_str(movie.get("writer")),
-        "producer": list_to_str(movie.get("producer")),
-        "composer": list_to_str(movie.get("composer")),
-        "cinematographer": list_to_str(movie.get("cinematographer")),
-        "music_team": list_to_str(movie.get("music department")),
-        "distributors": list_to_str(movie.get("distributors")),
-        'release_date': date,
-        'year': movie.get('year'),
-        'genres': list_to_str(movie.get("genres")),
-        'poster': movie.get('full-size cover url'),
-        'plot': plot,
-        'rating': str(movie.get("rating")),
-        'url': f'https://www.imdb.com/title/tt{movieid}',
-        '_source': 'imdb',
-    }
-# https://github.com/odysseusmax/animated-lamp/blob/2ef4730eb2b5f0596ed6d03e7b05243d93e3415b/bot/utils/broadcast.py#L37
+    return await _imdbio_search(title, year=year, bulk=bulk)
 
 async def broadcast_messages(user_id, message):
     try:
