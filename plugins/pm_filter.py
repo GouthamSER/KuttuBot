@@ -57,6 +57,7 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
+    ("Multi", "multi")
     ("Maʟᴀʏaʟᴀᴍ", "mal"),
     ("Taᴍɪʟ", "tam"),
     ("Kaɴɴaᴅᴀ", "kan"),
@@ -66,7 +67,7 @@ LANGUAGES = [
 ]
 
 QUALITIES = [
-    "2160p", "1080p", "720p", "480p", "360p"
+    "2160p", "1440p", "1080p", "720p", "540p", "480p", "360p"
 ]
 if len(QUALITIES) % 2 != 0:
     QUALITIES.append("Other")
@@ -84,8 +85,8 @@ async def safe_answer(query, *args, **kwargs):
 def _filter_rows(key):
     return [
         [
-            InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("Qᴜᴀʟɪᴛʏ",   callback_data=f"qualities#{key}"),
+            InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇs 💭", callback_data=f"languages#{key}"),
+            InlineKeyboardButton("Qᴜᴀʟɪᴛʏ 💯",   callback_data=f"qualities#{key}"),
         ],
     ]
 
@@ -144,7 +145,7 @@ async def give_filter(client, message):
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     if int(req) not in [query.from_user.id, 0]:
-        return await safe_answer(query, "**Search for Yourself**🔎", show_alert=True)
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
     try:
         offset = int(offset)
     except:
