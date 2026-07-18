@@ -57,7 +57,7 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("Multi", "multi")
+    ("Multi", "multi"),
     ("Maʟᴀʏaʟᴀᴍ", "mal"),
     ("Taᴍɪʟ", "tam"),
     ("Kaɴɴaᴅᴀ", "kan"),
