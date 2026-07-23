@@ -166,12 +166,18 @@ class script(object):
     CUSTOM_FILE_CAPTION = """<b>📁 𝖥𝗂𝗅𝖾 𝖭𝖺𝗆𝖾 : {file_name}
 📦 𝖥𝗂𝗅𝖾 𝖲𝗂𝗓𝖾 : {file_size}
 
-┌─────────────────────┐
-  ✨ <a href="https://t.me/+53lB8qzQaGFlNDll">𝖩𝗈𝗂𝗇 𝖤𝗅𝖽𝗈𝗋𝖺𝖽𝗈 :)</a>
-└─────────────────────┘
+┌────────────────┐
+✨ <a href="https://t.me/+53lB8qzQaGFlNDll">𝖩𝗈𝗂𝗇 𝖤𝗅𝖽𝗈𝗋𝖺𝖽𝗈 :)</a>
+└────────────────┘
 
-<u><i>📌 Download This File And Play on VLC or MX Player For Better Experience And Without Sound Issues.</u></i></b>"""
+╭───────────────╮
+⚡ <b>Instant Link Generator</b>
+├ 🔗 <a href="https://t.me/file2linkkuttu_bot">File ² Link</a>
+├ 🔗 <a href="https://t.me/filestreamk_bot">File Stream Bot</a>
+╰───────────────╯
 
+<u><i>📌 Download this file and play it using VLC or MX Player for the best experience and to avoid sound issues.</i></u></b>"""
+    
     RESTART_TXT = """✅ <b>𝗞𝘂𝘁𝘁𝘂 𝗕𝗼𝘁™  𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗲𝗱  🔄</b>
 
 ⚡ @im_goutham_josh"""
