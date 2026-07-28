@@ -928,10 +928,6 @@ async def auto_filter(client, msg, spoll=False):
 
         search = message.text.strip().lower()
 
-        # Fire typing action as background task — don't block the DB fetch
-        asyncio.create_task(
-            client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
-        )
 
         # ⚡ Fetch settings and search results in parallel
         settings, (files, offset, total_results) = await asyncio.gather(
@@ -1043,8 +1039,8 @@ async def auto_filter(client, msg, spoll=False):
     else:
         result_msg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
 
-    if spoll:
-        await msg.message.delete()
+    #if spoll:
+        #await msg.message.delete()
 
     # ── Auto-delete result after 5 min for copyright protection ───────────────
     if result_msg:
