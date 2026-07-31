@@ -1,6 +1,6 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM
+from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, TMDB_API_KEY
 import imdbio
 from imdbio import TitleType
 import asyncio
@@ -14,6 +14,7 @@ from typing import List
 from database.users_chats_db import db
 from bs4 import BeautifulSoup
 import aiohttp
+import httpx
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -64,6 +65,110 @@ class _ImdbioFakeMovie:
         return getattr(self._m, _map.get(k, k), default)
 
 
+TMDB_IMG_BASE = "https://image.tmdb.org/t/p/original"
+
+
+class _TmdbFakeMovie:
+    """Wraps a TMDB search result to match Cinemagoer's object interface."""
+    def __init__(self, m):
+        self._m = m
+        self.movieID = f"tmdb_{m.get('id')}"
+    def get(self, k, default=None):
+        _map = {'title': 'title', 'year': 'year', 'kind': 'media_type'}
+        key = _map.get(k, k)
+        if key == 'title':
+            return self._m.get('title') or self._m.get('name') or default
+        if key == 'year':
+            d = self._m.get('release_date') or self._m.get('first_air_date') or ''
+            return d[:4] if d else default
+        return self._m.get(key, default)
+
+
+async def _tmdb_search(title, year=None, bulk=False):
+    """Fallback search via TMDB (used when imdbio is blocked/down)."""
+    if not TMDB_API_KEY:
+        logger.warning("TMDB_API_KEY not set, skipping tmdb fallback")
+        return None
+    try:
+        params = {"api_key": TMDB_API_KEY, "query": title, "include_adult": "false"}
+        if year:
+            params["year"] = year
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get("https://api.themoviedb.org/3/search/multi", params=params)
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception as e:
+        logger.exception(f"tmdb search error: {e}")
+        return None
+
+    results = [r for r in data.get("results", []) if r.get("media_type") in ("movie", "tv")]
+    if not results:
+        return None
+    if bulk:
+        return [_TmdbFakeMovie(r) for r in results[:10]]
+    return await _tmdb_get_details(results[0]["id"], results[0]["media_type"])
+
+
+async def _tmdb_get_details(tmdb_id, media_type="movie"):
+    """Fetch full TMDB details by id + media_type ('movie' or 'tv')."""
+    if not TMDB_API_KEY:
+        return None
+    try:
+        params = {"api_key": TMDB_API_KEY, "append_to_response": "credits"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"https://api.themoviedb.org/3/{media_type}/{tmdb_id}", params=params)
+            resp.raise_for_status()
+            m = resp.json()
+    except Exception as e:
+        logger.exception(f"tmdb details error: {e}")
+        return None
+    if not m:
+        return None
+
+    credits = m.get("credits", {})
+    cast = list_to_str([c.get("name") for c in credits.get("cast", [])[:10]])
+    directors = list_to_str([c.get("name") for c in credits.get("crew", []) if c.get("job") == "Director"])
+    writers = list_to_str([c.get("name") for c in credits.get("crew", []) if c.get("job") in ("Writer", "Screenplay")])
+    title = m.get("title") or m.get("name") or "N/A"
+    release_date = m.get("release_date") or m.get("first_air_date") or "N/A"
+    year = release_date[:4] if release_date and release_date != "N/A" else "N/A"
+    plot = m.get("overview") or "N/A"
+    if not LONG_IMDB_DESCRIPTION and plot and len(plot) > 800:
+        plot = plot[:800] + "..."
+    poster_path = m.get("poster_path")
+
+    return {
+        'title': title,
+        'votes': m.get("vote_count", "N/A"),
+        "aka": "N/A",
+        "seasons": m.get("number_of_seasons"),
+        "box_office": "N/A",
+        'localized_title': title,
+        'kind': "tv series" if media_type == "tv" else "movie",
+        "imdb_id": "N/A",
+        "cast": cast or "N/A",
+        "runtime": f"{m.get('runtime')} min" if m.get("runtime") else "N/A",
+        "countries": list_to_str([c.get("name") for c in m.get("production_countries", [])]),
+        "certificates": "N/A",
+        "languages": list_to_str([l.get("english_name") for l in m.get("spoken_languages", [])]),
+        "director": directors or "N/A",
+        "writer": writers or "N/A",
+        "producer": "N/A",
+        "composer": "N/A",
+        "cinematographer": "N/A",
+        "music_team": "N/A",
+        "distributors": "N/A",
+        'release_date': release_date,
+        'year': year,
+        'genres': list_to_str([g.get("name") for g in m.get("genres", [])]),
+        'poster': f"{TMDB_IMG_BASE}{poster_path}" if poster_path else None,
+        'plot': plot,
+        'rating': str(m.get("vote_average", "N/A")),
+        'url': f"https://www.themoviedb.org/{media_type}/{tmdb_id}",
+        '_source': 'tmdb',
+    }
+
+
 def _cat_names(movie, key):
     """Pull a job-category (writer/producer/composer/...) name list off a MovieDetail."""
     people = (movie.categories or {}).get(key, [])
@@ -87,19 +192,19 @@ async def _imdbio_search(title, year=None, bulk=False, _retry=True):
             # imdb graphql blocked us, back off once then give up quietly
             await asyncio.sleep(2)
             return await _imdbio_search(title, year, bulk, _retry=False)
-        logger.warning(f"imdbio blocked (403), skipping imdb data for '{title}'")
-        return None
+        logger.warning(f"imdbio blocked (403), falling back to tmdb for '{title}'")
+        return await _tmdb_search(title, year, bulk)
     except Exception as e:
         logger.exception(f"imdbio search error: {e}")
-        return None
+        return await _tmdb_search(title, year, bulk)
 
     if not result or not result.titles:
-        return None
+        return await _tmdb_search(title, year, bulk)
     if bulk:
         return [_ImdbioFakeMovie(t) for t in result.titles[:10]]
     # fetch full details for top result
     imdb_id = result.titles[0].imdbId
-    return await _imdbio_get_details(imdb_id) if imdb_id else None
+    return await _imdbio_get_details(imdb_id) if imdb_id else await _tmdb_search(title, year, bulk)
 
 
 async def _imdbio_get_details(imdb_id):
@@ -158,6 +263,9 @@ async def _imdbio_get_details(imdb_id):
 async def get_poster(query, bulk=False, id=False, file=None):
     # ── Direct ID lookups ────────────────────────────────────────────────────
     if id:
+        if isinstance(query, str) and query.startswith("tmdb_"):
+            tmdb_id = query[len("tmdb_"):]
+            return await _tmdb_get_details(tmdb_id, "movie") or await _tmdb_get_details(tmdb_id, "tv")
         imdb_id = query
         if isinstance(query, str) and query.startswith("imdbio_"):
             imdb_id = query[len("imdbio_"):]  # strip "imdbio_" prefix
