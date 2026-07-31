@@ -1,4 +1,4 @@
-imdbio
+imdbinfo
 pyroblack
 tgcrypto
 pymongo[srv]==4.6.3
