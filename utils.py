@@ -70,7 +70,7 @@ def _cat_names(movie, key):
     return list_to_str([p.name for p in people]) if people else "N/A"
 
 
-async def _imdbio_search(title, year=None, bulk=False):
+async def _imdbio_search(title, year=None, bulk=False, _retry=True):
     """Search imdbio (no API key needed). Returns list (_ImdbioFakeMovie) for bulk, or full dict."""
     try:
         year_int = int(year) if year else None
@@ -82,6 +82,13 @@ async def _imdbio_search(title, year=None, bulk=False):
             None,
             (TitleType.Movies, TitleType.Series),
         )
+    except imdbio.exceptions.GraphQLError as e:
+        if "403" in str(e) and _retry:
+            # imdb graphql blocked us, back off once then give up quietly
+            await asyncio.sleep(2)
+            return await _imdbio_search(title, year, bulk, _retry=False)
+        logger.warning(f"imdbio blocked (403), skipping imdb data for '{title}'")
+        return None
     except Exception as e:
         logger.exception(f"imdbio search error: {e}")
         return None
