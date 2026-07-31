@@ -1,8 +1,8 @@
 imdbio
 pyroblack
 tgcrypto
-pymongo[srv]==4.3.2
-motor==3.0.0
+pymongo[srv]==4.6.3
+motor==3.4.0
 marshmallow==3.18.0
 umongo==3.1.0
 bs4
