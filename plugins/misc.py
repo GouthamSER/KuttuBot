@@ -134,7 +134,7 @@ async def imdb_search(client, message):
         r, title = message.text.split(None, 1)
         movies = await get_poster(title, bulk=True)
         if not movies:
-            return await k.edit("❌ No results found on IMDb or TMDB.")
+            return await k.edit("❌ No results found on OMDb.")
         btn = [
             [
                 InlineKeyboardButton(
@@ -156,11 +156,10 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     if not data:
         await quer_y.answer("❌ Could not fetch details.", show_alert=True)
         return
-    source_label = "TMDb" if data.get('_source') == 'tmdb' else "IMDb"
     btn = [
             [
                 InlineKeyboardButton(
-                    text=f"🔗 {data.get('title')} on {source_label}",
+                    text=f"🔗 {data.get('title')} on IMDb",
                     url=data['url'],
                 )
             ]
