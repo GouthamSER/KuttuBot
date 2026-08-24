@@ -10,7 +10,7 @@ import pyrogram
 from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, \
     make_inactive
 from info import ADMINS, AUTH_CHANNEL, AUTH_USERS, CUSTOM_FILE_CAPTION, AUTH_GROUPS, P_TTI_SHOW_OFF, IMDB, \
-    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE
+    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE, AUTO_DELETE_TIME
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, QueryIdInvalid
@@ -42,6 +42,35 @@ def _trim_dict(d: dict):
             d.pop(k, None)
 
 # -- Auto-delete helper --------------------------------------------------------
+async def _auto_delete_file(client, file_msg, delay: int = AUTO_DELETE_TIME):
+    """Delete a delivered file from user PM after `delay` sec, with a heads-up notice."""
+    if delay <= 0:
+        return
+    warn = None
+    try:
+        warn = await client.send_message(
+            chat_id=file_msg.chat.id,
+            text=(
+                "<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n"
+                f"⚠️ File will be deleted in {delay // 60} Mins\n\n"
+                "📌 Save or forward it.</blockquote>"
+            ),
+            reply_to_message_id=file_msg.id
+        )
+    except Exception:
+        pass
+    await asyncio.sleep(delay)
+    try:
+        await file_msg.delete()
+    except Exception:
+        pass
+    if warn:
+        try:
+            await warn.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
+        except Exception:
+            pass
+
+
 async def _auto_delete_result(result_msg, delay: int = 300):
     """Delete auto-filter result after delay seconds (default 5 min)."""
     await asyncio.sleep(delay)
@@ -598,13 +627,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
                 return
             else:
-                await client.send_cached_media(
+                m = await client.send_cached_media(
                     chat_id=query.from_user.id,
                     file_id=file_id,
                     caption=f_caption,
                     protect_content=True if ident == "filep" else False
                 )
                 await safe_answer(query, '**Already Sent In your Pm**', show_alert=True)
+                asyncio.create_task(_auto_delete_file(client, m))
         except UserIsBlocked:
             await safe_answer(query, 'Unblock the bot mahn !', show_alert=True)
         except PeerIdInvalid:
@@ -644,17 +674,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             caption=f_caption,
             protect_content=True if ident == 'checksubp' else False
         )
-        k = await client.send_message(
-            chat_id=query.from_user.id,
-            text=(
-                "<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n"
-                "⚠️ File will be deleted in 10 Mins\n\n"
-                "📌 Save or forward it.</blockquote>"
-            )
-        )
-        await asyncio.sleep(600)
-        await m.delete()
-        await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
+        asyncio.create_task(_auto_delete_file(client, m))
         return
 
     elif query.data == "pages":
