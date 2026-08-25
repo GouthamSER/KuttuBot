@@ -126,8 +126,16 @@ def _filter_rows(key):
     ]
 
 
+# ── Helper: top row with the "Select Files" toggle (only if >1 file) ──────────
+def _select_row(key, offset, req, n_files):
+    if n_files <= 1:
+        return []
+    _off = offset if offset not in ("", None) else 0
+    return [[InlineKeyboardButton("☑️ Select Files", callback_data=f"selst#{key}#{_off}#{req}")]]
+
+
 # ── Helper: rebuild file-list buttons after a filter ──────────────────────────
-def _build_file_btn(files, settings, pre, key, offset, total_results, req):
+def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_offset=0):
     if settings["button"]:
         btn = [
             [InlineKeyboardButton(
@@ -145,8 +153,9 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req):
             for file in files
         ]
 
-    # prepend filter rows
-    for row in reversed(_filter_rows(key)):
+    # prepend top rows: Language/Quality filter row, then Select Files row
+    top_rows = list(_filter_rows(key)) + _select_row(key, page_offset, req, len(files))
+    for row in reversed(top_rows):
         btn.insert(0, row)
 
     # pagination
@@ -169,7 +178,7 @@ def _build_select_btn(msg_key):
     for fid, f in files_map.items():
         mark = "✅" if fid in selected else "⬜"
         btn.append([InlineKeyboardButton(
-            text=f"{mark} {f.file_name} [{get_size(f.file_size)}]",
+            text=f"{mark} {f.file_name}",
             callback_data=f"tick#{msg_key}#{fid}"
         )])
     btn.append([
@@ -261,7 +270,7 @@ async def next_page(bot, query):
             for file in files
         ]
 
-    for row in reversed(_filter_rows(key)):
+    for row in reversed(list(_filter_rows(key)) + _select_row(key, offset, req, len(files))):
         btn.insert(0, row)
 
     if 0 < offset <= 10:
@@ -538,9 +547,7 @@ async def select_back_handler(client, query):
     if not files:
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
-    btn = _build_file_btn(files, settings, pre, key, n_offset, total, req)
-    if len(files) > 1:
-        btn.append([InlineKeyboardButton("☑️ Select Files", callback_data=f"selst#{key}#{offset}#{req}")])
+    btn = _build_file_btn(files, settings, pre, key, n_offset, total, req, page_offset=offset)
 
     try:
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
@@ -1185,7 +1192,7 @@ async def auto_filter(client, msg, spoll=False):
             for file in files
         ]
 
-    for row in reversed(_filter_rows(key)):
+    for row in reversed(list(_filter_rows(key)) + _select_row(key, 0, req, len(files))):
         btn.insert(0, row)
 
     if offset != "":
@@ -1195,10 +1202,6 @@ async def auto_filter(client, msg, spoll=False):
         ])
     else:
         btn.append([InlineKeyboardButton(text="📃 1/1", callback_data="pages")])
-
-    if len(files) > 1:
-        _off = offset if offset != "" else 0
-        btn.append([InlineKeyboardButton("☑️ Select Files", callback_data=f"selst#{key}#{_off}#{req}")])
 
     imdb = await get_poster(search, file=(files[0]).file_name) if settings["imdb"] else None
     TEMPLATE = settings['template']
