@@ -30,6 +30,9 @@ logger.setLevel(logging.ERROR)
 BUTTONS = {}
 SPELL_CHECK = {}
 FRESH = {}
+SELECTED = {}       # msg_key -> set(file_id) currently ticked
+SELECT_FILES = {}   # msg_key -> {file_id: file_obj} for the page in select-mode
+SELECT_META = {}    # msg_key -> {"key":.., "offset":.., "req":..} to rebuild "Back"
 
 # ✅ FIX: Max size for in-memory dicts — oldest entries dropped when limit hit
 _MAX_DICT_SIZE = 250
@@ -55,7 +58,10 @@ async def _auto_delete_file(client, file_msg, delay: int = AUTO_DELETE_TIME):
                 f"⚠️ File will be deleted in {delay // 60} Mins\n\n"
                 "📌 Save or forward it.</blockquote>"
             ),
-            reply_to_message_id=file_msg.id
+            reply_to_message_id=file_msg.id,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("🗑 Delete Now", callback_data=f"deln#{file_msg.chat.id}#{file_msg.id}")
+            ]])
         )
     except Exception:
         pass
@@ -153,6 +159,47 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req):
         btn.append([InlineKeyboardButton(text="📃 1/1", callback_data="pages")])
 
     return btn
+
+
+# -- Multi-select "Send All" helpers -------------------------------------------
+def _build_select_btn(msg_key):
+    files_map = SELECT_FILES.get(msg_key, {})
+    selected = SELECTED.get(msg_key, set())
+    btn = []
+    for fid, f in files_map.items():
+        mark = "✅" if fid in selected else "⬜"
+        btn.append([InlineKeyboardButton(
+            text=f"{mark} {f.file_name} [{get_size(f.file_size)}]",
+            callback_data=f"tick#{msg_key}#{fid}"
+        )])
+    btn.append([
+        InlineKeyboardButton("🔙 Back", callback_data=f"selback#{msg_key}"),
+        InlineKeyboardButton(f"✅ Send All ({len(selected)})", callback_data=f"sendall#{msg_key}"),
+    ])
+    return InlineKeyboardMarkup(btn)
+
+
+async def _send_selected_file(client, chat_id, file, settings):
+    title = file.file_name
+    size = get_size(file.file_size)
+    f_caption = getattr(file, "caption", None)
+    if CUSTOM_FILE_CAPTION:
+        try:
+            f_caption = CUSTOM_FILE_CAPTION.format(
+                file_name='' if title is None else title,
+                file_size='' if size is None else size,
+                file_caption='' if f_caption is None else f_caption
+            )
+        except Exception as e:
+            logger.exception(e)
+    if f_caption is None:
+        f_caption = title
+    return await client.send_cached_media(
+        chat_id=chat_id,
+        file_id=file.file_id,
+        caption=f_caption,
+        protect_content=settings['file_secure']
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -413,6 +460,153 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     except MessageNotModified:
         pass
     await safe_answer(query)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  MULTI-SELECT "SEND ALL" HANDLERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@Client.on_callback_query(filters.regex(r"^selst#"))
+async def select_mode_handler(client, query):
+    _, key, offset, req = query.data.split("#")
+    if int(req) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+    offset = int(offset)
+    search = BUTTONS.get(key) or FRESH.get(key)
+    if not search:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    files, n_offset, total = await get_search_results(search, offset=offset, filter=True)
+    if not files:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    msg_key = f"{query.message.chat.id}:{query.message.id}"
+    SELECT_FILES[msg_key] = {f.file_id: f for f in files}
+    SELECTED[msg_key] = set()
+    SELECT_META[msg_key] = {"key": key, "offset": offset, "req": req}
+    _trim_dict(SELECT_FILES)
+    _trim_dict(SELECTED)
+    _trim_dict(SELECT_META)
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
+    except MessageNotModified:
+        pass
+    await safe_answer(query, "Tap files to select, then Send All ✅")
+
+
+@Client.on_callback_query(filters.regex(r"^tick#"))
+async def tick_handler(client, query):
+    _, msg_key, fid = query.data.split("#")
+    meta = SELECT_META.get(msg_key)
+    if not meta:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    if int(meta["req"]) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+
+    sel = SELECTED.setdefault(msg_key, set())
+    if fid in sel:
+        sel.discard(fid)
+    else:
+        sel.add(fid)
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
+    except MessageNotModified:
+        pass
+    await safe_answer(query)
+
+
+@Client.on_callback_query(filters.regex(r"^selback#"))
+async def select_back_handler(client, query):
+    _, msg_key = query.data.split("#")
+    meta = SELECT_META.pop(msg_key, None)
+    SELECTED.pop(msg_key, None)
+    SELECT_FILES.pop(msg_key, None)
+    if not meta:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    if int(meta["req"]) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+
+    key, offset, req = meta["key"], meta["offset"], meta["req"]
+    search = BUTTONS.get(key) or FRESH.get(key)
+    if not search:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    settings = await get_settings(query.message.chat.id)
+    pre = 'filep' if settings['file_secure'] else 'file'
+    files, n_offset, total = await get_search_results(search, offset=offset, filter=True)
+    if not files:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    btn = _build_file_btn(files, settings, pre, key, n_offset, total, req)
+    if len(files) > 1:
+        btn.append([InlineKeyboardButton("☑️ Select Files", callback_data=f"selst#{key}#{offset}#{req}")])
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
+    except MessageNotModified:
+        pass
+    await safe_answer(query)
+
+
+@Client.on_callback_query(filters.regex(r"^sendall#"))
+async def send_all_handler(client, query):
+    _, msg_key = query.data.split("#")
+    meta = SELECT_META.get(msg_key)
+    if not meta:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    if int(meta["req"]) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+
+    sel_ids = SELECTED.get(msg_key, set())
+    files_map = SELECT_FILES.get(msg_key, {})
+    if not sel_ids:
+        return await safe_answer(query, "⚠️ No files selected!", show_alert=True)
+
+    await safe_answer(query, f"📤 Sending {len(sel_ids)} file(s) to your PM...", show_alert=True)
+    settings = await get_settings(query.message.chat.id)
+    user_id = query.from_user.id
+    sent = 0
+    for fid in list(sel_ids):
+        file = files_map.get(fid)
+        if not file:
+            continue
+        try:
+            m = await _send_selected_file(client, user_id, file, settings)
+            sent += 1
+            asyncio.create_task(_auto_delete_file(client, m))
+        except UserIsBlocked:
+            break
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+        except Exception as ex:
+            logger.exception(ex)
+
+    SELECTED[msg_key] = set()
+    try:
+        await client.send_message(user_id, f"✅ Sent {sent}/{len(sel_ids)} file(s) to your PM.")
+    except Exception:
+        pass
+    try:
+        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
+    except MessageNotModified:
+        pass
+
+
+@Client.on_callback_query(filters.regex(r"^deln#"))
+async def delete_now_handler(client, query):
+    _, chat_id, msg_id = query.data.split("#")
+    if query.from_user.id != int(chat_id):
+        return await safe_answer(query, "Not your file!", show_alert=True)
+    try:
+        await client.delete_messages(int(chat_id), int(msg_id))
+    except Exception:
+        pass
+    try:
+        await query.message.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
+    except Exception:
+        pass
+    await safe_answer(query, "Deleted ✅")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1001,6 +1195,10 @@ async def auto_filter(client, msg, spoll=False):
         ])
     else:
         btn.append([InlineKeyboardButton(text="📃 1/1", callback_data="pages")])
+
+    if len(files) > 1:
+        _off = offset if offset != "" else 0
+        btn.append([InlineKeyboardButton("☑️ Select Files", callback_data=f"selst#{key}#{_off}#{req}")])
 
     imdb = await get_poster(search, file=(files[0]).file_name) if settings["imdb"] else None
     TEMPLATE = settings['template']
