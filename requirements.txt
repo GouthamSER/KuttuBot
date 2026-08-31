@@ -10,3 +10,4 @@ psutil
 telegraph
 httpx
 aiofiles
+imdbio
