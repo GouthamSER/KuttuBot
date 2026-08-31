@@ -186,7 +186,7 @@ async def get_movie_list(max_results=30):
                 break
 
         # Store in cache (reuse cache infra with TTL=300s)
-        _SEARCH_CACHE[ck] = (movies, '', 0, time.time())
+        _cache_set(ck, movies, '', 0)
         return movies
     except Exception as e:
         logger.exception(f"Error in get_movie_list: {e}")
@@ -234,7 +234,7 @@ async def get_series_grouped(max_results=50):
                 break
 
         result = {title: sorted(eps) for title, eps in series_dict.items()}
-        _SEARCH_CACHE[ck] = (result, '', 0, time.time())
+        _cache_set(ck, result, '', 0)
         return result
     except Exception as e:
         logger.exception(f"Error in get_series_grouped: {e}")
