@@ -189,6 +189,7 @@ async def _imdbio_get_details(imdb_id):
         'plot': plot,
         'rating': str(m.rating) if m.rating else "N/A",
         'url': m.url or (f"https://www.imdb.com/title/{m.imdb_id}/" if m.imdb_id else "N/A"),
+        'trailers': list(m.trailers) if getattr(m, "trailers", None) else [],
         '_source': 'imdbio',
     }
 
@@ -284,6 +285,7 @@ async def _omdb_get_details(imdb_id):
         'plot': plot,
         'rating': m.get("imdbRating", "N/A"),
         'url': f"https://www.imdb.com/title/{m.get('imdbID')}/" if m.get("imdbID") else "N/A",
+        'trailers': [],  # OMDb has no trailer data
         '_source': 'omdb',
     }
 
