@@ -19,6 +19,13 @@ from plugins.pm_filter import auto_filter
 logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
+_MAX_BATCH_CACHE = 250
+
+def _trim_batch_files():
+    """Cap BATCH_FILES so it can't grow unbounded across bot uptime."""
+    if len(BATCH_FILES) > _MAX_BATCH_CACHE:
+        for k in list(BATCH_FILES.keys())[:len(BATCH_FILES) // 5]:
+            BATCH_FILES.pop(k, None)
 
 async def delete_after_delay(m, k, delay=600):
     await asyncio.sleep(delay)
@@ -161,6 +168,7 @@ async def start(client, message):
                 return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
             os.remove(file)
             BATCH_FILES[file_id] = msgs
+            _trim_batch_files()
 
         for msg in msgs:
             title = msg.get("title")
