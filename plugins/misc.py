@@ -156,6 +156,18 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     if not data:
         await quer_y.answer("❌ Could not fetch details.", show_alert=True)
         return
+
+    def _tags(field):
+        if not field or field == "N/A":
+            return "N/A"
+        return " ".join(f"#{p.strip().replace(' ', '_')}" for p in field.split(",") if p.strip())
+
+    # underscore-prefixed so they don't collide with the **locals() spread below
+    _aka_line = f"\n📝 Also Known As: {data['aka']}" if data.get("aka") and data["aka"] != "N/A" else ""
+    _genre_tags = _tags(data["genres"])
+    _language_tags = _tags(data["languages"])
+    _country_tags = _tags(data["countries"])
+
     btn = [
             [
                 InlineKeyboardButton(
@@ -164,11 +176,19 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
                 )
             ]
         ]
+    if data.get("trailers"):
+        btn.append([
+            InlineKeyboardButton(
+                text="▶️ Watch Trailer",
+                url=data["trailers"][-1],
+            )
+        ])
     caption = IMDB_TEMPLATE.format(
         query = data['title'],
         title = data['title'],
         votes = data['votes'],
         aka = data["aka"],
+        aka_line = _aka_line,
         seasons = data["seasons"],
         box_office = data['box_office'],
         localized_title = data['localized_title'],
@@ -177,8 +197,10 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         cast = data["cast"],
         runtime = data["runtime"],
         countries = data["countries"],
+        country_tags = _country_tags,
         certificates = data["certificates"],
         languages = data["languages"],
+        language_tags = _language_tags,
         director = data["director"],
         writer = data["writer"],
         producer = data["producer"],
@@ -189,6 +211,7 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         release_date = data['release_date'],
         year = data['year'],
         genres = data['genres'],
+        genre_tags = _genre_tags,
         poster = data['poster'],
         plot = data['plot'],
         rating = data['rating'],
