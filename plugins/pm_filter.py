@@ -173,13 +173,32 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
 def _build_select_btn(msg_key):
     files_map = SELECT_FILES.get(msg_key, {})
     selected = SELECTED.get(msg_key, set())
+    meta = SELECT_META.get(msg_key, {})
+    # only render the files that belong to the page currently being viewed
+    page_ids = meta.get("page_ids") or list(files_map.keys())
     btn = []
-    for fid, f in files_map.items():
+    for fid in page_ids:
+        f = files_map.get(fid)
+        if not f:
+            continue
         mark = "✅" if fid in selected else "⬜"
         btn.append([InlineKeyboardButton(
-            text=f"{mark} {f.file_name}",
+            text=f"{mark} [{get_size(f.file_size)}] {f.file_name}",
             callback_data=f"tick#{msg_key}#{fid}"
         )])
+
+    nav = []
+    if meta.get("history"):
+        nav.append(InlineKeyboardButton("◀️ PREV", callback_data=f"selprev#{msg_key}"))
+    total = meta.get("total") or 0
+    page_num = len(meta.get("history", [])) + 1
+    total_pages = max(1, math.ceil(int(total) / 10)) if total else 1
+    nav.append(InlineKeyboardButton(text=f"📃 {page_num}/{total_pages}", callback_data="pages"))
+    if meta.get("next_offset") not in ("", 0, None):
+        nav.append(InlineKeyboardButton("NEXT ▶️", callback_data=f"selnext#{msg_key}"))
+    if nav:
+        btn.append(nav)
+
     btn.append([
         InlineKeyboardButton("🔙 Back", callback_data=f"selback#{msg_key}"),
         InlineKeyboardButton(f"✅ Send All ({len(selected)})", callback_data=f"sendall#{msg_key}"),
@@ -488,9 +507,13 @@ async def select_mode_handler(client, query):
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
     msg_key = f"{query.message.chat.id}:{query.message.id}"
+    page_ids = [f.file_id for f in files]
     SELECT_FILES[msg_key] = {f.file_id: f for f in files}
-    SELECTED[msg_key] = set()
-    SELECT_META[msg_key] = {"key": key, "offset": offset, "req": req}
+    SELECTED.setdefault(msg_key, set())  # keep any prior selection if re-entering select mode
+    SELECT_META[msg_key] = {
+        "key": key, "offset": offset, "req": req,
+        "page_ids": page_ids, "next_offset": n_offset, "total": total, "history": [],
+    }
     _trim_dict(SELECT_FILES)
     _trim_dict(SELECTED)
     _trim_dict(SELECT_META)
@@ -500,6 +523,73 @@ async def select_mode_handler(client, query):
     except MessageNotModified:
         pass
     await safe_answer(query, "Tap files to select, then Send All ✅")
+
+
+@Client.on_callback_query(filters.regex(r"^selnext#"))
+async def select_next_handler(client, query):
+    _, msg_key = query.data.split("#")
+    meta = SELECT_META.get(msg_key)
+    if not meta:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    if int(meta["req"]) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+    if meta.get("next_offset") in ("", 0, None):
+        return await safe_answer(query, "No more pages", show_alert=True)
+
+    search = BUTTONS.get(meta["key"]) or FRESH.get(meta["key"])
+    if not search:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    files, n_offset, total = await get_search_results(search, offset=meta["next_offset"], filter=True)
+    if not files:
+        return await safe_answer(query, "No more pages", show_alert=True)
+
+    # merge new files into the pool so selections made on earlier pages stay intact
+    SELECT_FILES.setdefault(msg_key, {}).update({f.file_id: f for f in files})
+    meta["history"] = meta.get("history", []) + [meta["offset"]]
+    meta["offset"] = meta["next_offset"]
+    meta["next_offset"] = n_offset
+    meta["page_ids"] = [f.file_id for f in files]
+    meta["total"] = total
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
+    except MessageNotModified:
+        pass
+    await safe_answer(query)
+
+
+@Client.on_callback_query(filters.regex(r"^selprev#"))
+async def select_prev_handler(client, query):
+    _, msg_key = query.data.split("#")
+    meta = SELECT_META.get(msg_key)
+    if not meta:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+    if int(meta["req"]) not in (query.from_user.id, 0):
+        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
+    if not meta.get("history"):
+        return await safe_answer(query, "Already on the first page", show_alert=True)
+
+    search = BUTTONS.get(meta["key"]) or FRESH.get(meta["key"])
+    if not search:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    prev_offset = meta["history"].pop()
+    files, n_offset, total = await get_search_results(search, offset=prev_offset, filter=True)
+    if not files:
+        return await safe_answer(query, script.OLD_MES, show_alert=True)
+
+    SELECT_FILES.setdefault(msg_key, {}).update({f.file_id: f for f in files})
+    meta["next_offset"] = meta["offset"]  # what we were showing becomes "next" again
+    meta["offset"] = prev_offset
+    meta["page_ids"] = [f.file_id for f in files]
+    meta["total"] = total
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
+    except MessageNotModified:
+        pass
+    await safe_answer(query)
 
 
 @Client.on_callback_query(filters.regex(r"^tick#"))
