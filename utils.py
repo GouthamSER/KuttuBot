@@ -202,6 +202,26 @@ def _hq_poster(url):
     return re.sub(r'\._[A-Z0-9,]+_(?=\.\w+$)', '', url)
 
 
+async def fetch_poster_bytes(url):
+    """Download a poster image ourselves and return raw bytes, or None on failure.
+    Telegram's own reply_photo(photo=<url>) sometimes fails (CDN blocks Telegram's
+    fetcher, size/dimension limits) even when the URL is perfectly loadable from a
+    normal browser/HTTP client — downloading it ourselves and uploading the bytes
+    sidesteps that."""
+    if not url:
+        return None
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+    try:
+        async with httpx.AsyncClient(timeout=15, headers=headers, follow_redirects=True) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            return resp.content
+    except Exception as e:
+        logger.warning(f"poster download failed: {e}")
+        return None
+
+
 async def _omdb_search(title, year=None, bulk=False):
     """Search movies/shows via OMDb."""
     if not OMDB_API_KEY:
