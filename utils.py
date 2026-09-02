@@ -110,6 +110,12 @@ async def _imdbio_search(title, year=None, bulk=False):
     except _ImdbioError as e:
         logger.warning(f"imdbio search error: {e}")
         return None
+    except TypeError as e:
+        # known upstream quirk in some imdbio releases (internal lru_cache hashing
+        # occasionally chokes on certain inputs) — not fixable on our side, falls
+        # back to OMDb automatically, so just a quiet warning instead of a full trace
+        logger.warning(f"imdbio search skipped (upstream bug): {e}")
+        return None
     except Exception as e:
         logger.exception(f"imdbio search unexpected error: {e}")
         return None
