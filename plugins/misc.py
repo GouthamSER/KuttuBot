@@ -2,9 +2,10 @@ import os
 from pyrogram import Client, filters, enums
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from info import IMDB_TEMPLATE
-from utils import extract_user, get_file_id, get_poster
+from utils import extract_user, get_file_id, get_poster, fetch_poster_bytes
 import time
 from datetime import datetime
+from io import BytesIO
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 import logging
 logger = logging.getLogger(__name__)
@@ -148,6 +149,23 @@ async def imdb_search(client, message):
     else:
         await message.reply('Give me a movie / series Name')
 
+async def _send_photo_bytes_or_text(message, poster_url, caption, btn):
+    """Last resort before giving up on a real photo: download the poster ourselves
+    and upload the raw bytes. Only if that also fails do we send plain text — and
+    even then with the preview disabled, so we never show Telegram's own low-res
+    link-preview card as a stand-in for the poster."""
+    raw = await fetch_poster_bytes(poster_url)
+    if raw:
+        try:
+            photo = BytesIO(raw)
+            photo.name = "poster.jpg"
+            await message.reply_photo(photo=photo, caption=caption, reply_markup=InlineKeyboardMarkup(btn))
+            return
+        except Exception as e:
+            logger.exception(e)
+    await message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
+
+
 @Client.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     i, movie_id = quer_y.data.split('#')
@@ -228,11 +246,11 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
                 await quer_y.message.reply_photo(photo=poster, caption=caption, reply_markup=InlineKeyboardMarkup(btn))
             except Exception as e:
                 logger.exception(e)
-                await quer_y.message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
+                await _send_photo_bytes_or_text(quer_y.message, data['poster'], caption, btn)
         except Exception as e:
             logger.exception(e)
-            await quer_y.message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
+            await _send_photo_bytes_or_text(quer_y.message, data['poster'], caption, btn)
         await quer_y.message.delete()
     else:
-        await quer_y.message.edit(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
+        await quer_y.message.edit(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
     await quer_y.answer()
