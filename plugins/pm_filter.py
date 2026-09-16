@@ -91,7 +91,7 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("Multi", "multi"),
+    ("Multi", "mul"),
     ("Maʟᴀʏaʟᴀᴍ", "mal"),
     ("Taᴍɪʟ", "tam"),
     ("Kaɴɴaᴅᴀ", "kan"),
@@ -138,7 +138,7 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
     if settings["button"]:
         btn = [
             [InlineKeyboardButton(
-                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                text=f"|{get_size(file.file_size)}| {file.file_name}",
                 callback_data=f"{pre}#{file.file_id}"
             )]
             for file in files
@@ -183,7 +183,7 @@ def _build_select_btn(msg_key):
             continue
         mark = "✅" if fid in selected else "⬜"
         btn.append([InlineKeyboardButton(
-            text=f"{mark} [{get_size(f.file_size)}] {f.file_name}",
+            text=f"{mark} |{get_size(f.file_size)}| {f.file_name}",
             callback_data=f"tick#{msg_key}#{fid}"
         )])
 
@@ -274,7 +274,7 @@ async def next_page(bot, query):
     if settings['button']:
         btn = [
             [InlineKeyboardButton(
-                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                text=f"|{get_size(file.file_size)}| {file.file_name}",
                 callback_data=f'files#{file.file_id}'
             )]
             for file in files
