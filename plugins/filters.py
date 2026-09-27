@@ -46,6 +46,7 @@ async def addfilter(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
+        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
@@ -76,12 +77,12 @@ async def addfilter(client, message):
             msg = get_file_id(message.reply_to_message)
             if msg:
                 fileid = msg.file_id
-                reply_text = message.reply_to_message.caption.html
+                reply_text = message.reply_to_message.caption.html if message.reply_to_message.caption else ""
             else:
-                reply_text = message.reply_to_message.text.html
+                reply_text = message.reply_to_message.text.html if message.reply_to_message.text else ""
                 fileid = None
             alert = None
-        except:
+        except Exception:
             reply_text = ""
             btn = "[]" 
             fileid = None
@@ -91,8 +92,10 @@ async def addfilter(client, message):
         try:
             msg = get_file_id(message.reply_to_message)
             fileid = msg.file_id if msg else None
-            reply_text, btn, alert = parser(extracted[1], text) if message.reply_to_message.sticker else parser(message.reply_to_message.caption.html, text)
-        except:
+            caption_text = message.reply_to_message.caption.html if message.reply_to_message.caption else ""
+            parse_content = extracted[1] if (len(extracted) >= 2 or message.reply_to_message.sticker) else caption_text
+            reply_text, btn, alert = parser(parse_content, text)
+        except Exception:
             reply_text = ""
             btn = "[]"
             alert = None
@@ -100,7 +103,7 @@ async def addfilter(client, message):
         try:
             fileid = None
             reply_text, btn, alert = parser(message.reply_to_message.text.html, text)
-        except:
+        except Exception:
             reply_text = ""
             btn = "[]"
             alert = None
@@ -148,6 +151,7 @@ async def get_all(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
+        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
@@ -191,8 +195,7 @@ async def deletefilter(client, message):
         if grpid is not None:
             grp_id = grpid
             try:
-                chat = await client.get_chat(grpid)
-                title = chat.title
+                await client.get_chat(grpid)
             except:
                 await message.reply_text("Make sure I'm present in your group!!", quote=True)
                 return
@@ -202,7 +205,6 @@ async def deletefilter(client, message):
 
     elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         grp_id = message.chat.id
-        title = message.chat.title
 
     else:
         return
@@ -211,6 +213,7 @@ async def deletefilter(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
+        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
@@ -261,7 +264,7 @@ async def delallconfirm(client, message):
 
 
     st = await client.get_chat_member(grp_id, userid)
-    if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
+    if (st.status == enums.ChatMemberStatus.OWNER) or (userid in ADMINS or str(userid) in ADMINS):
         await message.reply_text(
             f"This will delete all filters from '{title}'.\nDo you want to continue??",
             reply_markup=InlineKeyboardMarkup([

@@ -1,7 +1,9 @@
-from pyrogram import Client, filters, enums
+import html
+import os
+from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.errors.exceptions.bad_request_400 import MessageTooLong, PeerIdInvalid
-from info import ADMINS, LOG_CHANNEL, SUPPORT_CHAT, MELCOW_NEW_USERS
+from info import ADMINS, LOG_CHANNEL, SUPPORT_CHAT
 from database.users_chats_db import db
 from database.ia_filterdb import Media
 from utils import get_size, temp, get_settings
@@ -168,7 +170,8 @@ async def re_enable_chat(bot, message):
     if not sts.get('is_disabled'):
         return await message.reply('This chat is not yet disabled.')
     await db.re_enable_chat(int(chat_))
-    temp.BANNED_CHATS.remove(int(chat_))
+    if int(chat_) in temp.BANNED_CHATS:
+        temp.BANNED_CHATS.remove(int(chat_))
     await message.reply("Chat Successfully re-enabled")
 
 
@@ -243,11 +246,9 @@ async def unban_a_user(bot, message):
         return await message.reply('Give me a user id / username')
     r = message.text.split(None)
     if len(r) > 2:
-        reason = message.text.split(None, 2)[2]
         chat = message.text.split(None, 2)[1]
     else:
         chat = message.command[1]
-        reason = "No reason Provided"
     try:
         chat = int(chat)
     except:
@@ -265,7 +266,8 @@ async def unban_a_user(bot, message):
         if not jar['is_banned']:
             return await message.reply(f"{k.mention} is not yet banned.")
         await db.remove_ban(k.id)
-        temp.BANNED_USERS.remove(k.id)
+        if k.id in temp.BANNED_USERS:
+            temp.BANNED_USERS.remove(k.id)
         await message.reply(f"Successfully unbanned {k.mention}")
 
 
@@ -277,16 +279,22 @@ async def list_users(bot, message):
     users = await db.get_all_users()
     out = "Users Saved In DB Are:\n\n"
     async for user in users:
-        out += f"<a href=tg://user?id={user['id']}>{user['name']}</a>"
+        user_name = html.escape(str(user.get('name') or ''))
+        out += f"<a href=tg://user?id={user['id']}>{user_name}</a>"
         if user['ban_status']['is_banned']:
-            out += '( Banned User )'
+            out += ' ( Banned User )'
         out += '\n'
     try:
         await raju.edit_text(out)
     except MessageTooLong:
-        with open('users.txt', 'w+') as outfile:
-            outfile.write(out)
-        await message.reply_document('users.txt', caption="List Of Users")
+        file_path = 'users.txt'
+        try:
+            with open(file_path, 'w+', encoding='utf-8') as outfile:
+                outfile.write(out)
+            await message.reply_document(file_path, caption="List Of Users")
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
 @Client.on_message(filters.command('chats') & filters.user(ADMINS))
 async def list_chats(bot, message):
@@ -296,11 +304,16 @@ async def list_chats(bot, message):
     async for chat in chats:
         out += f"**Title:** `{chat['title']}`\n**- ID:** `{chat['id']}`"
         if chat['chat_status']['is_disabled']:
-            out += '( Disabled Chat )'
+            out += ' ( Disabled Chat )'
         out += '\n'
     try:
         await raju.edit_text(out)
     except MessageTooLong:
-        with open('chats.txt', 'w+') as outfile:
-            outfile.write(out)
-        await message.reply_document('chats.txt', caption="List Of Chats")
+        file_path = 'chats.txt'
+        try:
+            with open(file_path, 'w+', encoding='utf-8') as outfile:
+                outfile.write(out)
+            await message.reply_document(file_path, caption="List Of Chats")
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)

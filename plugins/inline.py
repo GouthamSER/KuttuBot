@@ -1,5 +1,5 @@
 import logging
-from pyrogram import Client, filters
+from pyrogram import Client
 from pyrogram.errors.exceptions.bad_request_400 import QueryIdInvalid
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
@@ -74,9 +74,10 @@ async def answer(bot, query):
                 reply_markup=reply_markup))
 
     if results:
-        switch_pm_text = f"📁 Results "
+        switch_pm_text = "📁 Results"
         if string:
             switch_pm_text += f" for {string}"
+        switch_pm_text = switch_pm_text[:64]
         try:
             await query.answer(results=results,
                            is_personal = True,
@@ -89,15 +90,21 @@ async def answer(bot, query):
         except Exception as e:
             logging.exception(str(e))
     else:
-        switch_pm_text = f'❌ No results'
+        switch_pm_text = '❌ No results'
         if string:
             switch_pm_text += f' for "{string}"'
+        switch_pm_text = switch_pm_text[:64]
 
-        await query.answer(results=[],
-                           is_personal = True,
-                           cache_time=cache_time,
-                           switch_pm_text=switch_pm_text,
-                           switch_pm_parameter="okay")
+        try:
+            await query.answer(results=[],
+                               is_personal = True,
+                               cache_time=cache_time,
+                               switch_pm_text=switch_pm_text,
+                               switch_pm_parameter="okay")
+        except QueryIdInvalid:
+            pass
+        except Exception as e:
+            logging.exception(str(e))
 
 
 def get_reply_markup(query):

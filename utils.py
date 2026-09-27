@@ -7,7 +7,6 @@ from pyrogram import enums
 from typing import Union
 import re
 import os
-from datetime import datetime
 from typing import List
 from database.users_chats_db import db
 from bs4 import BeautifulSoup
@@ -361,7 +360,7 @@ async def broadcast_messages(user_id, message):
         await db.delete_user(int(user_id))
         logging.info(f"{user_id} - PeerIdInvalid")
         return False, "Error"
-    except Exception as e:
+    except Exception:
         return False, "Error"
 
 async def search_gagala(text):

@@ -1,9 +1,8 @@
-import random
-import re, asyncio, time, shutil, psutil, os, sys
+import asyncio, time, shutil, psutil, os, sys
 from pyrogram import Client, filters, enums
-from pyrogram.types import *
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import ADMINS
-from utils import humanbytes
+from utils import humanbytes, temp
 from urllib.parse import quote_plus
 
 CMD = ["/", "."]
@@ -201,7 +200,7 @@ async def generate_link(client, message):
                 parse_mode=enums.ParseMode.HTML
             )
 
-        bot_username = client.me.username
+        bot_username = client.me.username if client.me else temp.U_NAME
         movie_query  = " ".join(message.command[1:]).lower()
         movie_slug   = quote_plus(movie_query.replace(" ", "-"))
         link         = f"https://t.me/{bot_username}?start=getfile-{movie_slug}"

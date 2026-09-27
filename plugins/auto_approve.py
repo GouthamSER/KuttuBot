@@ -11,10 +11,7 @@ from info import ADMINS
 AUTO_APPROVE = os.getenv("AUTO_APPROVE", "ON").upper() == "ON"
 
 # ✅ Default welcome DM state (from .env)
-WELCOME_DM = os.getenv("WELCOME_DM", "OFF").upper() == "OFF"
-
-# ✅ Multiple admin IDs allowed (space-separated)
-ADMINS = [int(i) for i in os.getenv("ADMINS", "").split()]  # e.g., "123456789 987654321"
+WELCOME_DM = os.getenv("WELCOME_DM", "OFF").upper() == "ON"
 
 
 # --- AUTO APPROVE HANDLER ---

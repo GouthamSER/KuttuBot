@@ -195,7 +195,7 @@ async def start(client, message):
                 )
                 k = await client.send_message(
                     chat_id=message.from_user.id,
-                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                    text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
                 )
                 asyncio.create_task(delete_after_delay(m, k))
             except FloodWait as e:
@@ -209,7 +209,7 @@ async def start(client, message):
                 )
                 k = await client.send_message(
                     chat_id=message.from_user.id,
-                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                    text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
                 )
                 asyncio.create_task(delete_after_delay(m, k))
             except Exception as e:
@@ -293,7 +293,7 @@ async def start(client, message):
             await msg.edit_caption(f_caption)
             k = await client.send_message(
                 chat_id=message.from_user.id,
-                text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
             )
             asyncio.create_task(delete_after_delay(msg, k))
             return
@@ -326,7 +326,7 @@ async def start(client, message):
     )
     k = await client.send_message(
         chat_id=message.from_user.id,
-        text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+        text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
     )
     asyncio.create_task(delete_after_delay(m, k))
 
@@ -347,7 +347,7 @@ async def channel_info(bot, message):
         if chat.username:
             text += '\n@' + chat.username
         else:
-            text += '\n' + chat.title or chat.first_name
+            text += '\n' + (chat.title or chat.first_name or str(chat.id))
 
     text += f'\n\n**Total:** {len(CHANNELS)}'
 
@@ -469,6 +469,7 @@ async def settings(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
+        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
@@ -545,6 +546,7 @@ async def save_template(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
+        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return

@@ -29,6 +29,7 @@ async def add_filter(grp_id, text, reply_text, btn, file, alert):
 async def find_filter(group_id, name):
     mycol = mydb[str(group_id)]
     query = mycol.find({"text": name})
+    reply_text = btn = alert = fileid = None
     try:
         async for file in query:
             reply_text = file['reply']

@@ -8,8 +8,7 @@ from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidD
 from Script import script
 from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, \
     make_inactive
-from info import ADMINS, AUTH_CHANNEL, AUTH_USERS, CUSTOM_FILE_CAPTION, P_TTI_SHOW_OFF, IMDB, \
-    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE, AUTO_DELETE_TIME
+from info import ADMINS, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, AUTO_DELETE_TIME
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, QueryIdInvalid
@@ -275,7 +274,7 @@ async def next_page(bot, query):
         btn = [
             [InlineKeyboardButton(
                 text=f"|{get_size(file.file_size)}| {file.file_name}",
-                callback_data=f'files#{file.file_id}'
+                callback_data=f'{pre}#{file.file_id}'
             )]
             for file in files
         ]
@@ -283,7 +282,7 @@ async def next_page(bot, query):
         btn = [
             [InlineKeyboardButton(
                 text=f"{file.file_name} [{get_size(file.file_size)}]",
-                callback_data=f'files#{file.file_id}'
+                callback_data=f'{pre}#{file.file_id}'
             )]
             for file in files
         ]
@@ -743,7 +742,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             return await safe_answer(query, 'Piracy Is Crime')
 
         st = await client.get_chat_member(grp_id, userid)
-        if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
+        if (st.status == enums.ChatMemberStatus.OWNER) or (userid in ADMINS or str(userid) in ADMINS):
             await del_all(query.message, grp_id, title)
         else:
             await safe_answer(query, "You need to be Group Owner or an Auth User to do that!", show_alert=True)
@@ -759,7 +758,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
             grp_id = query.message.chat.id
             st = await client.get_chat_member(grp_id, userid)
-            if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
+            if (st.status == enums.ChatMemberStatus.OWNER) or (userid in ADMINS or str(userid) in ADMINS):
                 await query.message.delete()
                 try:
                     await query.message.reply_to_message.delete()
@@ -825,7 +824,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
+                "Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await safe_answer(query, 'Piracy Is Crime')
@@ -839,7 +838,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_text("Successfully deleted connection")
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
+                "Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await safe_answer(query, 'Piracy Is Crime')
@@ -929,7 +928,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_answer(query, 'Unblock the bot mahn !', show_alert=True)
         except PeerIdInvalid:
             await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
-        except Exception as e:
+        except Exception:
             await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
         return
 
@@ -1374,8 +1373,6 @@ async def advantage_spell_chok(client, msg):
     )
     cleaned_query = cleaned_query.strip()
 
-    settings = await get_settings(msg.chat.id)
-
     try:
         movies = await get_poster(cleaned_query, bulk=True)
     except Exception as e:
@@ -1460,7 +1457,7 @@ async def manual_filters(client, message, text=False):
 
             if btn is not None:
                 try:
-                    if fileid == "None":
+                    if fileid in ("None", None):
                         if btn == "[]":
                             await client.send_message(
                                 group_id,

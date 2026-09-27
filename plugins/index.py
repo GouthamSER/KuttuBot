@@ -1,7 +1,6 @@
 import logging
 import asyncio
 from pyrogram import Client, filters, enums
-from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
 from info import ADMINS
 from info import INDEX_REQ_CHANNEL as LOG_CHANNEL
@@ -32,7 +31,7 @@ async def index_files(bot, query):
     msg = query.message
 
     await query.answer('Processing...⏳', show_alert=True)
-    if int(from_user) not in ADMINS:
+    if int(from_user) not in ADMINS and str(from_user) not in ADMINS:
         await bot.send_message(int(from_user),
                                f'Your Submission for indexing {chat} has been accepted by our moderators and will be added soon.',
                                reply_to_message_id=int(lst_msg_id))
@@ -49,10 +48,16 @@ async def index_files(bot, query):
     await index_files_to_db(int(lst_msg_id), chat, msg, bot)
 
 
-@Client.on_message((filters.forwarded | (filters.regex("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")) & filters.text ) & filters.private & filters.incoming)
+@Client.on_message((filters.forwarded | (filters.regex(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")) & filters.text ) & filters.private & filters.incoming)
 async def send_for_index(bot, message):
-    if message.text:
-        regex = re.compile("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
+    if message.forward_from_chat:
+        if message.forward_from_chat.type == enums.ChatType.CHANNEL:
+            last_msg_id = message.forward_from_message_id
+            chat_id = message.forward_from_chat.username or message.forward_from_chat.id
+        else:
+            return await message.reply('Only forwards from channels are supported for indexing.')
+    elif message.text:
+        regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
         match = regex.match(message.text)
         if not match:
             return await message.reply('Invalid link')
@@ -60,9 +65,6 @@ async def send_for_index(bot, message):
         last_msg_id = int(match.group(5))
         if chat_id.isnumeric():
             chat_id  = int(("-100" + chat_id))
-    elif message.forward_from_chat.type == enums.ChatType.CHANNEL:
-        last_msg_id = message.forward_from_message_id
-        chat_id = message.forward_from_chat.username or message.forward_from_chat.id
     else:
         return
     try:
@@ -101,8 +103,10 @@ async def send_for_index(bot, message):
             link = (await bot.create_chat_invite_link(chat_id)).invite_link
         except ChatAdminRequired:
             return await message.reply('Make sure iam an admin in the chat and have permission to invite users.')
-    else:
+    elif message.forward_from_chat and message.forward_from_chat.username:
         link = f"@{message.forward_from_chat.username}"
+    else:
+        link = f"@{chat_id}"
     buttons = [
         [
             InlineKeyboardButton('Accept Index',

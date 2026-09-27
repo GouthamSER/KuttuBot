@@ -6,9 +6,9 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from info import SUPPORT_CHAT
 
 async def banned_users(_, client, message: Message):
-    return (
-        message.from_user is not None or not message.sender_chat
-    ) and message.from_user.id in temp.BANNED_USERS
+    return bool(
+        message.from_user and message.from_user.id in temp.BANNED_USERS
+    )
 
 banned_user = filters.create(banned_users)
 
@@ -26,12 +26,13 @@ async def ban_reply(bot, message):
 @Client.on_message(filters.group & disabled_group & filters.incoming)
 async def grp_bd(bot, message):
     buttons = [[
-        InlineKeyboardButton('𝚂𝚞𝚙𝚙𝚘𝚛𝚝', url=f'https://t.me/MOVIES_ZILAA')
+        InlineKeyboardButton('𝚂𝚞𝚙𝚙𝚘𝚛𝚝', url=f'https://t.me/{SUPPORT_CHAT}')
     ]]
     reply_markup=InlineKeyboardMarkup(buttons)
     vazha = await db.get_chat(message.chat.id)
+    reason = vazha.get('reason', 'No Reason') if isinstance(vazha, dict) else 'No Reason'
     k = await message.reply(
-        text=f"CHAT NOT ALLOWED 🐞\n\nMy admins has restricted me from working here ! If you want to know more about it contact support..\nReason : <code>{vazha['reason']}</code>.",
+        text=f"CHAT NOT ALLOWED 🐞\n\nMy admins has restricted me from working here ! If you want to know more about it contact support..\nReason : <code>{reason}</code>.",
         reply_markup=reply_markup)
     try:
         await k.pin()

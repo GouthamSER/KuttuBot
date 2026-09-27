@@ -3,7 +3,6 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from info import IMDB_TEMPLATE
 from utils import extract_user, get_file_id, get_poster, fetch_poster_bytes
-import time
 from datetime import datetime
 from io import BytesIO
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -16,10 +15,10 @@ async def showid(client, message):
     chat_type = message.chat.type
     if chat_type == enums.ChatType.PRIVATE:
         user_id = message.chat.id
-        first = message.from_user.first_name
-        last = message.from_user.last_name or ""
-        username = message.from_user.username
-        dc_id = message.from_user.dc_id or ""
+        first = message.from_user.first_name if message.from_user else "Unknown"
+        last = (message.from_user.last_name or "") if message.from_user else ""
+        username = message.from_user.username if message.from_user else ""
+        dc_id = (message.from_user.dc_id or "") if message.from_user else ""
         await message.reply_text(
             f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>",
             quote=True
@@ -186,15 +185,15 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     _language_tags = _tags(data["languages"])
     _country_tags = _tags(data["countries"])
 
-    btn = [
-            [
-                InlineKeyboardButton(
-                    text=f"🔗 {data.get('title')} on IMDb",
-                    url=data['url'],
-                )
-            ]
-        ]
-    if data.get("trailers"):
+    btn = []
+    if data.get('url') and str(data['url']).startswith('http'):
+        btn.append([
+            InlineKeyboardButton(
+                text=f"🔗 {data.get('title')} on IMDb",
+                url=data['url'],
+            )
+        ])
+    if data.get("trailers") and str(data["trailers"][-1]).startswith("http"):
         btn.append([
             InlineKeyboardButton(
                 text="▶️ Watch Trailer",

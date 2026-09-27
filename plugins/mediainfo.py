@@ -4,7 +4,6 @@ import asyncio
 import logging
 import os
 from re import search as re_search
-from shlex import split as ssplit
 
 import aiofiles
 from aiofiles.os import mkdir, remove as aioremove
@@ -127,7 +126,7 @@ async def gen_mediainfo(client, message, link=None, media=None, media_msg=None):
                         await f.write(chunk)
 
         # Execute mediainfo using our built-in cmd_exec
-        stdout, stderr, rc = await cmd_exec(ssplit(f'mediainfo "{des_path}"'))
+        stdout, stderr, rc = await cmd_exec(["mediainfo", des_path])
         if rc != 0 or not stdout:
             raise RuntimeError(stderr or "mediainfo returned no output. Is mediainfo installed on your system?")
 

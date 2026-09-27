@@ -26,7 +26,7 @@ PORT_CODE = environ.get("PORT", "8080")
 async def schedule_restart():
     await asyncio.sleep(86400)  # 24 hours
     # Restart the bot
-    os.execv(sys.executable, ['python'] + sys.argv)
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 class Bot(Client):
 
@@ -60,8 +60,7 @@ class Bot(Client):
         client = webserver.AppRunner(await bot_run())
         await client.setup()
         bind_address = "0.0.0.0"
-        await webserver.TCPSite(client, bind_address,
-        PORT_CODE).start()
+        await webserver.TCPSite(client, bind_address, int(PORT_CODE)).start()
         asyncio.create_task(schedule_restart()) #restart after 24 hrs clearing memory
 
     async def stop(self, *args):
