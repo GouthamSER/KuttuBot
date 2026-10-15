@@ -3,7 +3,8 @@ Telegram Mini App backend for KuttuBot.
 
 Routes (mounted by plugins/webcode.py):
   GET  /app               -> miniapp/index.html
-  POST /app/api/search    -> {init_data, query, offset}  -> files list
+  POST /app/api/search    -> {init_data, query, offset}  -> movies (grouped, with posters)
+  POST /app/api/movie     -> {init_data, key, q}         -> one movie's files + poster/details
   POST /app/api/send      -> {init_data, ids:[file_id..]} -> sends files to user's PM
 
 Every API call is authenticated with Telegram WebApp `initData` (HMAC-SHA256
@@ -26,6 +27,7 @@ from aiohttp import web
 from info import BOT_TOKEN, AUTH_CHANNEL, AUTO_DELETE_TIME
 from database.ia_filterdb import get_search_results, get_file_details
 from utils import temp, get_size, is_subscribed, get_settings
+from plugins.posters import parse_name, get_info, get_infos
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,9 @@ routes = web.RouteTableDef()
 INDEX_FILE = Path(__file__).resolve().parent.parent / "miniapp" / "index.html"
 
 INIT_DATA_MAX_AGE = 24 * 3600   # seconds initData stays valid
-PAGE_SIZE = 20                  # files per search page
+PAGE_SIZE = 30                  # files fetched per search page (grouped into movies)
+MOVIE_PAGE_SIZE = 100           # files per DB page when loading one movie
+MOVIE_MAX_PAGES = 3             # so at most 300 files per movie/series
 MAX_SEND = 20                   # max files per send request
 SEND_COOLDOWN = 3               # seconds between send requests per user
 _last_send = {}                 # user_id -> monotonic time of last send request
@@ -138,15 +142,78 @@ async def api_search(request):
     files, next_offset, total = await get_search_results(
         query, max_results=PAGE_SIZE, offset=offset, filter=True
     )
-    items = [
-        {"id": f.file_id, "name": f.file_name, "size": get_size(f.file_size)}
-        for f in files
-    ]
+
+    # group the page's files by movie / series, keeping first-seen (newest first) order
+    groups = {}
+    for f in files:
+        p = parse_name(f.file_name)
+        groups.setdefault(p["key"], p)
+
+    infos = await get_infos([(p["title"], p["year"], p["kind"]) for p in groups.values()])
+    movies = []
+    for p, info in zip(groups.values(), infos):
+        info = info or {}
+        movies.append({
+            "key": p["key"],
+            "q": p["title"],                       # search text that finds this movie's files
+            "title": info.get("title") or p["title"],
+            "year": info.get("year") or p["year"],
+            "kind": p["kind"],
+            "thumb": info.get("thumb"),
+            "rating": info.get("rating"),
+        })
     return web.json_response({
         "ok": True,
-        "files": items,
+        "movies": movies,
         "next_offset": next_offset if next_offset != "" else None,
         "total": total,
+    })
+
+
+@routes.post("/app/api/movie")
+async def api_movie(request):
+    """All files of one movie/series, plus poster and details."""
+    auth, resp = await _auth(request)
+    if resp is not None:
+        return resp
+    _, body = auth
+
+    key = str(body.get("key") or "")[:200]
+    q = _clean_query(body.get("q"))
+    if not key or not q:
+        return _err("Missing movie")
+
+    matched, offset = [], 0
+    for _ in range(MOVIE_MAX_PAGES):
+        files, next_offset, _total = await get_search_results(
+            q, max_results=MOVIE_PAGE_SIZE, offset=offset, filter=True
+        )
+        matched += [f for f in files if parse_name(f.file_name)["key"] == key]
+        if next_offset == "" or not files:
+            break
+        offset = next_offset
+
+    if not matched:
+        return web.json_response({"ok": True, "info": None, "files": []})
+
+    p = parse_name(matched[0].file_name)
+    info = await get_info(p["title"], p["year"], p["kind"])
+    if p["kind"] == "series":
+        matched.sort(key=lambda f: f.file_name.lower())
+    return web.json_response({
+        "ok": True,
+        "info": {
+            "title": info.get("title") or p["title"],
+            "year": info.get("year") or p["year"],
+            "kind": p["kind"],
+            "poster": info.get("poster"),
+            "thumb": info.get("thumb"),
+            "rating": info.get("rating"),
+            "genres": info.get("genres") or [],
+            "plot": info.get("plot") or "",
+            "runtime": info.get("runtime") or "",
+        },
+        "files": [{"id": f.file_id, "name": f.file_name, "size": get_size(f.file_size)} for f in matched],
     })
 
 
