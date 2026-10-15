@@ -197,7 +197,7 @@ async def api_movie(request):
         return web.json_response({"ok": True, "info": None, "files": []})
 
     p = parse_name(matched[0].file_name)
-    info = await get_info(p["title"], p["year"], p["kind"])
+    info = await get_info(p["title"], p["year"], p["kind"], detail=True)
     if p["kind"] == "series":
         matched.sort(key=lambda f: f.file_name.lower())
     return web.json_response({

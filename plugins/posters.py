@@ -2,13 +2,13 @@
 Movie grouping + poster lookup for the Mini App.
 
   parse_name(file_name)  -> {"title", "year", "kind", "key"}   (from a release filename)
-  get_info(title, year, kind) -> dict with poster/thumb/rating/genres/plot (cached)
+  get_info(title, year, kind, detail=False) -> dict with poster/thumb/rating/genres/plot (cached)
 
-Poster source order:
-  1. OMDb  (IMDb data; needs OMDB_API_KEY)  - original-resolution IMDb poster
-  2. TMDB  (optional; needs TMDB_API_KEY)   - only used when OMDb finds nothing
-Both lookups are cached in memory, including misses, so a movie costs one API
-call per day at most.
+Poster source order (first one that has a poster wins, text gaps are filled from the others):
+  1. imdbio  (IMDb via the imdbinfo library, no API key)
+  2. OMDb    (IMDb data; needs OMDB_API_KEY)  - backup when imdbio is blocked/down
+  3. TMDB    (optional; needs TMDB_API_KEY)   - last resort
+Results are cached in memory, including misses, so a title costs at most one lookup a day.
 """
 import re
 import time
@@ -18,6 +18,11 @@ import logging
 import httpx
 
 from info import OMDB_API_KEY, TMDB_API_KEY
+
+try:
+    from imdbinfo import search_title as _imdb_search, get_movie as _imdb_get_movie, TitleType
+except Exception:                        # library missing: skip imdbio, OMDb/TMDB still work
+    _imdb_search = _imdb_get_movie = TitleType = None
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +54,10 @@ def parse_name(file_name: str) -> dict:
     text = re.sub(r'[._+]+', ' ', raw)
 
     ep = _EPISODE.search(text)
-    # take the LAST plausible year before any episode marker, so "2012 (2009)" style names behave
     stop_for_year = ep.start() if ep else len(text)
     years = [m for m in _YEAR.finditer(text[:stop_for_year])]
     ym = years[0] if years else None
-    # if the year is the very start of the name it is part of the title ("1917", "2012")
+    # a year at the very start is part of the title ("1917", "2012")
     if ym and ym.start() == 0 and len(years) > 1:
         ym = years[1]
     elif ym and ym.start() == 0:
@@ -90,13 +94,15 @@ HIT_TTL = 24 * 3600
 MISS_TTL = 3600
 CACHE_MAX = 2000
 HTTP_TIMEOUT = 6
+IMDBIO_TIMEOUT = 10
 _cache = {}           # cache_key -> (expires_at, info dict)
 _inflight = {}        # cache_key -> asyncio.Task (dedupe concurrent lookups)
 _sem = asyncio.Semaphore(6)
+_TEXT_FIELDS = ("title", "year", "rating", "genres", "plot", "runtime", "imdb_id")
 
 
 def _imdb_sizes(url):
-    """OMDb gives '...@._V1_SX300.jpg'. Dropping the size suffix gives the original;
+    """IMDb images look like '...@._V1_SX300.jpg'. Dropping the size suffix gives the original;
     adding our own gives a lighter thumbnail for grid cards."""
     if not url or url == 'N/A':
         return None, None
@@ -109,9 +115,78 @@ def _imdb_sizes(url):
 
 def _num(v):
     try:
-        return round(float(v), 1)
+        v = round(float(v), 1)
+        return v or None
     except (TypeError, ValueError):
         return None
+
+
+def _empty(title, year):
+    return {"poster": None, "thumb": None, "source": None, "title": title, "year": year or "",
+            "rating": None, "genres": [], "plot": "", "runtime": "", "imdb_id": ""}
+
+
+# -- source 1: imdbio ----------------------------------------------------------
+async def _imdbio(title, year, kind):
+    if not _imdb_search:
+        return None
+    types = (TitleType.Series,) if kind == 'series' else (TitleType.Movies,)
+    year_int = int(year) if (year and kind != 'series') else None
+
+    async def search(y, retry=True):
+        try:
+            return await asyncio.to_thread(_imdb_search, title, y, False, None, types)
+        except Exception as e:
+            if "403" in str(e) and retry:                 # blocked: back off once
+                await asyncio.sleep(1.5)
+                return await search(y, retry=False)
+            raise
+
+    res = await search(year_int)
+    if (not res or not res.titles) and year_int:          # filename year can be wrong
+        res = await search(None)
+    if not res or not res.titles:
+        return None
+    t = res.titles[0]
+    full, thumb = _imdb_sizes(getattr(t, "cover_url", None))
+    return {
+        "poster": full, "thumb": thumb, "source": "imdbio",
+        "title": getattr(t, "title", None) or title,
+        "year": str(getattr(t, "year", None) or year or ""),
+        "rating": _num(getattr(t, "rating", None)),
+        "genres": [], "plot": "", "runtime": "",
+        "imdb_id": getattr(t, "imdb_id", "") or "",
+    }
+
+
+async def _imdbio_details(imdb_id):
+    """Plot / genres / runtime for one title (only needed on the movie page)."""
+    if not _imdb_get_movie or not imdb_id:
+        return None
+    m = await asyncio.to_thread(_imdb_get_movie, imdb_id)
+    if not m:
+        return None
+    dur = getattr(m, "duration", None)
+    return {
+        "plot": getattr(m, "plot", None) or "",
+        "genres": [str(g) for g in (getattr(m, "genres", None) or [])],
+        "runtime": f"{dur} min" if dur else "",
+        "rating": _num(getattr(m, "rating", None)),
+    }
+
+
+# -- source 2: OMDb ------------------------------------------------------------
+def _omdb_info(d, title, year):
+    full, thumb = _imdb_sizes(d.get("Poster"))
+    na = lambda v: v if v not in (None, "N/A") else ""
+    return {
+        "poster": full, "thumb": thumb, "source": "omdb",
+        "title": d.get("Title") or title,
+        "year": (d.get("Year") or year or "").split("–")[0],
+        "rating": _num(d.get("imdbRating")),
+        "genres": [g.strip() for g in na(d.get("Genre")).split(",") if g.strip()],
+        "plot": na(d.get("Plot")), "runtime": na(d.get("Runtime")), "imdb_id": d.get("imdbID") or "",
+    }
 
 
 async def _omdb(client, title, year, kind):
@@ -124,21 +199,19 @@ async def _omdb(client, title, year, kind):
     r = await client.get("https://www.omdbapi.com/", params=params)
     r.raise_for_status()
     d = r.json()
-    if d.get("Response") != "True":
+    return _omdb_info(d, title, year) if d.get("Response") == "True" else None
+
+
+async def _omdb_by_id(client, imdb_id):
+    if not OMDB_API_KEY or not imdb_id:
         return None
-    full, thumb = _imdb_sizes(d.get("Poster"))
-    return {
-        "poster": full, "thumb": thumb, "source": "imdb",
-        "title": d.get("Title") or title,
-        "year": (d.get("Year") or year or "").split("–")[0],
-        "rating": _num(d.get("imdbRating")),
-        "genres": [g.strip() for g in (d.get("Genre") or "").split(",") if g.strip() and g.strip() != "N/A"],
-        "plot": d.get("Plot") if d.get("Plot") not in (None, "N/A") else "",
-        "runtime": d.get("Runtime") if d.get("Runtime") not in (None, "N/A") else "",
-        "imdb_id": d.get("imdbID") or "",
-    }
+    r = await client.get("https://www.omdbapi.com/", params={"apikey": OMDB_API_KEY, "i": imdb_id, "plot": "short"})
+    r.raise_for_status()
+    d = r.json()
+    return _omdb_info(d, "", "") if d.get("Response") == "True" else None
 
 
+# -- source 3: TMDB (optional) -------------------------------------------------
 async def _tmdb(client, title, year, kind):
     if not TMDB_API_KEY:
         return None
@@ -161,38 +234,69 @@ async def _tmdb(client, title, year, kind):
         "source": "tmdb",
         "title": m.get("title") or m.get("name") or title,
         "year": date[:4] or year or "",
-        "rating": _num(m.get("vote_average")) or None,
+        "rating": _num(m.get("vote_average")),
         "genres": [], "plot": m.get("overview") or "", "runtime": "", "imdb_id": "",
     }
 
 
-def _empty(title, year):
-    return {"poster": None, "thumb": None, "source": None, "title": title, "year": year or "",
-            "rating": None, "genres": [], "plot": "", "runtime": "", "imdb_id": ""}
+# -- combine -------------------------------------------------------------------
+def _merge(found):
+    """found: results in priority order. Take the first with a poster; fill text gaps from the rest."""
+    if not found:
+        return None
+    base = dict(next((f for f in found if f.get("poster")), found[0]))
+    for other in found:
+        for k in _TEXT_FIELDS:
+            if not base.get(k) and other.get(k):
+                base[k] = other[k]
+    return base
 
 
 async def _lookup(title, year, kind):
     async with _sem:
-        info = None
+        found = []
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
-            try:
-                info = await _omdb(client, title, year, kind)
-                if not info and year:                      # filename year can be wrong: retry without it
-                    info = await _omdb(client, title, '', kind)
-            except Exception as e:
-                logger.warning(f"omdb lookup failed for {title!r}: {e}")
-            if not info or not info.get("poster"):         # fallback only when OMDb has no poster
+            async def omdb():
+                r = await _omdb(client, title, year, kind)
+                if not r and year:                         # filename year can be wrong
+                    r = await _omdb(client, title, '', kind)
+                return r
+            steps = (
+                ("imdbio", lambda: asyncio.wait_for(_imdbio(title, year, kind), IMDBIO_TIMEOUT)),
+                ("omdb", omdb),
+                ("tmdb", lambda: _tmdb(client, title, year, kind)),
+            )
+            for name, fn in steps:
                 try:
-                    alt = await _tmdb(client, title, year, kind)
+                    r = await fn()
                 except Exception as e:
-                    logger.warning(f"tmdb lookup failed for {title!r}: {e}")
-                    alt = None
-                if alt and (not info or alt.get("poster")):
-                    if info:                               # keep IMDb text, take TMDB poster
-                        alt = {**alt, **{k: info[k] for k in ("title", "year", "rating", "genres", "plot", "runtime", "imdb_id") if info.get(k)},
-                               "source": "imdb+tmdb"}
-                    info = alt
-        return info
+                    logger.warning(f"{name} lookup failed for {title!r}: {e!r}")
+                    r = None
+                if r:
+                    found.append(r)
+                    if r.get("poster"):
+                        break                              # poster found, no need to try further sources
+        return _merge(found)
+
+
+async def _enrich(info):
+    """Add plot/genres/runtime (not in imdbio search results). imdbio first, OMDb as backup."""
+    extra = None
+    try:
+        extra = await asyncio.wait_for(_imdbio_details(info.get("imdb_id")), IMDBIO_TIMEOUT)
+    except Exception as e:
+        logger.warning(f"imdbio details failed for {info.get('imdb_id')!r}: {e!r}")
+    if not extra or not (extra.get("plot") or extra.get("genres")):
+        try:
+            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+                extra = await _omdb_by_id(client, info.get("imdb_id")) or extra
+        except Exception as e:
+            logger.warning(f"omdb details failed for {info.get('imdb_id')!r}: {e!r}")
+    out = dict(info)
+    for k in ("plot", "genres", "runtime", "rating"):
+        if extra and extra.get(k) and not out.get(k):
+            out[k] = extra[k]
+    return out
 
 
 def _trim():
@@ -201,8 +305,7 @@ def _trim():
             _cache.pop(k, None)
 
 
-async def get_info(title, year='', kind='movie'):
-    """Cached poster/info lookup. Never raises; misses return an empty info dict."""
+async def _get_cached(title, year, kind):
     ck = f"{kind}|{re.sub(r'[^a-z0-9]+', '', title.lower())}|{year}"
     hit = _cache.get(ck)
     if hit and hit[0] > time.time():
@@ -214,19 +317,34 @@ async def get_info(title, year='', kind='movie'):
     try:
         info = await asyncio.shield(task)
     except Exception as e:
-        logger.warning(f"poster lookup crashed for {title!r}: {e}")
+        logger.warning(f"poster lookup crashed for {title!r}: {e!r}")
         info = None
     finally:
         if task.done():
             _inflight.pop(ck, None)
     if info is None:
-        info = _empty(title, year)
-        ttl = MISS_TTL
+        info, ttl = _empty(title, year), MISS_TTL
     else:
         ttl = HIT_TTL if info.get("poster") else MISS_TTL
     _cache[ck] = (time.time() + ttl, info)
     _trim()
     return info
+
+
+async def get_info(title, year='', kind='movie', detail=False):
+    """Cached poster/info lookup. Never raises; misses return an empty info dict.
+    detail=True also fills plot/genres/runtime (one extra request, cached)."""
+    info = await _get_cached(title, year, kind)
+    if not detail or not info.get("imdb_id") or (info.get("plot") and info.get("genres")):
+        return info
+    dk = f"detail|{kind}|{re.sub(r'[^a-z0-9]+', '', title.lower())}|{year}"
+    hit = _cache.get(dk)
+    if hit and hit[0] > time.time():
+        return hit[1]
+    full = await _enrich(info)
+    _cache[dk] = (time.time() + HIT_TTL, full)
+    _trim()
+    return full
 
 
 async def get_infos(items, budget=5.0):

@@ -2,9 +2,9 @@ import os
 from pyrogram import Client, filters, enums
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from info import IMDB_TEMPLATE
-from utils import extract_user, get_file_id, get_poster, fetch_poster_bytes
+from utils import extract_user, get_file_id, get_poster, last_online
+import time
 from datetime import datetime
-from io import BytesIO
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 import logging
 logger = logging.getLogger(__name__)
@@ -15,10 +15,10 @@ async def showid(client, message):
     chat_type = message.chat.type
     if chat_type == enums.ChatType.PRIVATE:
         user_id = message.chat.id
-        first = message.from_user.first_name if message.from_user else "Unknown"
-        last = (message.from_user.last_name or "") if message.from_user else ""
-        username = message.from_user.username if message.from_user else ""
-        dc_id = (message.from_user.dc_id or "") if message.from_user else ""
+        first = message.from_user.first_name
+        last = message.from_user.last_name or ""
+        username = message.from_user.username
+        dc_id = message.from_user.dc_id or ""
         await message.reply_text(
             f"<b>➲ First Name:</b> {first}\n<b>➲ Last Name:</b> {last}\n<b>➲ Username:</b> {username}\n<b>➲ Telegram ID:</b> <code>{user_id}</code>\n<b>➲ Data Centre:</b> <code>{dc_id}</code>",
             quote=True
@@ -134,7 +134,7 @@ async def imdb_search(client, message):
         r, title = message.text.split(None, 1)
         movies = await get_poster(title, bulk=True)
         if not movies:
-            return await k.edit("❌ No results found on OMDb.")
+            return await k.edit("❌ No results found on IMDb.")
         btn = [
             [
                 InlineKeyboardButton(
@@ -148,23 +148,6 @@ async def imdb_search(client, message):
     else:
         await message.reply('Give me a movie / series Name')
 
-async def _send_photo_bytes_or_text(message, poster_url, caption, btn):
-    """Last resort before giving up on a real photo: download the poster ourselves
-    and upload the raw bytes. Only if that also fails do we send plain text — and
-    even then with the preview disabled, so we never show Telegram's own low-res
-    link-preview card as a stand-in for the poster."""
-    raw = await fetch_poster_bytes(poster_url)
-    if raw:
-        try:
-            photo = BytesIO(raw)
-            photo.name = "poster.jpg"
-            await message.reply_photo(photo=photo, caption=caption, reply_markup=InlineKeyboardMarkup(btn))
-            return
-        except Exception as e:
-            logger.exception(e)
-    await message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
-
-
 @Client.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     i, movie_id = quer_y.data.split('#')
@@ -173,39 +156,19 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     if not data:
         await quer_y.answer("❌ Could not fetch details.", show_alert=True)
         return
-
-    def _tags(field):
-        if not field or field == "N/A":
-            return "N/A"
-        return " ".join(f"#{p.strip().replace(' ', '_')}" for p in field.split(",") if p.strip())
-
-    # underscore-prefixed so they don't collide with the **locals() spread below
-    _aka_line = f"\n📝 Also Known As: {data['aka']}" if data.get("aka") and data["aka"] != "N/A" else ""
-    _genre_tags = _tags(data["genres"])
-    _language_tags = _tags(data["languages"])
-    _country_tags = _tags(data["countries"])
-
-    btn = []
-    if data.get('url') and str(data['url']).startswith('http'):
-        btn.append([
-            InlineKeyboardButton(
-                text=f"🔗 {data.get('title')} on IMDb",
-                url=data['url'],
-            )
-        ])
-    if data.get("trailers") and str(data["trailers"][-1]).startswith("http"):
-        btn.append([
-            InlineKeyboardButton(
-                text="▶️ Watch Trailer",
-                url=data["trailers"][-1],
-            )
-        ])
+    btn = [
+            [
+                InlineKeyboardButton(
+                    text=f"🔗 {data.get('title')} on IMDb",
+                    url=data['url'],
+                )
+            ]
+        ]
     caption = IMDB_TEMPLATE.format(
         query = data['title'],
         title = data['title'],
         votes = data['votes'],
         aka = data["aka"],
-        aka_line = _aka_line,
         seasons = data["seasons"],
         box_office = data['box_office'],
         localized_title = data['localized_title'],
@@ -214,10 +177,8 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         cast = data["cast"],
         runtime = data["runtime"],
         countries = data["countries"],
-        country_tags = _country_tags,
         certificates = data["certificates"],
         languages = data["languages"],
-        language_tags = _language_tags,
         director = data["director"],
         writer = data["writer"],
         producer = data["producer"],
@@ -228,7 +189,6 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         release_date = data['release_date'],
         year = data['year'],
         genres = data['genres'],
-        genre_tags = _genre_tags,
         poster = data['poster'],
         plot = data['plot'],
         rating = data['rating'],
@@ -245,11 +205,11 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
                 await quer_y.message.reply_photo(photo=poster, caption=caption, reply_markup=InlineKeyboardMarkup(btn))
             except Exception as e:
                 logger.exception(e)
-                await _send_photo_bytes_or_text(quer_y.message, data['poster'], caption, btn)
+                await quer_y.message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
         except Exception as e:
             logger.exception(e)
-            await _send_photo_bytes_or_text(quer_y.message, data['poster'], caption, btn)
+            await quer_y.message.reply(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
         await quer_y.message.delete()
     else:
-        await quer_y.message.edit(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
+        await quer_y.message.edit(caption, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=False)
     await quer_y.answer()
