@@ -1,12 +1,15 @@
 from aiohttp import web as webserver
+from plugins.miniapp import routes as miniapp_routes
 
 routes = webserver.RouteTableDef()
 
-async def bot_run():
+async def bot_run(bot=None):
     _app = webserver.Application(client_max_size=30000000)
+    _app["bot"] = bot   # miniapp API uses this client to send files to users
     _app.add_routes(routes)
+    _app.add_routes(miniapp_routes)
     return _app
-  
+
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
     return webserver.json_response("Mo_Tech_YT")

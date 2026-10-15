@@ -5,10 +5,10 @@ import asyncio
 from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from database.ia_filterdb import Media, get_file_details, unpack_new_file_id
 from database.users_chats_db import db
-from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT
+from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, MINIAPP_URL
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 import re
@@ -19,13 +19,6 @@ from plugins.pm_filter import auto_filter
 logger = logging.getLogger(__name__)
 
 BATCH_FILES = {}
-_MAX_BATCH_CACHE = 250
-
-def _trim_batch_files():
-    """Cap BATCH_FILES so it can't grow unbounded across bot uptime."""
-    if len(BATCH_FILES) > _MAX_BATCH_CACHE:
-        for k in list(BATCH_FILES.keys())[:len(BATCH_FILES) // 5]:
-            BATCH_FILES.pop(k, None)
 
 async def delete_after_delay(m, k, delay=600):
     await asyncio.sleep(delay)
@@ -37,6 +30,17 @@ async def delete_after_delay(m, k, delay=600):
         await k.edit_text("<b>✅ Yᴏᴜʀ File ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
     except Exception:
         pass
+
+
+@Client.on_message(filters.command("app") & filters.incoming & filters.private)
+async def open_miniapp(client, message):
+    if not MINIAPP_URL:
+        return await message.reply("Mini app not configured. Set MINIAPP_URL (public https url of the bot).")
+    await message.reply(
+        "🎬 <b>Search, tick files and send them to PM in one tap.</b>",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎬 Open Mini App", web_app=WebAppInfo(url=MINIAPP_URL))]]),
+        parse_mode=enums.ParseMode.HTML,
+    )
 
 
 @Client.on_message(filters.command("start") & filters.incoming)
@@ -76,6 +80,8 @@ async def start(client, message):
         ], [
             InlineKeyboardButton('✔ DMCA', callback_data='dmca')
         ]]
+        if MINIAPP_URL:
+            buttons.insert(0, [InlineKeyboardButton('🎬 Open Mini App', web_app=WebAppInfo(url=MINIAPP_URL))])
         reply_markup = InlineKeyboardMarkup(buttons)
         m = await message.reply_sticker("CAACAgUAAxkBAAEMNShmVI6xlIcNJ_lKp26yYT-1AZ-7IAACBAADwSQxMYnlHW4Ls8gQNQQ")
         await asyncio.sleep(1)
@@ -168,7 +174,6 @@ async def start(client, message):
                 return await client.send_message(LOG_CHANNEL, "UNABLE TO OPEN FILE.")
             os.remove(file)
             BATCH_FILES[file_id] = msgs
-            _trim_batch_files()
 
         for msg in msgs:
             title = msg.get("title")
@@ -195,7 +200,7 @@ async def start(client, message):
                 )
                 k = await client.send_message(
                     chat_id=message.from_user.id,
-                    text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
                 )
                 asyncio.create_task(delete_after_delay(m, k))
             except FloodWait as e:
@@ -209,7 +214,7 @@ async def start(client, message):
                 )
                 k = await client.send_message(
                     chat_id=message.from_user.id,
-                    text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                    text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
                 )
                 asyncio.create_task(delete_after_delay(m, k))
             except Exception as e:
@@ -293,7 +298,7 @@ async def start(client, message):
             await msg.edit_caption(f_caption)
             k = await client.send_message(
                 chat_id=message.from_user.id,
-                text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+                text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
             )
             asyncio.create_task(delete_after_delay(msg, k))
             return
@@ -326,7 +331,7 @@ async def start(client, message):
     )
     k = await client.send_message(
         chat_id=message.from_user.id,
-        text="<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
+        text=f"<blockquote><b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\n⚠️ File will be deleted in 10 Mins\n\n📌 Save or forward it.</blockquote>"
     )
     asyncio.create_task(delete_after_delay(m, k))
 
@@ -347,7 +352,7 @@ async def channel_info(bot, message):
         if chat.username:
             text += '\n@' + chat.username
         else:
-            text += '\n' + (chat.title or chat.first_name or str(chat.id))
+            text += '\n' + chat.title or chat.first_name
 
     text += f'\n\n**Total:** {len(CHANNELS)}'
 
@@ -469,7 +474,6 @@ async def settings(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
-        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
@@ -546,7 +550,6 @@ async def save_template(client, message):
     if (
         st.status != enums.ChatMemberStatus.ADMINISTRATOR
         and st.status != enums.ChatMemberStatus.OWNER
-        and userid not in ADMINS
         and str(userid) not in ADMINS
     ):
         return
