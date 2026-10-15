@@ -7,18 +7,12 @@ from pyrogram import enums
 from typing import Union
 import re
 import os
+from datetime import datetime
 from typing import List
 from database.users_chats_db import db
 from bs4 import BeautifulSoup
 import aiohttp
 import httpx
-
-try:
-    import imdbio as _imdbio
-    from imdbio.exceptions import ImdbioError as _ImdbioError
-    IMDBIO_AVAILABLE = True
-except ImportError:
-    IMDBIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -68,163 +62,12 @@ class _OmdbFakeMovie:
         return self._m.get(_map.get(k, k), default)
 
 
-class _ImdbioFakeMovie:
-    """Wraps an imdbio MovieBriefInfo search result to match Cinemagoer's object interface."""
-    def __init__(self, m):
-        self._m = m
-        self.movieID = f"imdbio_{m.imdb_id}"
-    def get(self, k, default=None):
-        if k == 'title':
-            return self._m.title or default
-        if k == 'year':
-            return self._m.year or default
-        if k == 'kind':
-            return self._m.kind or default
-        return default
-
-
-def _names(people):
-    """Turn a list of imdbio Person/CastMember objects into a joined name string."""
-    try:
-        names = [p.name for p in people if getattr(p, "name", None)]
-    except (TypeError, AttributeError):
-        return "N/A"
-    return list_to_str(names) if names else "N/A"
-
-
-def _cat(m, key):
-    """Safely pull a named category (writer, producer, ...) off an imdbio MovieDetail."""
-    try:
-        return _names(m.categories.get(key, []))
-    except (AttributeError, TypeError):
-        return "N/A"
-
-
-async def _imdbio_search(title, year=None, bulk=False):
-    """Search movies/shows via imdbio (no API key required)."""
-    if not IMDBIO_AVAILABLE:
-        return None
-    try:
-        result = await asyncio.to_thread(_imdbio.search_title, title, year=year)
-    except _ImdbioError as e:
-        logger.warning(f"imdbio search error: {e}")
-        return None
-    except TypeError as e:
-        # known upstream quirk in some imdbio releases (internal lru_cache hashing
-        # occasionally chokes on certain inputs) — not fixable on our side, falls
-        # back to OMDb automatically, so just a quiet warning instead of a full trace
-        logger.warning(f"imdbio search skipped (upstream bug): {e}")
-        return None
-    except Exception as e:
-        logger.exception(f"imdbio search unexpected error: {e}")
-        return None
-
-    if not result or not result.titles:
-        return None
-    if bulk:
-        return [_ImdbioFakeMovie(t) for t in result.titles[:10]]
-    return await _imdbio_get_details(result.titles[0].imdb_id)
-
-
-async def _imdbio_get_details(imdb_id):
-    """Fetch full details via imdbio by IMDb ID."""
-    if not IMDBIO_AVAILABLE:
-        return None
-    if isinstance(imdb_id, str) and imdb_id.startswith("imdbio_"):
-        imdb_id = imdb_id[len("imdbio_"):]
-    try:
-        m = await asyncio.to_thread(_imdbio.get_movie, imdb_id)
-    except _ImdbioError as e:
-        logger.warning(f"imdbio details error: {e}")
-        return None
-    except Exception as e:
-        logger.exception(f"imdbio details unexpected error: {e}")
-        return None
-    if not m:
-        return None
-
-    plot = m.plot or "N/A"
-    if not LONG_IMDB_DESCRIPTION and plot and plot != "N/A" and len(plot) > 800:
-        plot = plot[:800] + "..."
-
-    try:
-        seasons = len(m.info_series.display_seasons) if getattr(m, "info_series", None) else None
-    except (AttributeError, TypeError):
-        seasons = None
-
-    try:
-        cast = _names(m.categories.get("cast", []))
-        if cast == "N/A":
-            cast = _names(m.stars)
-    except (AttributeError, TypeError):
-        cast = _names(m.stars) if getattr(m, "stars", None) else "N/A"
-
-    try:
-        box_office = (m.box_office or {}).get("cumulativeWorldwideGross") \
-            or (m.box_office or {}).get("grossWorldwide") \
-            or m.worldwide_gross or "N/A"
-    except (AttributeError, TypeError):
-        box_office = "N/A"
-
-    return {
-        'title': m.title or "N/A",
-        'votes': str(m.votes) if m.votes else "N/A",
-        "aka": list_to_str(m.title_akas) if getattr(m, "title_akas", None) else "N/A",
-        "seasons": seasons,
-        "box_office": box_office,
-        'localized_title': m.title_localized or m.title or "N/A",
-        'kind': "tv series" if m.is_series() else ("episode" if m.is_episode() else "movie"),
-        "imdb_id": m.imdb_id or "N/A",
-        "cast": cast,
-        "runtime": f"{m.duration} min" if getattr(m, "duration", None) else "N/A",
-        "countries": list_to_str(m.countries) if getattr(m, "countries", None) else "N/A",
-        "certificates": m.mpaa or m.certificate or "N/A",
-        "languages": list_to_str(m.languages_text or m.languages) if (getattr(m, "languages_text", None) or getattr(m, "languages", None)) else "N/A",
-        "director": _names(m.directors) if getattr(m, "directors", None) else "N/A",
-        "writer": _cat(m, "writer"),
-        "producer": _cat(m, "producer"),
-        "composer": _cat(m, "composer"),
-        "cinematographer": _cat(m, "cinematographer"),
-        "music_team": "N/A",
-        "distributors": "N/A",
-        'release_date': m.release_date or "N/A",
-        'year': str(m.year) if m.year else "N/A",
-        'genres': list_to_str(m.genres) if getattr(m, "genres", None) else "N/A",
-        'poster': _hq_poster(m.cover_url),
-        'plot': plot,
-        'rating': str(m.rating) if m.rating else "N/A",
-        'url': m.url or (f"https://www.imdb.com/title/{m.imdb_id}/" if m.imdb_id else "N/A"),
-        'trailers': list(m.trailers) if getattr(m, "trailers", None) else [],
-        '_source': 'imdbio',
-    }
-
-
 def _hq_poster(url):
     """OMDb poster URLs point at Amazon's image CDN with a size-limiting suffix
-    like '._V1_SX300.jpg'. Stripping that suffix returns the original, full-res image."""
+    like '...@._V1_SX300.jpg'. Stripping '._V1_SX300' leaves '...@.jpg' = the original, full-res image."""
     if not url or url == "N/A":
         return None
-    return re.sub(r'\._[A-Z0-9,]+_(?=\.\w+$)', '', url)
-
-
-async def fetch_poster_bytes(url):
-    """Download a poster image ourselves and return raw bytes, or None on failure.
-    Telegram's own reply_photo(photo=<url>) sometimes fails (CDN blocks Telegram's
-    fetcher, size/dimension limits) even when the URL is perfectly loadable from a
-    normal browser/HTTP client — downloading it ourselves and uploading the bytes
-    sidesteps that."""
-    if not url:
-        return None
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
-    try:
-        async with httpx.AsyncClient(timeout=15, headers=headers, follow_redirects=True) as client:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            return resp.content
-    except Exception as e:
-        logger.warning(f"poster download failed: {e}")
-        return None
+    return re.sub(r'\._V1_[^/]*?(?=\.\w+$)', '', url)
 
 
 async def _omdb_search(title, year=None, bulk=False):
@@ -310,7 +153,6 @@ async def _omdb_get_details(imdb_id):
         'plot': plot,
         'rating': m.get("imdbRating", "N/A"),
         'url': f"https://www.imdb.com/title/{m.get('imdbID')}/" if m.get("imdbID") else "N/A",
-        'trailers': [],  # OMDb has no trailer data
         '_source': 'omdb',
     }
 
@@ -318,9 +160,6 @@ async def _omdb_get_details(imdb_id):
 async def get_poster(query, bulk=False, id=False, file=None):
     # ── Direct ID lookups ────────────────────────────────────────────────────
     if id:
-        result = await _imdbio_get_details(query)
-        if result:
-            return result
         return await _omdb_get_details(query)
 
     # ── Parse title + year ───────────────────────────────────────────────────
@@ -337,9 +176,6 @@ async def get_poster(query, bulk=False, id=False, file=None):
     else:
         year = None
 
-    result = await _imdbio_search(title, year=year, bulk=bulk)
-    if result:
-        return result
     return await _omdb_search(title, year=year, bulk=bulk)
 
 async def broadcast_messages(user_id, message):
@@ -360,7 +196,7 @@ async def broadcast_messages(user_id, message):
         await db.delete_user(int(user_id))
         logging.info(f"{user_id} - PeerIdInvalid")
         return False, "Error"
-    except Exception:
+    except Exception as e:
         return False, "Error"
 
 async def search_gagala(text):

@@ -58,6 +58,7 @@ FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '')).
 MELCOW_NEW_USERS = is_enabled((environ.get('MELCOW_NEW_USERS', "True")), True)
 PROTECT_CONTENT = is_enabled((environ.get('PROTECT_CONTENT', "False")), False)
 PUBLIC_FILE_STORE = is_enabled((environ.get('PUBLIC_FILE_STORE', "False")), True)
+TMDB_API_KEY = environ.get("TMDB_API_KEY") # optional. Mini app only: poster fallback when OMDb has no poster. Bot /imdb stays OMDb-only.
 OMDB_API_KEY = environ.get("OMDB_API_KEY") #get free key from omdbapi.com, used for posters + metadata
 
 LOG_STR = "Current Cusomized Configurations are:-\n"
