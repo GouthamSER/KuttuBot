@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Kuttu Search</title>
+<title>KuttuBot</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ── Tokens ─────────────────────────────────────────────────────────────
-     Surfaces follow the Telegram theme. Teal marks selection, amber is
-     reserved for the send stub. Edit these to re-skin the app. */
+     Surfaces follow the Telegram theme. Teal marks selection, amber is the
+     brand colour (logo tile + send stub). Edit these to re-skin the app. */
   :root {
     --bg: var(--tg-theme-bg-color, #ffffff);
     --surface: var(--tg-theme-secondary-bg-color, #f1f2f4);
@@ -41,9 +41,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
   body {
-    font-family: var(--ui);
-    font-size: 15px;
-    line-height: 1.4;
+    font-family: var(--ui); font-size: 15px; line-height: 1.4;
     padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
     overscroll-behavior-y: none;
   }
@@ -51,169 +49,155 @@
   button { font: inherit; color: inherit; cursor: pointer; }
   [hidden] { display: none !important; }
   :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .pad { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+
+  /* ── Brand header ────────────────────────────────────────────────────── */
+  .brand { display: flex; align-items: center; gap: 12px; padding-top: 14px; padding-bottom: 4px; }
+  .mark {                                   /* ticket-shaped tile, echoes the send stub */
+    position: relative; flex: none; width: 40px; height: 40px; border-radius: 11px;
+    background: var(--amber); color: var(--ink);
+    display: grid; place-items: center;
+    font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1;
+  }
+  .mark::before, .mark::after {
+    content: ""; position: absolute; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--bg);
+  }
+  .mark::before { left: -4px; }
+  .mark::after { right: -4px; }
+  .brand h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: .01em; }
+  .brand p { margin: 3px 0 0; font-size: 12.5px; color: var(--hint); }
 
   /* ── Search header ───────────────────────────────────────────────────── */
-  .top {
-    position: sticky; top: 0; z-index: 5;
-    background: var(--bg);
-    padding: 12px 14px 6px;
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-  }
+  .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: 10px; padding-bottom: 6px; }
   .search { position: relative; }
   .search input {
-    width: 100%; height: 46px;
-    padding: 0 44px 0 42px;
+    width: 100%; height: 46px; padding: 0 44px 0 42px;
     border: 1.5px solid transparent; border-radius: 12px;
     background: var(--surface); color: var(--text);
-    font: inherit; font-size: 16px;      /* 16px stops iOS zooming on focus */
-    outline: none;
+    font: inherit; font-size: 16px; outline: none;      /* 16px stops iOS zoom on focus */
   }
   .search input::placeholder { color: var(--hint); }
   .search input:focus { border-color: var(--teal); }
   .search input::-webkit-search-cancel-button { display: none; }
-  .search .icon {
-    position: absolute; left: 13px; top: 50%; translate: 0 -50%;
-    width: 18px; height: 18px; color: var(--hint); pointer-events: none;
-  }
-  .search .clear {
-    position: absolute; right: 0; top: 0; width: 46px; height: 46px;
-    border: 0; background: none; color: var(--hint);
-    display: grid; place-items: center;
-  }
+  .search .icon { position: absolute; left: 13px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--hint); pointer-events: none; }
+  .search .clear { position: absolute; right: 0; top: 0; width: 46px; height: 46px; border: 0; background: none; color: var(--hint); display: grid; place-items: center; }
   .search .clear svg { width: 16px; height: 16px; }
 
-  .chips {
-    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
-    padding: 10px 0 2px; margin: 0 -14px; padding-inline: 14px;
-  }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 10px 14px 2px; margin: 0 -14px; }
   .chips::-webkit-scrollbar { display: none; }
   .chip {
     flex: none; height: 34px; padding: 0 14px;
-    border: 1px solid var(--line); border-radius: 17px;
-    background: transparent; font-size: 14px; font-weight: 500;
-    transition: background .12s, border-color .12s;
+    border: 1px solid var(--line); border-radius: 17px; background: transparent;
+    font-size: 14px; font-weight: 500; transition: background .12s, border-color .12s;
   }
-  .chip[aria-pressed="true"] {
-    background: var(--teal); border-color: var(--teal); color: var(--on-teal);
-  }
+  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
 
-  /* ── Results bar + list ──────────────────────────────────────────────── */
-  .bar {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 10px 14px 4px; min-height: 40px;
-    color: var(--hint); font-size: 13px;
-  }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; padding-bottom: 6px; min-height: 40px; color: var(--hint); font-size: 13px; }
   .bar .actions { display: flex; gap: 4px; flex: none; }
-  .link {
-    border: 0; background: none; color: var(--teal);
-    font-size: 13px; font-weight: 600; padding: 8px 8px; margin: -8px -4px;
+  .link { border: 0; background: none; color: var(--teal); font-size: 13px; font-weight: 600; padding: 8px 8px; margin: -8px -4px; }
+
+  /* ── Poster grid ─────────────────────────────────────────────────────── */
+  .grid { list-style: none; margin: 0; padding-top: 6px; padding-bottom: 8px; display: grid; gap: 18px 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .card { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
+  .art {
+    position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden;
+    border-radius: 10px; background: var(--surface);
+    box-shadow: 0 0 0 1px var(--line);
+    transition: transform .12s;
   }
+  .card:active .art { transform: scale(.98); }
+  .art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .ph {                                   /* shown when no poster exists */
+    position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; text-align: center;
+    background: var(--teal-soft); color: var(--text);
+    font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.05; overflow: hidden;
+  }
+  .badge {
+    position: absolute; top: 8px; right: 8px; min-width: 26px; height: 26px; padding: 0 7px;
+    display: grid; place-items: center; border-radius: 13px;
+    background: var(--teal); color: var(--on-teal);
+    font-family: var(--display); font-weight: 700; font-size: 16px;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .ctitle { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 8px; font-weight: 600; line-height: 1.25; }
+  .cmeta { display: block; margin-top: 2px; color: var(--hint); font-size: 13px; }
+
+  .sk-card .art { box-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
+  .sk-card i { display: block; height: 12px; border-radius: 6px; background: var(--surface); margin-top: 10px; width: 70%; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  /* ── Movie view ──────────────────────────────────────────────────────── */
+  .mbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 4px; background: var(--bg); padding-top: 8px; padding-bottom: 8px; box-shadow: 0 1px 0 var(--line); }
+  .back { flex: none; display: flex; align-items: center; gap: 2px; height: 40px; padding: 0 10px 0 4px; border: 0; background: none; color: var(--teal); font-weight: 600; }
+  .back svg { width: 22px; height: 22px; }
+  .mbar-title { min-width: 0; flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .mhead { display: grid; grid-template-columns: 116px 1fr; gap: 16px; padding-top: 16px; padding-bottom: 12px; align-items: start; }
+  .mposter { position: relative; display: block; width: 116px; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+  .mposter img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .minfo h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; overflow-wrap: anywhere; }
+  .facts { margin: 8px 0 0; color: var(--hint); font-size: 14px; }
+  .facts b { color: var(--text); font-weight: 600; }
+  .genres { margin: 4px 0 0; color: var(--hint); font-size: 14px; }
+  .plot { grid-column: 1 / -1; margin: 0; padding: 0; border: 0; background: none; text-align: left; color: var(--text); font-size: 14.5px; line-height: 1.5; opacity: .88;
+          display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .plot.open { -webkit-line-clamp: unset; display: block; }
 
   .list { list-style: none; margin: 0; padding: 0; }
   .list li { border-bottom: 1px solid var(--line); }
-  .row {
-    position: relative; width: 100%;
-    display: grid; grid-template-columns: 22px 1fr; gap: 14px; align-items: start;
-    padding: 14px 14px; text-align: left;
-    border: 0; background: transparent;
-  }
+  .row { position: relative; width: 100%; display: grid; grid-template-columns: 22px 1fr; gap: 14px; align-items: start; padding: 14px 14px; text-align: left; border: 0; background: transparent; }
   .row[aria-checked="true"] { background: var(--teal-soft); }
-  .row[aria-checked="true"]::before {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--teal);
-  }
-  .box {
-    width: 22px; height: 22px; margin-top: 1px;
-    border: 2px solid rgba(127, 127, 127, .55); border-radius: 7px;
-    display: grid; place-items: center;
-    transition: background .12s, border-color .12s;
-  }
+  .row[aria-checked="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--teal); }
+  .box { width: 22px; height: 22px; margin-top: 1px; border: 2px solid rgba(127, 127, 127, .55); border-radius: 7px; display: grid; place-items: center; transition: background .12s, border-color .12s; }
   .box svg { width: 13px; height: 13px; opacity: 0; color: var(--on-teal); }
   .row[aria-checked="true"] .box { background: var(--teal); border-color: var(--teal); }
   .row[aria-checked="true"] .box svg { opacity: 1; }
-
-  .name { font-weight: 500; overflow-wrap: anywhere; }   /* full name, never cut */
-  .meta {
-    margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-    color: var(--hint); font-size: 13px;
-  }
-  .q {
-    font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em;
-    padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text);
-  }
+  .name { font-weight: 500; overflow-wrap: anywhere; }
+  .meta { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--hint); font-size: 13px; }
+  .q { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); }
   .sent-tag { color: var(--teal); font-weight: 600; }
-
-  .sk { padding: 16px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 22px 1fr; gap: 14px; }
-  .sk i { display: block; border-radius: 7px; background: var(--surface); }
-  .sk i:first-child { width: 22px; height: 22px; }
-  .sk .l1 { height: 14px; width: 86%; }
-  .sk .l2 { height: 12px; width: 38%; margin-top: 10px; }
-  .sk > div { display: block; }
-  .sk i { animation: pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: .45; } }
+  .sk-row { padding: 16px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 22px 1fr; gap: 14px; }
+  .sk-row i { display: block; border-radius: 7px; background: var(--surface); animation: pulse 1.2s ease-in-out infinite; }
+  .sk-row i:first-child { width: 22px; height: 22px; }
+  .sk-row .l1 { height: 14px; width: 86%; }
+  .sk-row .l2 { height: 12px; width: 38%; margin-top: 10px; }
 
   .state { padding: 48px 28px; text-align: center; color: var(--hint); }
   .state strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
-  .state .retry {
-    margin-top: 16px; height: 40px; padding: 0 20px;
-    border: 1.5px solid var(--teal); border-radius: 10px; background: none; color: var(--teal); font-weight: 600;
-  }
+  .state .retry { margin-top: 16px; height: 40px; padding: 0 20px; border: 1.5px solid var(--teal); border-radius: 10px; background: none; color: var(--teal); font-weight: 600; }
   .more { padding: 18px; text-align: center; color: var(--hint); font-size: 13px; }
+
+  /* ── Poster lightbox ─────────────────────────────────────────────────── */
+  .lightbox { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(0, 0, 0, .92); padding: 16px; }
+  .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
 
   /* ── Send stub (the one loud element) ────────────────────────────────── */
   .dock {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
     padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-    padding-left: max(14px, env(safe-area-inset-left));
-    padding-right: max(14px, env(safe-area-inset-right));
-    background: var(--bg);
-    box-shadow: 0 -1px 0 var(--line);
-    transform: translateY(110%);
-    transition: transform .22s ease-out;
+    padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right));
+    background: var(--bg); box-shadow: 0 -1px 0 var(--line);
+    transform: translateY(110%); transition: transform .22s ease-out;
   }
   .dock.on { transform: none; }
-  .stub {
-    position: relative; height: 64px;
-    display: grid; grid-template-columns: auto 0 1fr; align-items: stretch;
-    background: var(--amber); color: var(--ink); border-radius: 14px;
-  }
-  .stub::before, .stub::after {          /* side notches */
-    content: ""; position: absolute; top: calc(50% - 7px);
-    width: 14px; height: 14px; border-radius: 50%; background: var(--bg);
-  }
+  .stub { position: relative; height: 64px; display: grid; grid-template-columns: auto 0 1fr; align-items: stretch; background: var(--amber); color: var(--ink); border-radius: 14px; }
+  .stub::before, .stub::after { content: ""; position: absolute; top: calc(50% - 7px); width: 14px; height: 14px; border-radius: 50%; background: var(--bg); }
   .stub::before { left: -7px; }
   .stub::after { right: -7px; }
-  .count {
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 0 20px 0 24px; min-width: 92px;
-  }
+  .count { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px 0 24px; min-width: 92px; }
   .count b { font-family: var(--display); font-weight: 700; font-size: 32px; line-height: .95; }
   .count span { font-size: 12px; font-weight: 500; opacity: .8; }
-  .tear {                                  /* perforation between count and send */
-    position: relative; margin: 12px 0; border-left: 2px dashed rgba(34, 22, 10, .4);
-  }
-  .tear::before, .tear::after {
-    content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg);
-  }
+  .tear { position: relative; margin: 12px 0; border-left: 2px dashed rgba(34, 22, 10, .4); }
+  .tear::before, .tear::after { content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); }
   .tear::before { top: -20px; }
   .tear::after { bottom: -20px; }
-  .send {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    border: 0; background: none; color: var(--ink);
-    font-size: 17px; font-weight: 600; padding: 0 22px; border-radius: 0 14px 14px 0;
-  }
+  .send { display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: none; color: var(--ink); font-size: 17px; font-weight: 600; padding: 0 22px; border-radius: 0 14px 14px 0; }
   .send svg { width: 20px; height: 20px; }
   .send:active { background: rgba(0, 0, 0, .08); }
   .send:disabled { opacity: .6; cursor: default; }
   .send:focus-visible { outline: 2px solid var(--ink); outline-offset: -6px; }
 
-  .toast {
-    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); z-index: 20;
-    translate: -50% 0; max-width: min(92vw, 420px);
-    padding: 11px 16px; border-radius: 10px;
-    background: var(--text); color: var(--bg); font-size: 14px; text-align: center;
-    opacity: 0; pointer-events: none; transition: opacity .18s;
-  }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); z-index: 40; translate: -50% 0; max-width: min(92vw, 420px); padding: 11px 16px; border-radius: 10px; background: var(--text); color: var(--bg); font-size: 14px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
   body.has-dock .toast { bottom: calc(env(safe-area-inset-bottom) + 108px); }
   .toast.show { opacity: 1; }
   .toast.error { background: var(--danger); color: #fff; }
@@ -222,9 +206,7 @@
   .gate h1 { font-family: var(--display); font-size: 30px; margin: 0; }
   .gate p { margin: 0; color: var(--hint); max-width: 28ch; }
 
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -235,30 +217,69 @@
 </main>
 
 <div id="app" hidden>
-  <header class="top">
-    <div class="search">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search movies or series" aria-label="Search movies or series">
-      <button id="clearQ" class="clear" type="button" aria-label="Clear search" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
+
+  <!-- HOME: brand, search, poster grid -->
+  <section id="home">
+    <header class="brand pad">
+      <div class="mark" aria-hidden="true">K</div>
+      <div>
+        <h1>KuttuBot</h1>
+        <p>by Goutham Josh</p>
+      </div>
+    </header>
+
+    <div class="top pad">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search movies or series" aria-label="Search movies or series">
+        <button id="clearQ" class="clear" type="button" aria-label="Clear search" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="chips" id="qualityChips" role="group" aria-label="Quality"></div>
+      <div class="chips" id="langChips" role="group" aria-label="Language"></div>
     </div>
-    <div class="chips" id="qualityChips" role="group" aria-label="Quality"></div>
-    <div class="chips" id="langChips" role="group" aria-label="Language"></div>
-  </header>
 
-  <div class="bar">
-    <span id="summary" aria-live="polite"></span>
-    <span class="actions">
-      <button id="selectAll" class="link" type="button" hidden>Select all</button>
-      <button id="clearSel" class="link" type="button" hidden>Clear</button>
-    </span>
-  </div>
+    <div class="bar pad"><span id="summary" aria-live="polite"></span></div>
+    <ul id="grid" class="grid pad"></ul>
+    <div id="state" class="state" hidden></div>
+    <div id="more" class="more" hidden>Loading more…</div>
+    <div id="sentinel" aria-hidden="true"></div>
+  </section>
 
-  <ul id="list" class="list"></ul>
-  <div id="state" class="state" hidden></div>
-  <div id="more" class="more" hidden>Loading more…</div>
-  <div id="sentinel" aria-hidden="true"></div>
+  <!-- MOVIE: poster, details, that title's files -->
+  <section id="movie" hidden>
+    <div class="mbar pad">
+      <button id="back" class="back" type="button" aria-label="Back to results">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>
+        Back
+      </button>
+      <span id="mbarTitle" class="mbar-title"></span>
+    </div>
+
+    <div class="mhead pad">
+      <button id="mposter" class="mposter" type="button" aria-label="View full poster"></button>
+      <div class="minfo">
+        <h2 id="mtitle"></h2>
+        <p id="mfacts" class="facts"></p>
+        <p id="mgenres" class="genres"></p>
+      </div>
+      <button id="mplot" class="plot" type="button" hidden></button>
+    </div>
+
+    <div class="pad"><div class="chips" id="mChips" role="group" aria-label="Filter files by quality" hidden></div></div>
+    <div class="bar pad">
+      <span id="msummary" aria-live="polite"></span>
+      <span class="actions">
+        <button id="selectAll" class="link" type="button" hidden>Select all</button>
+        <button id="clearSel" class="link" type="button" hidden>Clear</button>
+      </span>
+    </div>
+    <ul id="files" class="list"></ul>
+    <div id="mstate" class="state" hidden></div>
+  </section>
+
+  <div id="lightbox" class="lightbox" role="dialog" aria-label="Poster" hidden><img id="lightImg" alt=""></div>
 
   <div id="dock" class="dock" aria-hidden="true">
     <div class="stub">
@@ -288,14 +309,13 @@
   // ── Telegram integration ────────────────────────────────────────────────
   tg.ready();
   tg.expand();
-  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();   // stop scroll closing the app
+  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
   const applyScheme = () => { document.documentElement.dataset.scheme = tg.colorScheme === 'dark' ? 'dark' : 'light'; };
   applyScheme();
   tg.onEvent('themeChanged', applyScheme);
   const haptic = (kind) => {
     const h = tg.HapticFeedback; if (!h) return;
-    if (kind === 'tick') h.selectionChanged();
-    else h.notificationOccurred(kind);                      // 'success' | 'error'
+    if (kind === 'tick') h.selectionChanged(); else h.notificationOccurred(kind);   // 'success' | 'error'
   };
 
   // ── Config ─────────────────────────────────────────────────────────────
@@ -304,17 +324,30 @@
   const QUALITIES = ['480p', '720p', '1080p', '2160p'];
   const LANGUAGES = ['Malayalam', 'Tamil', 'Telugu', 'Hindi', 'English', 'Kannada'];
   const QUALITY_RE = /(2160p|4k|1440p|1080p|720p|540p|480p|360p)/i;
+  const qualityOf = (name) => {
+    const m = name.match(QUALITY_RE); if (!m) return '';
+    const q = m[1].toLowerCase(); return q === '4k' ? '2160p' : q;
+  };
 
   // ── State ──────────────────────────────────────────────────────────────
-  const state = { query: '', quality: '', lang: '', next: null, loading: false, seq: 0 };
-  const selected = new Map();    // file id -> name
-  const sent = new Set();        // file ids already delivered this session
+  const state = { query: '', quality: '', lang: '', next: null, loading: false, seq: 0, view: 'home' };
+  const selected = new Map();    // file id -> {name, key}
+  const sent = new Set();        // file ids delivered this session
+  const movies = [];             // movies currently in the grid
+  const movieKeys = new Set();
   let ctrl = null;
+  let homeScroll = 0;
+  let current = null;            // the open movie: {key, files, filter, seq, info}
+  let movieSeq = 0;
 
   const el = {
-    q: $('q'), clearQ: $('clearQ'), list: $('list'), summary: $('summary'),
-    selectAll: $('selectAll'), clearSel: $('clearSel'), state: $('state'), more: $('more'),
-    sentinel: $('sentinel'), dock: $('dock'), count: $('count'), send: $('send'), toast: $('toast'),
+    q: $('q'), clearQ: $('clearQ'), grid: $('grid'), summary: $('summary'), state: $('state'),
+    more: $('more'), sentinel: $('sentinel'), home: $('home'), movie: $('movie'),
+    back: $('back'), mbarTitle: $('mbarTitle'), mposter: $('mposter'), mtitle: $('mtitle'),
+    mfacts: $('mfacts'), mgenres: $('mgenres'), mplot: $('mplot'), mChips: $('mChips'),
+    msummary: $('msummary'), selectAll: $('selectAll'), clearSel: $('clearSel'),
+    files: $('files'), mstate: $('mstate'), lightbox: $('lightbox'), lightImg: $('lightImg'),
+    dock: $('dock'), count: $('count'), send: $('send'), toast: $('toast'),
   };
 
   // ── API ────────────────────────────────────────────────────────────────
@@ -347,96 +380,70 @@
     toastTimer = setTimeout(() => el.toast.classList.remove('show'), 4200);
   }
 
-  function showState(title, body, retry) {
-    el.state.hidden = false;
-    el.state.replaceChildren();
+  function showState(box, title, body, retry) {
+    box.hidden = false;
+    box.replaceChildren();
     const s = document.createElement('strong'); s.textContent = title;
     const p = document.createElement('span'); p.textContent = body;
-    el.state.append(s, p);
+    box.append(s, p);
     if (retry) {
       const b = document.createElement('button');
       b.className = 'retry'; b.type = 'button'; b.textContent = 'Try again';
-      b.onclick = retry; el.state.append(document.createElement('br'), b);
+      b.onclick = retry; box.append(document.createElement('br'), b);
     }
   }
 
-  function skeleton() {
-    el.list.replaceChildren();
+  function placeholder(title) {
+    const d = document.createElement('span'); d.className = 'ph'; d.textContent = title; return d;
+  }
+  function posterEl(url, title) {
+    if (!url) return placeholder(title);
+    const img = new Image();
+    img.alt = ''; img.decoding = 'async'; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+    img.onerror = () => img.replaceWith(placeholder(title));
+    img.src = url;
+    return img;
+  }
+  const fmtRating = (r) => Number(r).toFixed(1);
+  const wrapSeps = (s) => s.replace(/([._-])/g, '$1​');    // allow wrapping at separators; text stays complete
+
+  // ── HOME: poster grid ──────────────────────────────────────────────────
+  function skeletonGrid() {
+    el.grid.replaceChildren();
     for (let i = 0; i < 6; i++) {
-      const d = document.createElement('li');
-      d.className = 'sk';
-      d.innerHTML = '<i></i><div><i class="l1"></i><i class="l2"></i></div>';
-      el.list.append(d);
+      const li = document.createElement('li'); li.className = 'sk-card';
+      li.innerHTML = '<span class="art"></span><i></i>';
+      el.grid.append(li);
     }
   }
 
-  // ── Rendering ──────────────────────────────────────────────────────────
-  function buildRow(f) {
+  function buildCard(m) {
     const li = document.createElement('li');
-    li.dataset.id = f.id;
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'row'; btn.setAttribute('role', 'checkbox');
-    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
-
-    const box = document.createElement('span'); box.className = 'box'; box.innerHTML = svgCheck;
-    const body = document.createElement('span');
-    const name = document.createElement('span'); name.className = 'name';
-    name.textContent = f.name.replace(/([._-])/g, '$1​');   // allow wrapping at separators, text stays complete
-    const meta = document.createElement('span'); meta.className = 'meta';
-    const qm = f.name.match(QUALITY_RE);
-    if (qm) { const q = document.createElement('span'); q.className = 'q'; q.textContent = qm[1].toUpperCase(); meta.append(q); }
-    const size = document.createElement('span'); size.textContent = f.size; meta.append(size);
-    if (sent.has(f.id)) { const t = document.createElement('span'); t.className = 'sent-tag'; t.textContent = 'Sent'; meta.append(t); }
-    body.append(name, meta);
-    btn.append(box, body);
-    btn.onclick = () => toggle(f, btn);
-    li.append(btn);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'card'; b.dataset.key = m.key;
+    b.setAttribute('aria-label', `${m.title}${m.year ? ' ' + m.year : ''}`);
+    const art = document.createElement('span'); art.className = 'art';
+    art.append(posterEl(m.thumb, m.title));
+    const badge = document.createElement('span'); badge.className = 'badge'; badge.hidden = true; art.append(badge);
+    const t = document.createElement('span'); t.className = 'ctitle'; t.textContent = m.title;
+    const meta = document.createElement('span'); meta.className = 'cmeta';
+    meta.textContent = [m.year, m.kind === 'series' ? 'Series' : '', m.rating ? `★ ${fmtRating(m.rating)}` : ''].filter(Boolean).join(' · ');
+    b.append(art, t, meta);
+    b.onclick = () => openMovie(m);
+    li.append(b);
     return li;
   }
 
-  function toggle(f, btn) {
-    if (selected.has(f.id)) {
-      selected.delete(f.id);
-    } else {
-      if (selected.size >= MAX_SEND) { toast(`You can send up to ${MAX_SEND} files at once.`, true); haptic('error'); return; }
-      selected.set(f.id, f.name);
-    }
-    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
-    haptic('tick');
-    syncSelection();
-  }
-
-  const renderedFiles = [];   // files currently in the list, same order as rows
-
-  function syncSelection() {
-    const n = selected.size;
-    el.count.textContent = n;
-    el.dock.classList.toggle('on', n > 0);
-    el.dock.setAttribute('aria-hidden', n > 0 ? 'false' : 'true');
-    document.body.classList.toggle('has-dock', n > 0);
-    el.clearSel.hidden = n === 0;
-    el.selectAll.hidden = renderedFiles.length === 0 || renderedFiles.every((f) => selected.has(f.id));
-  }
-
-  function syncRows() {
-    el.list.querySelectorAll('li[data-id]').forEach((li) => {
-      li.firstElementChild.setAttribute('aria-checked', selected.has(li.dataset.id) ? 'true' : 'false');
-    });
-  }
-
-  // ── Search ─────────────────────────────────────────────────────────────
   async function load(append) {
     if (append && (state.loading || state.next === null)) return;
     const mySeq = append ? state.seq : ++state.seq;
     if (!append) {
       if (ctrl) ctrl.abort();
       ctrl = new AbortController();
-      state.next = null;
-      renderedFiles.length = 0;
+      state.next = null; movies.length = 0; movieKeys.clear();
       el.state.hidden = true; el.more.hidden = true;
       el.summary.textContent = 'Searching…';
-      skeleton();
-      syncSelection();
+      skeletonGrid();
     } else {
       el.more.hidden = false;
     }
@@ -444,31 +451,36 @@
     try {
       const data = await api('/api/search', { query: effectiveQuery(), offset: append ? state.next : 0 }, ctrl.signal);
       if (mySeq !== state.seq) return;
-      if (!append) el.list.replaceChildren();
-      data.files.forEach((f) => { renderedFiles.push(f); el.list.append(buildRow(f)); });
+      if (!append) el.grid.replaceChildren();
+      data.movies.forEach((m) => {
+        if (movieKeys.has(m.key)) return;               // same title can span two pages
+        movieKeys.add(m.key); movies.push(m); el.grid.append(buildCard(m));
+      });
       state.next = data.next_offset;
       const q = effectiveQuery();
-      el.summary.textContent = !q ? 'Latest uploads'
-        : data.total === 1 ? '1 file found' : `${data.total} files found`;
-      if (!renderedFiles.length) {
-        showState(q ? `No files for “${q}”` : 'Nothing uploaded yet',
+      el.summary.textContent = !movies.length ? '' : !q ? 'Latest uploads' : `Results for “${q}”`;
+      if (!movies.length) {
+        showState(el.state, q ? `No titles for “${q}”` : 'Nothing uploaded yet',
                   q ? 'Check the spelling, use fewer words, or clear a filter.' : 'Come back after new files are added.');
       }
+      syncSelection();
     } catch (e) {
       if (e.name === 'AbortError' || mySeq !== state.seq) return;
-      if (!append) { el.list.replaceChildren(); el.summary.textContent = ''; }
-      showState('Could not load files', e.message, () => load(append));
+      if (!append) { el.grid.replaceChildren(); el.summary.textContent = ''; }
+      showState(el.state, 'Could not load titles', e.message, () => load(append));
     } finally {
-      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; syncSelection(); }
+      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; }
+      requestAnimationFrame(maybeFill);
     }
   }
 
-  // infinite scroll
-  new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) load(true);
-  }, { rootMargin: '600px 0px' }).observe(el.sentinel);
+  // keep loading while the sentinel is on screen (a page can add no new titles)
+  function maybeFill() {
+    if (state.view !== 'home' || state.loading || state.next === null) return;
+    if (el.sentinel.getBoundingClientRect().top < window.innerHeight + 600) load(true);
+  }
+  new IntersectionObserver((entries) => { if (entries[0].isIntersecting) maybeFill(); }, { rootMargin: '600px 0px' }).observe(el.sentinel);
 
-  // ── Controls ───────────────────────────────────────────────────────────
   let typing;
   el.q.addEventListener('input', () => {
     el.clearQ.hidden = !el.q.value;
@@ -485,11 +497,9 @@
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'chip'; b.textContent = v; b.setAttribute('aria-pressed', 'false');
       b.onclick = () => {
-        const on = state[key] !== v;
-        state[key] = on ? v : '';
+        state[key] = state[key] !== v ? v : '';
         container.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === state[key] ? 'true' : 'false'));
-        haptic('tick');
-        load(false);
+        haptic('tick'); load(false);
       };
       container.append(b);
     });
@@ -497,12 +507,200 @@
   buildChips($('qualityChips'), QUALITIES, 'quality');
   buildChips($('langChips'), LANGUAGES, 'lang');
 
+  // ── MOVIE view ─────────────────────────────────────────────────────────
+  function setPoster(url, title) {
+    el.mposter.replaceChildren(posterEl(url, title));
+  }
+
+  function renderHead(info) {
+    el.mbarTitle.textContent = info.title;
+    el.mtitle.textContent = info.title;
+    setPoster(info.thumb, info.title);
+    const facts = [];
+    if (info.year) facts.push(info.year);
+    if (info.kind === 'series') facts.push('Series');
+    if (info.runtime) facts.push(info.runtime);
+    el.mfacts.replaceChildren(document.createTextNode(facts.join(' · ')));
+    if (info.rating) {
+      if (facts.length) el.mfacts.append(document.createTextNode(' · '));
+      const b = document.createElement('b'); b.textContent = `★ ${fmtRating(info.rating)}`; el.mfacts.append(b);
+    }
+    el.mgenres.textContent = (info.genres || []).join(', ');
+    el.mgenres.hidden = !(info.genres && info.genres.length);
+    el.mplot.textContent = info.plot || '';
+    el.mplot.hidden = !info.plot;
+    el.mplot.classList.remove('open');
+  }
+
+  function visibleFiles() {
+    if (!current) return [];
+    return current.filter ? current.files.filter((f) => qualityOf(f.name) === current.filter) : current.files;
+  }
+
+  function buildRow(f, key) {
+    const li = document.createElement('li');
+    li.dataset.id = f.id;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'row'; btn.setAttribute('role', 'checkbox');
+    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
+    const box = document.createElement('span'); box.className = 'box'; box.innerHTML = svgCheck;
+    const body = document.createElement('span');
+    const name = document.createElement('span'); name.className = 'name'; name.textContent = wrapSeps(f.name);
+    const meta = document.createElement('span'); meta.className = 'meta';
+    const ql = qualityOf(f.name);
+    if (ql) { const q = document.createElement('span'); q.className = 'q'; q.textContent = ql.toUpperCase(); meta.append(q); }
+    const size = document.createElement('span'); size.textContent = f.size; meta.append(size);
+    if (sent.has(f.id)) { const t = document.createElement('span'); t.className = 'sent-tag'; t.textContent = 'Sent'; meta.append(t); }
+    body.append(name, meta);
+    btn.append(box, body);
+    btn.onclick = () => toggle(f, key, btn);
+    li.append(btn);
+    return li;
+  }
+
+  function toggle(f, key, btn) {
+    if (selected.has(f.id)) {
+      selected.delete(f.id);
+    } else {
+      if (selected.size >= MAX_SEND) { toast(`You can send up to ${MAX_SEND} files at once.`, true); haptic('error'); return; }
+      selected.set(f.id, { name: f.name, key });
+    }
+    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
+    haptic('tick');
+    syncSelection();
+  }
+
+  function renderFiles() {
+    const list = visibleFiles();
+    el.files.replaceChildren();
+    list.forEach((f) => el.files.append(buildRow(f, current.key)));
+    const n = list.length, total = current.files.length;
+    el.msummary.textContent = n === total ? `${n} ${n === 1 ? 'file' : 'files'}` : `${n} of ${total} files`;
+    syncSelection();
+  }
+
+  function renderQualityChips() {
+    el.mChips.replaceChildren();
+    const present = QUALITIES.filter((q) => current.files.some((f) => qualityOf(f.name) === q));
+    el.mChips.hidden = present.length < 2;
+    present.forEach((q) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = q;
+      b.setAttribute('aria-pressed', current.filter === q ? 'true' : 'false');
+      b.onclick = () => {
+        current.filter = current.filter === q ? '' : q;
+        el.mChips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === current.filter ? 'true' : 'false'));
+        haptic('tick'); renderFiles();
+      };
+      el.mChips.append(b);
+    });
+  }
+
+  function skeletonRows() {
+    el.files.replaceChildren();
+    for (let i = 0; i < 4; i++) {
+      const li = document.createElement('li'); li.className = 'sk-row';
+      li.innerHTML = '<i></i><div><i class="l1"></i><i class="l2"></i></div>';
+      el.files.append(li);
+    }
+  }
+
+  async function openMovie(m) {
+    homeScroll = window.scrollY;
+    state.view = 'movie';
+    el.home.hidden = true; el.movie.hidden = false;
+    window.scrollTo(0, 0);
+    if (tg.BackButton) tg.BackButton.show();
+    const mySeq = ++movieSeq;
+    current = { key: m.key, files: [], filter: '', seq: mySeq, info: null };
+    // show what we already know straight away, then fill in
+    renderHead({ title: m.title, year: m.year, kind: m.kind, thumb: m.thumb, rating: m.rating, genres: [], plot: '', runtime: '' });
+    el.mChips.hidden = true; el.mstate.hidden = true;
+    el.msummary.textContent = 'Loading files…';
+    skeletonRows(); syncSelection();
+    try {
+      const d = await api('/api/movie', { key: m.key, q: m.q });
+      if (mySeq !== movieSeq) return;
+      current.files = d.files;
+      current.info = d.info;
+      if (d.info) renderHead(d.info);
+      if (!d.files.length) {
+        el.files.replaceChildren(); el.msummary.textContent = '';
+        showState(el.mstate, 'No files right now', 'This title has no files available at the moment. Try again later.');
+        syncSelection();
+        return;
+      }
+      renderQualityChips();
+      renderFiles();
+    } catch (e) {
+      if (mySeq !== movieSeq) return;
+      el.files.replaceChildren(); el.msummary.textContent = '';
+      showState(el.mstate, 'Could not load files', e.message, () => openMovie(m));
+    }
+  }
+
+  function closeMovie() {
+    movieSeq++; current = null;
+    state.view = 'home';
+    el.movie.hidden = true; el.home.hidden = false;
+    if (tg.BackButton) tg.BackButton.hide();
+    window.scrollTo(0, homeScroll);
+    syncSelection();
+    requestAnimationFrame(maybeFill);
+  }
+
+  // ── Lightbox (full-resolution poster) ──────────────────────────────────
+  function openLightbox() {
+    const url = current && current.info && current.info.poster;
+    if (!url) return;
+    el.lightImg.onerror = () => { el.lightbox.hidden = true; toast('Could not load the full poster.', true); };
+    el.lightImg.src = url;
+    el.lightbox.hidden = false;
+  }
+  const closeLightbox = () => { el.lightbox.hidden = true; el.lightImg.removeAttribute('src'); };
+  el.mposter.onclick = openLightbox;
+  el.lightbox.onclick = closeLightbox;
+
+  function goBack() {
+    if (!el.lightbox.hidden) return closeLightbox();
+    if (state.view === 'movie') closeMovie();
+  }
+  el.back.onclick = goBack;
+  if (tg.BackButton) tg.BackButton.onClick(goBack);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') goBack(); });
+  el.mplot.onclick = () => el.mplot.classList.toggle('open');
+
+  // ── Selection ──────────────────────────────────────────────────────────
+  function syncSelection() {
+    const n = selected.size;
+    el.count.textContent = n;
+    el.dock.classList.toggle('on', n > 0);
+    el.dock.setAttribute('aria-hidden', n > 0 ? 'false' : 'true');
+    document.body.classList.toggle('has-dock', n > 0);
+    el.clearSel.hidden = n === 0;
+    const vis = visibleFiles();
+    el.selectAll.hidden = vis.length === 0 || vis.every((f) => selected.has(f.id));
+    // count badges on poster cards
+    const per = new Map();
+    selected.forEach((v) => per.set(v.key, (per.get(v.key) || 0) + 1));
+    el.grid.querySelectorAll('.card').forEach((c) => {
+      const badge = c.querySelector('.badge'); const k = per.get(c.dataset.key) || 0;
+      badge.hidden = k === 0; badge.textContent = k;
+    });
+  }
+
+  function syncRows() {
+    el.files.querySelectorAll('li[data-id]').forEach((li) => {
+      li.firstElementChild.setAttribute('aria-checked', selected.has(li.dataset.id) ? 'true' : 'false');
+    });
+  }
+
   el.selectAll.onclick = () => {
     let hitLimit = false;
-    for (const f of renderedFiles) {
+    for (const f of visibleFiles()) {
       if (selected.has(f.id)) continue;
       if (selected.size >= MAX_SEND) { hitLimit = true; break; }
-      selected.set(f.id, f.name);
+      selected.set(f.id, { name: f.name, key: current.key });
     }
     if (hitLimit) toast(`Selected the first ${MAX_SEND}. That is the most you can send at once.`, true);
     haptic('tick'); syncRows(); syncSelection();
@@ -521,9 +719,7 @@
       const d = await api('/api/send', { ids });
       ids.forEach((id) => sent.add(id));
       selected.clear();
-      syncRows(); syncSelection();
-      // re-render rows so the Sent tag shows
-      const keep = renderedFiles.slice(); el.list.replaceChildren(); keep.forEach((f) => el.list.append(buildRow(f)));
+      if (current) renderFiles(); else syncSelection();   // re-render so "Sent" tags show
       const mins = d.delete_after ? Math.max(1, Math.round(d.delete_after / 60)) : 0;
       const base = d.sent < d.requested
         ? `Sent ${d.sent} of ${d.requested} files. The rest could not be sent.`
@@ -531,11 +727,9 @@
       toast(mins ? `${base} They delete in ${mins} min.` : base);
       haptic('success');
     } catch (e) {
-      toast(e.message, true);
-      haptic('error');
+      toast(e.message, true); haptic('error');
     } finally {
-      label.textContent = original;
-      sending = false; el.send.disabled = false;
+      label.textContent = original; sending = false; el.send.disabled = false;
     }
   };
 
