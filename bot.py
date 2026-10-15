@@ -26,7 +26,7 @@ PORT_CODE = environ.get("PORT", "8080")
 async def schedule_restart():
     await asyncio.sleep(86400)  # 24 hours
     # Restart the bot
-    os.execl(sys.executable, sys.executable, *sys.argv)
+    os.execv(sys.executable, ['python'] + sys.argv)
 
 class Bot(Client):
 
@@ -57,10 +57,11 @@ class Bot(Client):
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT)#RESTART SND IN LOG_CHANNEL
         print("Goutham SER own Bot</>")
         
-        client = webserver.AppRunner(await bot_run())
+        client = webserver.AppRunner(await bot_run(self))
         await client.setup()
         bind_address = "0.0.0.0"
-        await webserver.TCPSite(client, bind_address, int(PORT_CODE)).start()
+        await webserver.TCPSite(client, bind_address,
+        PORT_CODE).start()
         asyncio.create_task(schedule_restart()) #restart after 24 hrs clearing memory
 
     async def stop(self, *args):
