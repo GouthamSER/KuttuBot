@@ -1,1 +1,547 @@
+<!doctype html>
+<html lang="en" data-scheme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Kuttu Search</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── Tokens ─────────────────────────────────────────────────────────────
+     Surfaces follow the Telegram theme. Teal marks selection, amber is
+     reserved for the send stub. Edit these to re-skin the app. */
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --surface: var(--tg-theme-secondary-bg-color, #f1f2f4);
+    --text: var(--tg-theme-text-color, #15171a);
+    --hint: var(--tg-theme-hint-color, #6b7078);
+    --line: rgba(127, 127, 127, .22);
+    --teal: #0b8583;
+    --teal-soft: rgba(11, 133, 131, .11);
+    --on-teal: #ffffff;
+    --amber: #f4a53b;
+    --ink: #22160a;
+    --danger: #b3261e;
+    --ui: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  }
+  :root[data-scheme="dark"] {
+    --bg: var(--tg-theme-bg-color, #17191c);
+    --surface: var(--tg-theme-secondary-bg-color, #24272c);
+    --text: var(--tg-theme-text-color, #eceef0);
+    --hint: var(--tg-theme-hint-color, #8d939b);
+    --teal: #3cc8c4;
+    --teal-soft: rgba(60, 200, 196, .14);
+    --on-teal: #052928;
+  }
 
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.4;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+    overscroll-behavior-y: none;
+  }
+  body.has-dock { padding-bottom: calc(env(safe-area-inset-bottom) + 112px); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+  /* ── Search header ───────────────────────────────────────────────────── */
+  .top {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg);
+    padding: 12px 14px 6px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+  .search { position: relative; }
+  .search input {
+    width: 100%; height: 46px;
+    padding: 0 44px 0 42px;
+    border: 1.5px solid transparent; border-radius: 12px;
+    background: var(--surface); color: var(--text);
+    font: inherit; font-size: 16px;      /* 16px stops iOS zooming on focus */
+    outline: none;
+  }
+  .search input::placeholder { color: var(--hint); }
+  .search input:focus { border-color: var(--teal); }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .search .icon {
+    position: absolute; left: 13px; top: 50%; translate: 0 -50%;
+    width: 18px; height: 18px; color: var(--hint); pointer-events: none;
+  }
+  .search .clear {
+    position: absolute; right: 0; top: 0; width: 46px; height: 46px;
+    border: 0; background: none; color: var(--hint);
+    display: grid; place-items: center;
+  }
+  .search .clear svg { width: 16px; height: 16px; }
+
+  .chips {
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 0 2px; margin: 0 -14px; padding-inline: 14px;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; height: 34px; padding: 0 14px;
+    border: 1px solid var(--line); border-radius: 17px;
+    background: transparent; font-size: 14px; font-weight: 500;
+    transition: background .12s, border-color .12s;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--teal); border-color: var(--teal); color: var(--on-teal);
+  }
+
+  /* ── Results bar + list ──────────────────────────────────────────────── */
+  .bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 14px 4px; min-height: 40px;
+    color: var(--hint); font-size: 13px;
+  }
+  .bar .actions { display: flex; gap: 4px; flex: none; }
+  .link {
+    border: 0; background: none; color: var(--teal);
+    font-size: 13px; font-weight: 600; padding: 8px 8px; margin: -8px -4px;
+  }
+
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { border-bottom: 1px solid var(--line); }
+  .row {
+    position: relative; width: 100%;
+    display: grid; grid-template-columns: 22px 1fr; gap: 14px; align-items: start;
+    padding: 14px 14px; text-align: left;
+    border: 0; background: transparent;
+  }
+  .row[aria-checked="true"] { background: var(--teal-soft); }
+  .row[aria-checked="true"]::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--teal);
+  }
+  .box {
+    width: 22px; height: 22px; margin-top: 1px;
+    border: 2px solid rgba(127, 127, 127, .55); border-radius: 7px;
+    display: grid; place-items: center;
+    transition: background .12s, border-color .12s;
+  }
+  .box svg { width: 13px; height: 13px; opacity: 0; color: var(--on-teal); }
+  .row[aria-checked="true"] .box { background: var(--teal); border-color: var(--teal); }
+  .row[aria-checked="true"] .box svg { opacity: 1; }
+
+  .name { font-weight: 500; overflow-wrap: anywhere; }   /* full name, never cut */
+  .meta {
+    margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    color: var(--hint); font-size: 13px;
+  }
+  .q {
+    font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em;
+    padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text);
+  }
+  .sent-tag { color: var(--teal); font-weight: 600; }
+
+  .sk { padding: 16px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 22px 1fr; gap: 14px; }
+  .sk i { display: block; border-radius: 7px; background: var(--surface); }
+  .sk i:first-child { width: 22px; height: 22px; }
+  .sk .l1 { height: 14px; width: 86%; }
+  .sk .l2 { height: 12px; width: 38%; margin-top: 10px; }
+  .sk > div { display: block; }
+  .sk i { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  .state { padding: 48px 28px; text-align: center; color: var(--hint); }
+  .state strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
+  .state .retry {
+    margin-top: 16px; height: 40px; padding: 0 20px;
+    border: 1.5px solid var(--teal); border-radius: 10px; background: none; color: var(--teal); font-weight: 600;
+  }
+  .more { padding: 18px; text-align: center; color: var(--hint); font-size: 13px; }
+
+  /* ── Send stub (the one loud element) ────────────────────────────────── */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    background: var(--bg);
+    box-shadow: 0 -1px 0 var(--line);
+    transform: translateY(110%);
+    transition: transform .22s ease-out;
+  }
+  .dock.on { transform: none; }
+  .stub {
+    position: relative; height: 64px;
+    display: grid; grid-template-columns: auto 0 1fr; align-items: stretch;
+    background: var(--amber); color: var(--ink); border-radius: 14px;
+  }
+  .stub::before, .stub::after {          /* side notches */
+    content: ""; position: absolute; top: calc(50% - 7px);
+    width: 14px; height: 14px; border-radius: 50%; background: var(--bg);
+  }
+  .stub::before { left: -7px; }
+  .stub::after { right: -7px; }
+  .count {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 0 20px 0 24px; min-width: 92px;
+  }
+  .count b { font-family: var(--display); font-weight: 700; font-size: 32px; line-height: .95; }
+  .count span { font-size: 12px; font-weight: 500; opacity: .8; }
+  .tear {                                  /* perforation between count and send */
+    position: relative; margin: 12px 0; border-left: 2px dashed rgba(34, 22, 10, .4);
+  }
+  .tear::before, .tear::after {
+    content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg);
+  }
+  .tear::before { top: -20px; }
+  .tear::after { bottom: -20px; }
+  .send {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    border: 0; background: none; color: var(--ink);
+    font-size: 17px; font-weight: 600; padding: 0 22px; border-radius: 0 14px 14px 0;
+  }
+  .send svg { width: 20px; height: 20px; }
+  .send:active { background: rgba(0, 0, 0, .08); }
+  .send:disabled { opacity: .6; cursor: default; }
+  .send:focus-visible { outline: 2px solid var(--ink); outline-offset: -6px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); z-index: 20;
+    translate: -50% 0; max-width: min(92vw, 420px);
+    padding: 11px 16px; border-radius: 10px;
+    background: var(--text); color: var(--bg); font-size: 14px; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .18s;
+  }
+  body.has-dock .toast { bottom: calc(env(safe-area-inset-bottom) + 108px); }
+  .toast.show { opacity: 1; }
+  .toast.error { background: var(--danger); color: #fff; }
+
+  .gate { min-height: 100vh; display: grid; place-content: center; text-align: center; padding: 32px; gap: 8px; }
+  .gate h1 { font-family: var(--display); font-size: 30px; margin: 0; }
+  .gate p { margin: 0; color: var(--hint); max-width: 28ch; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main id="gate" class="gate" hidden>
+  <h1>Open this from the bot</h1>
+  <p>This page only works inside Telegram. Open the bot and tap Open Mini App.</p>
+</main>
+
+<div id="app" hidden>
+  <header class="top">
+    <div class="search">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search movies or series" aria-label="Search movies or series">
+      <button id="clearQ" class="clear" type="button" aria-label="Clear search" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="chips" id="qualityChips" role="group" aria-label="Quality"></div>
+    <div class="chips" id="langChips" role="group" aria-label="Language"></div>
+  </header>
+
+  <div class="bar">
+    <span id="summary" aria-live="polite"></span>
+    <span class="actions">
+      <button id="selectAll" class="link" type="button" hidden>Select all</button>
+      <button id="clearSel" class="link" type="button" hidden>Clear</button>
+    </span>
+  </div>
+
+  <ul id="list" class="list"></ul>
+  <div id="state" class="state" hidden></div>
+  <div id="more" class="more" hidden>Loading more…</div>
+  <div id="sentinel" aria-hidden="true"></div>
+
+  <div id="dock" class="dock" aria-hidden="true">
+    <div class="stub">
+      <div class="count" aria-live="polite"><b id="count">0</b><span>selected</span></div>
+      <div class="tear"></div>
+      <button id="send" class="send" type="button">
+        Send to PM
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const initData = (tg && tg.initData) || '';
+  const $ = (id) => document.getElementById(id);
+
+  if (!initData) { $('gate').hidden = false; return; }
+  $('app').hidden = false;
+
+  // ── Telegram integration ────────────────────────────────────────────────
+  tg.ready();
+  tg.expand();
+  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();   // stop scroll closing the app
+  const applyScheme = () => { document.documentElement.dataset.scheme = tg.colorScheme === 'dark' ? 'dark' : 'light'; };
+  applyScheme();
+  tg.onEvent('themeChanged', applyScheme);
+  const haptic = (kind) => {
+    const h = tg.HapticFeedback; if (!h) return;
+    if (kind === 'tick') h.selectionChanged();
+    else h.notificationOccurred(kind);                      // 'success' | 'error'
+  };
+
+  // ── Config ─────────────────────────────────────────────────────────────
+  const BASE = location.pathname.replace(/\/$/, '');         // "/app"
+  const MAX_SEND = 20;                                       // keep equal to MAX_SEND in plugins/miniapp.py
+  const QUALITIES = ['480p', '720p', '1080p', '2160p'];
+  const LANGUAGES = ['Malayalam', 'Tamil', 'Telugu', 'Hindi', 'English', 'Kannada'];
+  const QUALITY_RE = /(2160p|4k|1440p|1080p|720p|540p|480p|360p)/i;
+
+  // ── State ──────────────────────────────────────────────────────────────
+  const state = { query: '', quality: '', lang: '', next: null, loading: false, seq: 0 };
+  const selected = new Map();    // file id -> name
+  const sent = new Set();        // file ids already delivered this session
+  let ctrl = null;
+
+  const el = {
+    q: $('q'), clearQ: $('clearQ'), list: $('list'), summary: $('summary'),
+    selectAll: $('selectAll'), clearSel: $('clearSel'), state: $('state'), more: $('more'),
+    sentinel: $('sentinel'), dock: $('dock'), count: $('count'), send: $('send'), toast: $('toast'),
+  };
+
+  // ── API ────────────────────────────────────────────────────────────────
+  async function api(path, payload, signal) {
+    let res, data = null;
+    try {
+      res = await fetch(BASE + path, {
+        method: 'POST', signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ init_data: initData, ...payload }),
+      });
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      throw new Error('No connection. Check your internet and try again.');
+    }
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'Something went wrong. Try again.');
+    return data;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  const svgCheck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  const effectiveQuery = () => [state.query, state.lang, state.quality].filter(Boolean).join(' ');
+
+  let toastTimer;
+  function toast(msg, isError) {
+    el.toast.textContent = msg;
+    el.toast.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.toast.classList.remove('show'), 4200);
+  }
+
+  function showState(title, body, retry) {
+    el.state.hidden = false;
+    el.state.replaceChildren();
+    const s = document.createElement('strong'); s.textContent = title;
+    const p = document.createElement('span'); p.textContent = body;
+    el.state.append(s, p);
+    if (retry) {
+      const b = document.createElement('button');
+      b.className = 'retry'; b.type = 'button'; b.textContent = 'Try again';
+      b.onclick = retry; el.state.append(document.createElement('br'), b);
+    }
+  }
+
+  function skeleton() {
+    el.list.replaceChildren();
+    for (let i = 0; i < 6; i++) {
+      const d = document.createElement('li');
+      d.className = 'sk';
+      d.innerHTML = '<i></i><div><i class="l1"></i><i class="l2"></i></div>';
+      el.list.append(d);
+    }
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────
+  function buildRow(f) {
+    const li = document.createElement('li');
+    li.dataset.id = f.id;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'row'; btn.setAttribute('role', 'checkbox');
+    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
+
+    const box = document.createElement('span'); box.className = 'box'; box.innerHTML = svgCheck;
+    const body = document.createElement('span');
+    const name = document.createElement('span'); name.className = 'name';
+    name.textContent = f.name.replace(/([._-])/g, '$1​');   // allow wrapping at separators, text stays complete
+    const meta = document.createElement('span'); meta.className = 'meta';
+    const qm = f.name.match(QUALITY_RE);
+    if (qm) { const q = document.createElement('span'); q.className = 'q'; q.textContent = qm[1].toUpperCase(); meta.append(q); }
+    const size = document.createElement('span'); size.textContent = f.size; meta.append(size);
+    if (sent.has(f.id)) { const t = document.createElement('span'); t.className = 'sent-tag'; t.textContent = 'Sent'; meta.append(t); }
+    body.append(name, meta);
+    btn.append(box, body);
+    btn.onclick = () => toggle(f, btn);
+    li.append(btn);
+    return li;
+  }
+
+  function toggle(f, btn) {
+    if (selected.has(f.id)) {
+      selected.delete(f.id);
+    } else {
+      if (selected.size >= MAX_SEND) { toast(`You can send up to ${MAX_SEND} files at once.`, true); haptic('error'); return; }
+      selected.set(f.id, f.name);
+    }
+    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
+    haptic('tick');
+    syncSelection();
+  }
+
+  const renderedFiles = [];   // files currently in the list, same order as rows
+
+  function syncSelection() {
+    const n = selected.size;
+    el.count.textContent = n;
+    el.dock.classList.toggle('on', n > 0);
+    el.dock.setAttribute('aria-hidden', n > 0 ? 'false' : 'true');
+    document.body.classList.toggle('has-dock', n > 0);
+    el.clearSel.hidden = n === 0;
+    el.selectAll.hidden = renderedFiles.length === 0 || renderedFiles.every((f) => selected.has(f.id));
+  }
+
+  function syncRows() {
+    el.list.querySelectorAll('li[data-id]').forEach((li) => {
+      li.firstElementChild.setAttribute('aria-checked', selected.has(li.dataset.id) ? 'true' : 'false');
+    });
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────
+  async function load(append) {
+    if (append && (state.loading || state.next === null)) return;
+    const mySeq = append ? state.seq : ++state.seq;
+    if (!append) {
+      if (ctrl) ctrl.abort();
+      ctrl = new AbortController();
+      state.next = null;
+      renderedFiles.length = 0;
+      el.state.hidden = true; el.more.hidden = true;
+      el.summary.textContent = 'Searching…';
+      skeleton();
+      syncSelection();
+    } else {
+      el.more.hidden = false;
+    }
+    state.loading = true;
+    try {
+      const data = await api('/api/search', { query: effectiveQuery(), offset: append ? state.next : 0 }, ctrl.signal);
+      if (mySeq !== state.seq) return;
+      if (!append) el.list.replaceChildren();
+      data.files.forEach((f) => { renderedFiles.push(f); el.list.append(buildRow(f)); });
+      state.next = data.next_offset;
+      const q = effectiveQuery();
+      el.summary.textContent = !q ? 'Latest uploads'
+        : data.total === 1 ? '1 file found' : `${data.total} files found`;
+      if (!renderedFiles.length) {
+        showState(q ? `No files for “${q}”` : 'Nothing uploaded yet',
+                  q ? 'Check the spelling, use fewer words, or clear a filter.' : 'Come back after new files are added.');
+      }
+    } catch (e) {
+      if (e.name === 'AbortError' || mySeq !== state.seq) return;
+      if (!append) { el.list.replaceChildren(); el.summary.textContent = ''; }
+      showState('Could not load files', e.message, () => load(append));
+    } finally {
+      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; syncSelection(); }
+    }
+  }
+
+  // infinite scroll
+  new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) load(true);
+  }, { rootMargin: '600px 0px' }).observe(el.sentinel);
+
+  // ── Controls ───────────────────────────────────────────────────────────
+  let typing;
+  el.q.addEventListener('input', () => {
+    el.clearQ.hidden = !el.q.value;
+    clearTimeout(typing);
+    typing = setTimeout(() => { state.query = el.q.value.trim(); load(false); }, 350);
+  });
+  el.q.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(typing); state.query = el.q.value.trim(); el.q.blur(); load(false); }
+  });
+  el.clearQ.onclick = () => { el.q.value = ''; el.clearQ.hidden = true; state.query = ''; el.q.focus(); load(false); };
+
+  function buildChips(container, values, key) {
+    values.forEach((v) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = v; b.setAttribute('aria-pressed', 'false');
+      b.onclick = () => {
+        const on = state[key] !== v;
+        state[key] = on ? v : '';
+        container.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === state[key] ? 'true' : 'false'));
+        haptic('tick');
+        load(false);
+      };
+      container.append(b);
+    });
+  }
+  buildChips($('qualityChips'), QUALITIES, 'quality');
+  buildChips($('langChips'), LANGUAGES, 'lang');
+
+  el.selectAll.onclick = () => {
+    let hitLimit = false;
+    for (const f of renderedFiles) {
+      if (selected.has(f.id)) continue;
+      if (selected.size >= MAX_SEND) { hitLimit = true; break; }
+      selected.set(f.id, f.name);
+    }
+    if (hitLimit) toast(`Selected the first ${MAX_SEND}. That is the most you can send at once.`, true);
+    haptic('tick'); syncRows(); syncSelection();
+  };
+  el.clearSel.onclick = () => { selected.clear(); haptic('tick'); syncRows(); syncSelection(); };
+
+  // ── Send ───────────────────────────────────────────────────────────────
+  let sending = false;
+  el.send.onclick = async () => {
+    if (sending || !selected.size) return;
+    sending = true; el.send.disabled = true;
+    const label = el.send.firstChild; const original = label.textContent;
+    label.textContent = 'Sending ';
+    const ids = [...selected.keys()];
+    try {
+      const d = await api('/api/send', { ids });
+      ids.forEach((id) => sent.add(id));
+      selected.clear();
+      syncRows(); syncSelection();
+      // re-render rows so the Sent tag shows
+      const keep = renderedFiles.slice(); el.list.replaceChildren(); keep.forEach((f) => el.list.append(buildRow(f)));
+      const mins = d.delete_after ? Math.max(1, Math.round(d.delete_after / 60)) : 0;
+      const base = d.sent < d.requested
+        ? `Sent ${d.sent} of ${d.requested} files. The rest could not be sent.`
+        : `Sent ${d.sent} ${d.sent === 1 ? 'file' : 'files'} to your chat.`;
+      toast(mins ? `${base} They delete in ${mins} min.` : base);
+      haptic('success');
+    } catch (e) {
+      toast(e.message, true);
+      haptic('error');
+    } finally {
+      label.textContent = original;
+      sending = false; el.send.disabled = false;
+    }
+  };
+
+  // ── Go ─────────────────────────────────────────────────────────────────
+  load(false);
+})();
+</script>
+</body>
+</html>
