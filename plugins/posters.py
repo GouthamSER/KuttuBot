@@ -43,9 +43,22 @@ def _clean(s: str) -> str:
     return re.sub(r'\s+', ' ', s).strip(' -[]()')
 
 
+# The bot stores names with "." "_" "-" turned into spaces ("Movie 2026 720p mkv"), so the
+# extension may follow a space instead of a dot.
+VIDEO_EXTS = ('mkv', 'mp4', 'avi', 'mov', 'm4v', 'webm', 'ts', 'wmv', 'flv', 'mpg', 'mpeg')
+NON_VIDEO_EXTS = ('srt', 'ass', 'zip', 'rar', '7z', 'txt', 'nfo', 'mp3', 'flac', 'm4a', 'wav', 'ogg', 'opus',
+                  'jpg', 'jpeg', 'png', 'pdf', 'apk')
+_EXT = re.compile(r'[\s._-]+(' + '|'.join(VIDEO_EXTS + NON_VIDEO_EXTS) + r')$', re.I)
+
+
 def parse_name(file_name: str) -> dict:
-    """Best-effort movie/series title + year from a release filename."""
-    raw = re.sub(r'\.(mkv|mp4|avi|mov|m4v|webm|ts|zip|rar|srt)$', '', file_name or '', flags=re.I)
+    """Best-effort movie/series title + year from a release filename.
+    Also returns `ext` and `is_video` (subtitles, audio, archives are not video)."""
+    raw = (file_name or '').strip()
+    em = _EXT.search(raw)
+    ext = em.group(1).lower() if em else ''
+    if em:
+        raw = raw[:em.start()]
     for _ in range(3):                                    # strip stacked leading tags like "[Tag] @chan -"
         new = _LEADING_TAGS.sub('', raw)
         if new == raw:
@@ -86,7 +99,8 @@ def parse_name(file_name: str) -> dict:
     year = ym.group(1) if (ym and kind == 'movie') else ''
     norm = re.sub(r'[^a-z0-9]+', '', title.lower())
     key = norm if kind == 'series' else f"{norm}|{year}"
-    return {"title": title, "year": year, "kind": kind, "key": key}
+    return {"title": title, "year": year, "kind": kind, "key": key,
+            "ext": ext, "is_video": ext not in NON_VIDEO_EXTS}
 
 
 # ── Poster lookup ──────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ Telegram Mini App backend for KuttuBot.
 Routes (mounted by plugins/webcode.py):
   GET  /app               -> miniapp/index.html
   POST /app/api/search    -> {init_data, query, offset}  -> movies (grouped, with posters)
-  POST /app/api/movie     -> {init_data, key, q}         -> one movie's files + poster/details
+  POST /app/api/movie     -> {init_data, keys, qs}       -> one movie's files + poster/details
   POST /app/api/send      -> {init_data, ids:[file_id..]} -> sends files to user's PM
 
 Every API call is authenticated with Telegram WebApp `initData` (HMAC-SHA256
@@ -38,12 +38,23 @@ INDEX_FILE = Path(__file__).resolve().parent.parent / "miniapp" / "index.html"
 INIT_DATA_MAX_AGE = 24 * 3600   # seconds initData stays valid
 PAGE_SIZE = 30                  # files fetched per search page (grouped into movies)
 MOVIE_PAGE_SIZE = 100           # files per DB page when loading one movie
-MOVIE_MAX_PAGES = 3             # so at most 300 files per movie/series
+MOVIE_MAX_PAGES = 3             # DB pages read per search text when loading one movie
+MOVIE_MAX_FILES = 300           # cap on files shown for one movie/series
+SEARCH_MAX_PAGES = 3            # extra pages read when a page has no video titles
+MAX_KEYS = 6                    # filename variants merged into one movie
 MAX_SEND = 20                   # max files per send request
 SEND_COOLDOWN = 3               # seconds between send requests per user
 _last_send = {}                 # user_id -> monotonic time of last send request
 
 _REGEX_META = re.compile(r'[\\^$.*+?{}\[\]|()]')
+
+
+def _norm(s):
+    return re.sub(r'[^a-z0-9]+', '', (s or '').lower())
+
+
+def _years_compatible(a, b):
+    return not a or not b or a == b
 
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
@@ -139,29 +150,54 @@ async def api_search(request):
     except (TypeError, ValueError):
         offset = 0
 
-    files, next_offset, total = await get_search_results(
-        query, max_results=PAGE_SIZE, offset=offset, filter=True
-    )
-
-    # group the page's files by movie / series, keeping first-seen (newest first) order
-    groups = {}
-    for f in files:
-        p = parse_name(f.file_name)
-        groups.setdefault(p["key"], p)
+    # Fetch until we have at least one video title (a page can be all subtitles / audio files).
+    groups, cursor = {}, offset
+    next_offset, total = "", 0
+    for _ in range(SEARCH_MAX_PAGES):
+        files, next_offset, total = await get_search_results(
+            query, max_results=PAGE_SIZE, offset=cursor, filter=True
+        )
+        for f in files:
+            p = parse_name(f.file_name)
+            if p["is_video"]:                       # subtitles / audio / archives only show inside a movie page
+                groups.setdefault(p["key"], p)
+        if groups or next_offset == "" or not files:
+            break
+        cursor = next_offset
 
     infos = await get_infos([(p["title"], p["year"], p["kind"]) for p in groups.values()])
-    movies = []
+
+    # Different filenames can be the same movie ("Khalifa The Ruler (2026)" and "Khalifa 2026").
+    # Cards that resolve to the same IMDb title are merged into one.
+    movies, by_ident = [], {}
     for p, info in zip(groups.values(), infos):
         info = info or {}
-        movies.append({
-            "key": p["key"],
-            "q": p["title"],                       # search text that finds this movie's files
+        ident = info.get("imdb_id") or (f"t:{_norm(info['title'])}" if info.get("source") and info.get("title") else "")
+        target = next((m for m in by_ident.get(ident, []) if _years_compatible(m["_year"], p["year"])), None) if ident else None
+        if target:
+            if p["key"] not in target["keys"] and len(target["keys"]) < MAX_KEYS:
+                target["keys"].append(p["key"])
+            if p["title"] not in target["qs"] and len(target["qs"]) < MAX_KEYS:
+                target["qs"].append(p["title"])
+            if not target["thumb"] and info.get("thumb"):
+                target["thumb"] = info["thumb"]
+            continue
+        m = {
+            "mkey": f"{ident}|{p['year']}" if ident else p["key"],   # identity used to de-duplicate across pages
+            "key": p["key"], "keys": [p["key"]],
+            "q": p["title"], "qs": [p["title"]],      # search texts that find this movie's files
             "title": info.get("title") or p["title"],
             "year": info.get("year") or p["year"],
             "kind": p["kind"],
             "thumb": info.get("thumb"),
             "rating": info.get("rating"),
-        })
+            "_year": p["year"],
+        }
+        movies.append(m)
+        if ident:
+            by_ident.setdefault(ident, []).append(m)
+    for m in movies:
+        m.pop("_year")
     return web.json_response({
         "ok": True,
         "movies": movies,
@@ -170,33 +206,60 @@ async def api_search(request):
     })
 
 
+def _str_list(v, single=None, clean=False):
+    """Accept a list (or one legacy string) from the client; return up to MAX_KEYS unique short strings."""
+    items = v if isinstance(v, list) else [single]
+    out = []
+    for x in items:
+        x = _clean_query(x) if clean else str(x or "")[:200]
+        if x and x not in out:
+            out.append(x)
+    return out[:MAX_KEYS]
+
+
 @routes.post("/app/api/movie")
 async def api_movie(request):
-    """All files of one movie/series, plus poster and details."""
+    """All files of one movie/series (every filename variant of it), plus poster and details."""
     auth, resp = await _auth(request)
     if resp is not None:
         return resp
     _, body = auth
 
-    key = str(body.get("key") or "")[:200]
-    q = _clean_query(body.get("q"))
-    if not key or not q:
+    keys = _str_list(body.get("keys"), body.get("key"))
+    qs = _str_list(body.get("qs"), body.get("q"), clean=True)
+    if not keys or not qs:
         return _err("Missing movie")
+    keyset = set(keys)
 
-    matched, offset = [], 0
-    for _ in range(MOVIE_MAX_PAGES):
-        files, next_offset, _total = await get_search_results(
-            q, max_results=MOVIE_PAGE_SIZE, offset=offset, filter=True
-        )
-        matched += [f for f in files if parse_name(f.file_name)["key"] == key]
-        if next_offset == "" or not files:
+    matched, seen_ids, seen_sig = [], set(), set()
+    for q in qs:
+        offset = 0
+        for _ in range(MOVIE_MAX_PAGES):
+            files, next_offset, _total = await get_search_results(
+                q, max_results=MOVIE_PAGE_SIZE, offset=offset, filter=True
+            )
+            for f in files:
+                if parse_name(f.file_name)["key"] not in keyset:
+                    continue
+                # the same file indexed twice (two channels) has a different file_id but the same name + size
+                sig = (" ".join(f.file_name.lower().split()), f.file_size)
+                if f.file_id in seen_ids or sig in seen_sig:
+                    continue
+                seen_ids.add(f.file_id)
+                seen_sig.add(sig)
+                matched.append(f)
+            if next_offset == "" or not files:
+                break
+            offset = next_offset
+        if len(matched) >= MOVIE_MAX_FILES:
             break
-        offset = next_offset
+    matched = matched[:MOVIE_MAX_FILES]
 
     if not matched:
         return web.json_response({"ok": True, "info": None, "files": []})
 
-    p = parse_name(matched[0].file_name)
+    lead = next((f for f in matched if parse_name(f.file_name)["key"] == keys[0]), matched[0])
+    p = parse_name(lead.file_name)
     info = await get_info(p["title"], p["year"], p["kind"], detail=True)
     if p["kind"] == "series":
         matched.sort(key=lambda f: f.file_name.lower())
