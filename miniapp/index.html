@@ -334,7 +334,7 @@
   const selected = new Map();    // file id -> {name, key}
   const sent = new Set();        // file ids delivered this session
   const movies = [];             // movies currently in the grid
-  const movieKeys = new Set();
+  const movieByM = new Map();    // mkey -> movie (one card per real title, even across pages)
   let ctrl = null;
   let homeScroll = 0;
   let current = null;            // the open movie: {key, files, filter, seq, info}
@@ -440,7 +440,7 @@
     if (!append) {
       if (ctrl) ctrl.abort();
       ctrl = new AbortController();
-      state.next = null; movies.length = 0; movieKeys.clear();
+      state.next = null; movies.length = 0; movieByM.clear();
       el.state.hidden = true; el.more.hidden = true;
       el.summary.textContent = 'Searching…';
       skeletonGrid();
@@ -453,13 +453,18 @@
       if (mySeq !== state.seq) return;
       if (!append) el.grid.replaceChildren();
       data.movies.forEach((m) => {
-        if (movieKeys.has(m.key)) return;               // same title can span two pages
-        movieKeys.add(m.key); movies.push(m); el.grid.append(buildCard(m));
+        const ex = movieByM.get(m.mkey);
+        if (ex) {                                       // same title on another page: merge its name variants
+          m.keys.forEach((k) => { if (!ex.keys.includes(k)) ex.keys.push(k); });
+          m.qs.forEach((q) => { if (!ex.qs.includes(q)) ex.qs.push(q); });
+          return;
+        }
+        movieByM.set(m.mkey, m); movies.push(m); el.grid.append(buildCard(m));
       });
       state.next = data.next_offset;
       const q = effectiveQuery();
       el.summary.textContent = !movies.length ? '' : !q ? 'Latest uploads' : `Results for “${q}”`;
-      if (!movies.length) {
+      if (!movies.length && state.next === null) {     // still more pages? keep loading instead
         showState(el.state, q ? `No titles for “${q}”` : 'Nothing uploaded yet',
                   q ? 'Check the spelling, use fewer words, or clear a filter.' : 'Come back after new files are added.');
       }
@@ -619,7 +624,7 @@
     el.msummary.textContent = 'Loading files…';
     skeletonRows(); syncSelection();
     try {
-      const d = await api('/api/movie', { key: m.key, q: m.q });
+      const d = await api('/api/movie', { keys: m.keys, qs: m.qs });
       if (mySeq !== movieSeq) return;
       current.files = d.files;
       current.info = d.info;
