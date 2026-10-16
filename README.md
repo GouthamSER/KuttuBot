@@ -1,325 +1,310 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/97418751/212598655-d7637a29-cba8-4ed6-92a4-6534d394b0f7.jpg" alt="ᴋᴜᴛᴛᴜ ʙᴏᴛ™ Logo" width="170" style="border-radius: 50%;">
+  <img src="https://user-images.githubusercontent.com/97418751/212598655-d7637a29-cba8-4ed6-92a4-6534d394b0f7.jpg" alt="ᴋᴜᴛᴛᴜ ʙᴏᴛ™ Logo" width="180">
 </p>
 
 <h1 align="center">ᴋᴜᴛᴛᴜ ʙᴏᴛ™</h1>
 
 <p align="center">
-  <b>Enterprise-Grade, High-Performance Telegram Auto-Filter & Media Management Suite</b><br>
-  <i>Powered by Pyrogram v2 & AsyncIO Motor MongoDB</i>
+  A powerful Telegram auto-filter bot built with <a href="https://github.com/pyrogram/pyrogram">Pyrogram</a><br>
+  Index your channels · Serve files · Manage groups with ease
 </p>
 
 <p align="center">
-  <a href="https://github.com/GouthamSER/KuttuBot/stargazers"><img src="https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=for-the-badge&color=f5c518&logo=github" alt="Stars"></a>
-  <a href="https://github.com/GouthamSER/KuttuBot/network/members"><img src="https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=for-the-badge&color=ff8000&logo=git" alt="Forks"></a>
-  <a href="https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge" alt="License"></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
-  <a href="https://docs.pyrogram.org/"><img src="https://img.shields.io/badge/Pyrogram-v2.0+-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Pyrogram"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/stargazers"><img src="https://img.shields.io/github/stars/GouthamSER/KuttuBot?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/fork"><img src="https://img.shields.io/github/forks/GouthamSER/KuttuBot?style=flat-square&color=orange" alt="Forks"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/"><img src="https://img.shields.io/github/repo-size/GouthamSER/KuttuBot?style=flat-square&color=green" alt="Size"></a>
+  <a href="https://github.com/GouthamSER/KuttuBot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-AGPL-blue" alt="License"></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python" alt="Python">
 </p>
 
 <p align="center">
-  <a href="https://telegram.dog/im_goutham_josh"><img src="https://img.shields.io/badge/Telegram-Support%20Chat-2CA5E0?style=flat-square&logo=telegram" alt="Support Chat"></a>
-  <a href="https://telegram.dog/wudixh15"><img src="https://img.shields.io/badge/Telegram-Developer-blueviolet?style=flat-square&logo=telegram" alt="Developer"></a>
-  <a href="https://telegram.dog/wudixh1"><img src="https://img.shields.io/badge/Telegram-Updates%20Channel-0088cc?style=flat-square&logo=telegram" alt="Updates Channel"></a>
+  <a href="https://telegram.dog/im_goutham_josh"><img src="https://img.shields.io/badge/Telegram-Support%20Group-30302f?style=flat&logo=telegram" alt="Support"></a>
+  <a href="https://telegram.dog/wudixh15"><img src="https://img.shields.io/badge/Telegram-Updates%20Channel-30302f?style=flat&logo=telegram" alt="Updates"></a>
 </p>
 
 ---
 
-## 📑 Table of Contents
+## ✨ Features
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Quick Start Guide](#-quick-start-guide)
-- [Configuration Reference](#-configuration-reference)
-  - [Required Environment Variables](#-required-environment-variables)
-  - [Optional Customization Variables](#-optional-customization-variables)
-- [Deployment Options](#-deployment-options)
-  - [Koyeb](#-koyeb-one-click)
-  - [Heroku & Scalingo](#-heroku--scalingo)
-  - [Docker & Docker Compose](#-docker--docker-compose)
-  - [Linux VPS / Self-Hosted](#-linux-vps--self-hosted)
-- [Command Matrix](#-command-matrix)
-  - [General User Commands](#-general-user-commands)
-  - [Filter & Connection Management](#-filter--connection-management)
-  - [Admin-Only Commands](#-admin-only-commands)
-- [Project Architecture](#-project-architecture)
-- [Recent Improvements & Bug Fixes](#-recent-improvements--bug-fixes)
-- [Credits & Licensing](#-credits--licensing)
-
----
-
-## 🌟 Overview
-
-**ᴋᴜᴛᴛᴜ ʙᴏᴛ™** is an ultra-fast, modular Telegram bot designed for indexing Telegram channels, providing instant auto-filter search results, and managing large media libraries effortlessly.
-
-Built from the ground up on modern asynchronous Python patterns, it features **in-memory search acceleration**, **multi-select batch delivery**, **Telegraph-powered technical MediaInfo generation**, **smart typo corrections**, and **built-in web server health checking** for 24/7 cloud uptime.
-
----
-
-## ✨ Key Features
-
-| Category | Highlights |
+| Feature | Status |
 |---|---|
-| 🔍 **Search & Filters** | Instant auto-filter with pagination, language filtering (Multi, Malayalam, Tamil, Hindi, Kannada, Telugu, English), and resolution quality filtering (4K, 1080p, 720p, etc.). |
-| ☑️ **Batch & Multi-Select** | Multi-select files right from search results and receive them all in private chat with a single tap. |
-| 🎬 **IMDb & Metadata** | Real-time movie/series cards with ratings, cast, genres, release dates, storylines, and **Watch Trailer** buttons — works out of the box with zero API keys required (via `imdbio`, with optional OMDb fallback). |
-| 📊 **Technical MediaInfo** | Pass any media file or direct video link to `/mediainfo` (`/mi`) to generate a clean, formatted Telegraph inspection page with automatic 5-minute self-destruction. |
-| 🛡️ **Group Management** | Remote connection via PM (`/connect`), per-group settings toggles, custom captions, custom welcome media, force-subscription verification, and auto-approval for channel join requests. |
-| ⚡ **Performance & Stability** | Async Motor MongoDB driver, non-blocking concurrent queries via `asyncio.gather`, 60-second search query caching, memory-bounded dictionary caches, and a built-in `aiohttp` web server on port `8080` for Koyeb / Heroku health-checks. |
+| Auto Filter | ✅ |
+| Manual Filter | ✅ |
+| IMDb Info & Search (imdbio → OMDb backup) | ✅ |
+| 🎬 Telegram Mini App (poster grid, search, send to PM) | ✅ |
+| Multi-select & Send All with ✅ ticks | ✅ |
+| Auto-Delete of Sent Files (+ "Delete Now" button) | ✅ |
+| Full, Untrimmed File Names | ✅ |
+| Inline Search | ✅ |
+| Spelling Check & Suggestions | ✅ |
+| Language & Quality Filters | ✅ |
+| File Store with Auto-Delete | ✅ |
+| Fast Broadcast to All Users | ✅ |
+| Index Channels | ✅ |
+| Admin Commands | ✅ |
+| Group Connection via PM | ✅ |
+| Ban / Unban Users & Chats | ✅ |
+| User & Chat Statistics | ✅ |
+| Protect Content | ✅ |
+| Force Subscribe Channel Check | ✅ |
+| Auto Approve Join Requests | ✅ |
+| Per-Group Settings | ✅ |
+| 24-Hour Auto Restart | ✅ |
 
 ---
 
-## ⚡ Quick Start Guide
+## ⚙️ Configuration
 
-Deploy your own instance of **KuttuBot** in less than 5 minutes:
+Copy `sample_info.py` → `info.py` and fill in your values, **or** set them as environment variables for cloud deployments.
 
-1. **Create Bot on Telegram**:
-   - Open [@BotFather](https://telegram.dog/BotFather) on Telegram and send `/newbot`.
-   - Choose a display name and username. Save the generated `BOT_TOKEN`.
+### 🔴 Required Variables
 
-2. **Obtain Telegram API Credentials**:
-   - Log into [my.telegram.org](https://my.telegram.org/apps) with your Telegram phone number.
-   - Create an application to get your `API_ID` (integer) and `API_HASH` (string).
+| Variable | Description |
+|---|---|
+| `BOT_TOKEN` | Get from [@BotFather](https://telegram.dog/BotFather) |
+| `API_ID` | Get from [my.telegram.org](https://my.telegram.org/apps) |
+| `API_HASH` | Get from [my.telegram.org](https://my.telegram.org/apps) |
+| `CHANNELS` | Username or ID of channels to index (space-separated) |
+| `ADMINS` | Username or ID of bot admins (space-separated) |
+| `DATABASE_URI` | MongoDB connection URI — [get one free](https://www.mongodb.com) |
+| `DATABASE_NAME` | Name of your MongoDB database |
+| `LOG_CHANNEL` | Channel ID for bot activity logs (bot must be admin) |
 
-3. **Set Up MongoDB Database**:
-   - Create a free cloud cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-   - Under *Database Access*, create a user and password.
-   - Under *Network Access*, add `0.0.0.0/0` (allow from anywhere).
-   - Under *Clusters → Connect → Drivers*, copy your connection string as `DATABASE_URI` (e.g. `mongodb+srv://...`).
-
-4. **Identify Admin and Log Channel IDs**:
-   - Message [@missrose_bot](https://telegram.dog/missrose_bot) with `/id` to get your personal numerical Telegram ID (`ADMINS`).
-   - Create a private channel for bot logs, add your bot as an administrator with full permissions, and forward a message from that channel to `@missrose_bot` to get its channel ID (`LOG_CHANNEL`, starts with `-100`).
-
-5. **Deploy & Launch**:
-   - Choose any deployment option below, provide the required environment variables, and send `/start` to your bot in Telegram!
-
----
-
-## ⚙️ Configuration Reference
-
-Settings can be specified as environment variables (cloud hosts) or configured in `info.py` (local/VPS).
-
-### 🔴 Required Environment Variables
-
-| Variable | Description | Example / Format |
-|---|---|---|
-| `BOT_TOKEN` | Token generated by [@BotFather](https://telegram.dog/BotFather) | `7123456789:AAH...` |
-| `API_ID` | Telegram API identifier from [my.telegram.org](https://my.telegram.org) | `12345678` |
-| `API_HASH` | Telegram API hash from [my.telegram.org](https://my.telegram.org) | `0123456789abcdef0123456789abcdef` |
-| `ADMINS` | Telegram user ID(s) of bot administrators (space-separated) | `123456789 987654321` |
-| `DATABASE_URI` | MongoDB Atlas URI connection string | `mongodb+srv://user:pass@cluster...` |
-| `DATABASE_NAME` | Name of the MongoDB database | `KuttuBot` |
-| `LOG_CHANNEL` | Telegram Channel ID for logging bot activity | `-1001234567890` |
-| `CHANNELS` | Channel IDs or usernames to index files from (space-separated) | `-1001987654321 -1001122334455` |
-
-### 🟡 Optional Customization Variables
+### 🟡 Optional Variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `AUTH_CHANNEL` | `None` | Channel ID for Force-Subscribe (users must join to use the bot). |
-| `AUTO_DELETE_TIME` | `180` | Delay in seconds before sent media files are auto-deleted from user PM (`0` to disable). |
-| `OMDB_API_KEY` | `None` | Free API key from [omdbapi.com](https://www.omdbapi.com) (used as fallback when IMDb scraper is unreachable). |
-| `PICS` | Telegraph URLs | Space-separated image URLs rotated randomly for the `/start` message. |
-| `CUSTOM_FILE_CAPTION` | Built-in script | Caption template applied to individual files sent to users. |
-| `BATCH_FILE_CAPTION` | Built-in script | Caption template applied to batch-delivered media files. |
-| `IMDB` | `False` | Enable/disable IMDb info cards by default in search responses. |
-| `LONG_IMDB_DESCRIPTION` | `False` | Show full plot synopsis instead of truncated summary. |
-| `PROTECT_CONTENT` | `False` | Prevent forwarding and saving of delivered files by default. |
-| `SINGLE_BUTTON` | `True` | Display filename and file size in a single compact button. |
-| `P_TTI_SHOW_OFF` | `True` | Direct users to PM to collect files rather than cluttering groups. |
-| `SPELL_CHECK_REPLY` | `True` | Display interactive spelling corrections when no exact match is found. |
-| `MELCOW_NEW_USERS` | `True` | Send animated welcome media when new members join connected groups. |
-| `CACHE_TIME` | `300` | Inline query caching duration in seconds. |
-| `PORT` | `8080` | Port for the internal HTTP health check web server. |
-| `AUTO_APPROVE` | `ON` | Automatically approve join requests for channels/groups where bot is admin. |
-| `WELCOME_DM` | `OFF` | Send a private welcome message to users approved via join requests. |
+| `PICS` | Telegra.ph URLs | Space-separated image links shown on `/start` |
+| `FILE_STORE_CHANNEL` | — | Channel IDs for file store links (space-separated) |
+| `AUTH_CHANNEL` | — | Force-subscribe channel ID |
+| `AUTH_USERS` | — | Extra user IDs with admin access |
+| `AUTH_GROUP` | — | Allowed group IDs (space-separated) |
+| `CACHE_TIME` | `300` | Inline query cache time (seconds) |
+| `CUSTOM_FILE_CAPTION` | Script default | Caption template for sent files |
+| `BATCH_FILE_CAPTION` | Built-in | Caption used in batch file links |
+| `IMDB_TEMPLATE` | Built-in | Template for IMDB result messages |
+| `IMDB` | `False` | Show IMDB info on search results |
+| `LONG_IMDB_DESCRIPTION` | `False` | Use full plot instead of short summary |
+| `SINGLE_BUTTON` | `True` | Show filename + size in one button |
+| `P_TTI_SHOW_OFF` | `True` | Redirect users to bot PM instead of sending file in group |
+| `SPELL_CHECK_REPLY` | `True` | Suggest similar titles when file not found |
+| `MAX_LIST_ELM` | `None` | Limit cast/crew list length in IMDB template |
+| `PROTECT_CONTENT` | `False` | Enable forward-protection on sent files |
+| `PUBLIC_FILE_STORE` | `False` | Allow any user to create file store links |
+| `MELCOW_NEW_USERS` | `True` | Send welcome message to new users |
+| `MINIAPP_URL` | — | Public HTTPS URL of your bot's web server (e.g. `https://yourapp.koyeb.app`). Enables the **🎬 Open Mini App** button and `/app` |
+| `OMDB_API_KEY` | — | Free key from [omdbapi.com](https://www.omdbapi.com). Backup poster/info source when imdbio is blocked, and gives HD posters |
+| `TMDB_API_KEY` | — | Optional. Mini App only — last-resort poster fallback |
+| `AUTO_DELETE_TIME` | `600` | Seconds before sent files are deleted from the user's PM. `0` disables |
+| `COLLECTION_NAME` | `Telegram_files` | MongoDB collection name for indexed files |
+| `INDEX_REQ_CHANNEL` | `LOG_CHANNEL` | Channel where index requests are logged |
+
+> Full list with defaults: [`info.py`](./info.py) · Example config: [`sample_info.py`](./sample_info.py)
 
 ---
 
-## 🚀 Deployment Options
+## 🎬 Mini App
 
-### ☁️ Koyeb (One-Click)
+A movie-poster browser that opens inside Telegram.
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/GouthamSER/KuttuBot&branch=main&name=kuttubot)
+- **Poster grid** — search, then tap a poster to open the movie page
+- **Movie page** — full-size poster, rating, genres, plot, quality chips and every file of that movie
+- **Select files → send to PM** — pick one or many, the bot sends them to your chat and they auto-delete after `AUTO_DELETE_TIME`
+- **No duplicates** — different filenames of the same movie are merged into one card; subtitles / audio files never get their own card; the same file indexed twice is shown once
+- **Poster chain** — imdbio → OMDb → TMDB (optional), cached in memory
 
-> [!TIP]
-> KuttuBot includes a built-in `aiohttp` web server on port `8080` that binds to `0.0.0.0`, satisfying Koyeb's internal TCP health checks automatically.
+**Set it up**
 
-### 🟣 Heroku / Scalingo
+1. Deploy the bot and set `MINIAPP_URL=https://<your-app>.koyeb.app` (the `/app` part is added for you).
+2. In [@BotFather](https://telegram.dog/BotFather): `/mybots` → your bot → **Bot Settings** → **Menu Button** → **Configure menu button** → send the same URL ending with `/app`, and a title like `KuttuBot`.
+3. Open the bot → tap **🎬 Open Mini App** on `/start`, or send `/app`.
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/GouthamSER/KuttuBot)
-[![Deploy to Scalingo](https://cdn.scalingo.com/deploy/button.svg)](https://dashboard.scalingo.com/create/app?source=https://github.com/GouthamSER/KuttuBot)
+All mini app calls are verified with Telegram `initData` (HMAC-SHA256 with your bot token), banned users and force-subscribe rules are respected.
 
-### 🐳 Docker & Docker Compose
+---
 
-Run isolated in a Docker container using the pre-configured `docker-compose.yml`:
+## 🚀 Deploy
+
+### ☁️ Koyeb (Recommended)
+
+<a href="https://app.koyeb.com/deploy?type=git&repository=github.com/GouthamSER/KuttuBot&branch=main&name=kuttubot">
+  <img src="https://www.koyeb.com/static/images/deploy/button.svg" alt="Deploy to Koyeb">
+</a>
+
+### ☁️ Scalingo
+
+<a href="https://dashboard.scalingo.com/create/app?source=https://github.com/GouthamSER/KuttuBot">
+  <img src="https://cdn.scalingo.com/deploy/button.svg" alt="Deploy to Scalingo">
+</a>
+
+### 🟣 Heroku
+
+<details>
+<summary>Click to expand</summary>
+<br>
+<a href="https://telegram.dog/XTZ_HerokuBot?start=QU0tUk9CT1RTL0V2YU1hcmlhIG1haW4">
+  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku">
+</a>
+</details>
+
+### 🐳 Docker
+
+<details>
+<summary>Click to expand</summary>
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/GouthamSER/KuttuBot.git
+git clone https://github.com/GouthamSER/KuttuBot
 cd KuttuBot
-
-# 2. Configure variables in docker-compose.yml or create a .env file
-cp sample_info.py info.py
-
-# 3. Build and launch
-docker-compose up -d --build
+# Set your variables in info.py or as environment vars
+docker-compose up -d
 ```
 
-### 🖥️ Linux VPS / Self-Hosted
+`Dockerfile` and `docker-compose.yml` are included in the repo.
+</details>
+
+### 🖥️ VPS / Self-Host
+
+<details>
+<summary>Click to expand</summary>
 
 ```bash
-# 1. Update system packages and install MediaInfo
-sudo apt update && sudo apt install -y python3 python3-pip mediainfo git
-
-# 2. Clone repository
-git clone https://github.com/GouthamSER/KuttuBot.git
+# Requires Python 3.10+
+git clone https://github.com/GouthamSER/KuttuBot
 cd KuttuBot
-
-# 3. Install Python requirements
 pip3 install -U -r requirements.txt
-
-# 4. Create your configuration
 cp sample_info.py info.py
-nano info.py
-
-# 5. Start bot
+# Edit info.py with your values
 python3 bot.py
 ```
+</details>
 
 ---
 
-## 📋 Command Matrix
+## 📋 Commands
 
-### 👤 General User Commands
-
-| Command | Description |
-|---|---|
-| `/start` | Start bot, view main menu, or fetch media from deep links |
-| `/imdb <title>` | Search movie or TV show information on IMDb with trailer button |
-| `/search <title>` | Search database files and IMDb simultaneously |
-| `/mediainfo` or `/mi` | Generate technical MediaInfo sheet for a replied file or direct URL |
-| `/movies` | Browse recently added movies in the database |
-| `/series` | Browse latest television series and available episodes |
-| `/id` | Show Telegram ID, Chat ID, and media file IDs |
-| `/info` | Retrieve comprehensive profile info and joined dates for any user |
-| `/ping` | Measure real-time MTProto response latency and network quality |
-| `/usage` | Display real-time CPU, RAM, Disk, and Koyeb/VPS server metrics |
-
-### 🔧 Filter & Connection Management
+### 👤 User Commands
 
 | Command | Description |
 |---|---|
-| `/connect <chat_id>` | Connect a group to your private chat for remote management |
-| `/disconnect` | Disconnect from the currently active group connection |
-| `/connections` | View and toggle all active group connections |
-| `/settings` | Open interactive button menu to configure group preferences |
-| `/set_template <template>` | Set customized IMDb caption template for group responses |
-| `/filter <keyword> <reply>` | Add a manual reply filter in the connected chat |
-| `/filters` or `/viewfilters` | List all active manual keyword filters in the chat |
-| `/del <keyword>` | Delete a specific manual filter |
-| `/delall` | Delete all manual filters from the group (Owner / Admin only) |
+| `/start` | Start the bot |
+| `/help` | Get help info |
+| `/about` | About the bot |
+| `/id` | Get your Telegram ID |
+| `/info` | Get info about a user |
+| `/imdb` | Search a movie on IMDb |
+| `/app` | Open the Mini App (needs `MINIAPP_URL`) |
 
-### 🛡️ Admin-Only Commands
-
-*(Restricted to user IDs specified in `ADMINS`)*
+### 🔧 Filter & Connection Commands
 
 | Command | Description |
 |---|---|
-| `/broadcast` | Broadcast a message to all registered users (reply to target message) |
-| `/index` | Forward last message or channel link to index files |
-| `/setskip <number>` | Set message skip offset counter for bulk indexing |
-| `/delete <reply>` | Remove a replied media file from the database |
-| `/deleteall` | Drop all indexed file documents from the database |
-| `/channel` | List all indexed channels and member counts |
-| `/users` | Export comprehensive list of bot users with status |
-| `/chats` | Export list of all registered groups and status |
-| `/stats` | View real-time database collection size and storage quota |
-| `/logs` | Send the current runtime application log file (`TelegramBot.log`) |
-| `/ban <user_id> [reason]` | Ban a user from using the bot |
-| `/unban <user_id>` | Revoke a user's ban status |
-| `/disable <chat_id> [reason]` | Restrict and disable bot functionality in a chat |
-| `/enable <chat_id>` | Re-enable bot functionality in a disabled chat |
-| `/leave <chat_id>` | Instruct the bot to cleanly leave a group |
-| `/invite <chat_id>` | Generate an invite link for any chat the bot administers |
-| `/restart` | Restart the bot process gracefully |
-| `/link <name>` | Generate a shareable Telegram deep link for a movie title |
-| `/approve_on` / `/approve_off` | Toggle automatic join request approval |
-| `/welcome_on` / `/welcome_off` | Toggle DM welcome notifications on join approval |
-| `/approve_status` | View current status of join request approval engine |
+| `/filter` | Add a manual filter |
+| `/filters` | View all filters in this group |
+| `/del` | Delete a specific filter |
+| `/delall` | Delete all filters |
+| `/connect` | Connect a group to your PM |
+| `/disconnect` | Disconnect from current group |
+| `/connections` | List your active connections |
+| `/settings` | Configure per-group settings |
+
+### 🛡️ Admin Commands
+
+| Command | Description |
+|---|---|
+| `/broadcast` | Broadcast a message to all users |
+| `/index` | Index files from a channel |
+| `/deleteall` | Delete all indexed files |
+| `/delete` | Delete a specific indexed file |
+| `/stats` | View database and file stats |
+| `/users` | List all users |
+| `/chats` | List all chats |
+| `/logs` | Get recent error logs |
+| `/batch` | Create a shareable link for multiple posts |
+| `/link` | Create a shareable link for a single post |
+| `/ban` | Ban a user from the bot |
+| `/unban` | Unban a user |
+| `/leave` | Make the bot leave a chat |
+| `/disable` | Disable the bot in a chat |
+| `/enable` | Re-enable the bot in a chat |
+| `/channel` | List all connected channels |
 
 ---
 
-## 🗂️ Project Architecture
+## 🗂️ Project Structure
 
 ```
 KuttuBot/
-├── bot.py                  # Core Bot client, scheduler, iter_messages & aiohttp web server
-├── info.py                 # Central environment variable loader and config validation
-├── sample_info.py          # Configuration template
-├── Script.py               # UI text strings, markdown templates & help messages
-├── utils.py                # Utilities, IMDb parser, poster byte fetcher & temp state
-├── requirements.txt        # Python package dependencies
-├── Dockerfile              # Docker container definition
-├── docker-compose.yml      # Multi-container orchestration
-├── logging.conf            # Logging formatter configurations
-│
-├── plugins/                # Modular Pyrogram Event Handlers
-│   ├── pm_filter.py        # Auto-filter, multi-select, language/quality filters & callbacks
-│   ├── commands.py         # Start, help, settings, channel info & batch file processing
-│   ├── filters.py          # Manual custom keyword filters (/filter, /del, /delall)
-│   ├── index.py            # Channel scraper and bulk database indexer
-│   ├── inline.py           # Telegram inline query search provider
-│   ├── connection.py       # PM-to-Group remote management bridge (/connect)
-│   ├── mediainfo.py        # Technical MediaInfo parser & Telegraph publisher
-│   ├── misc.py             # User lookup (/info), ID inspection (/id) & IMDb (/imdb)
-│   ├── mov_ser_latest.py   # Recent movie & series catalog browser (/movies, /series)
-│   ├── auto_approve.py     # Channel & group join request auto-approver
-│   ├── broadcast.py        # High-throughput asynchronous mass broadcast engine
-│   ├── banned.py           # Access control middleware for banned users and chats
-│   ├── channel.py          # Real-time channel post listener & file saver
-│   ├── etc.py              # System monitor (/usage), latency (/ping), link generator (/link)
-│   └── webcode.py          # Aiohttp health-check HTTP endpoints
-│
-└── database/               # Asynchronous Motor MongoDB Layer
-    ├── ia_filterdb.py      # File metadata schema, indexes, natural sorting & cached queries
-    ├── filters_mdb.py      # Manual keyword filters storage
-    ├── users_chats_db.py   # User accounts, group settings, bans & status registry
-    └── connections_mdb.py  # User-to-Group active connection mapping
+├── bot.py                  # Entry point & Bot class
+├── info.py                 # All configuration variables
+├── sample_info.py          # Config template (copy → info.py)
+├── utils.py                # Shared async utilities
+├── Script.py               # All message texts & templates
+├── requirements.txt        # Python dependencies
+├── Dockerfile              # Docker container config
+├── docker-compose.yml      # Docker Compose config
+├── plugins/
+│   ├── pm_filter.py        # Auto filter, Language & Quality callbacks
+│   ├── filters.py          # Manual filter management
+│   ├── broadcast.py        # Fast broadcast system
+│   ├── index.py            # Channel indexing
+│   ├── inline.py           # Inline search
+│   ├── connection.py       # PM ↔ group connection
+│   ├── commands.py         # Start, help, file store & user commands
+│   ├── channel.py          # Channel media handler
+│   ├── miniapp.py          # Mini App API (search, movie, send) + initData auth
+│   ├── posters.py          # Filename parser + poster/info lookup (imdbio → OMDb → TMDB)
+│   ├── webcode.py          # aiohttp web server routes
+│   ├── misc.py             # ID, info, IMDb commands
+│   ├── auto_approve.py     # Auto join request approval
+│   ├── banned.py           # Banned user/chat middleware
+│   ├── mov_ser_latest.py   # Latest movies & series listing
+│   └── etc.py              # Extra/miscellaneous commands
+├── miniapp/
+│   └── index.html          # Mini App front-end (single file)
+└── database/
+    ├── ia_filterdb.py      # Indexed file database (with search cache)
+    ├── filters_mdb.py      # Manual filter database
+    ├── users_chats_db.py   # Users & chats database
+    └── connections_mdb.py  # PM–group connection database
 ```
 
 ---
 
-## 🔄 Recent Improvements & Bug Fixes
+## 🔄 Recent Improvements
 
-- 🛡️ **Comprehensive Admin ID Type Resolution**: Standardized `ADMINS` checking across all plugins ([commands.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/commands.py), [filters.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/filters.py), [connection.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/connection.py), [pm_filter.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/pm_filter.py)) to prevent integer vs string ID mismatch rejections.
-- 🎬 **IMDb Without API Keys**: Integrated `imdbio` as primary metadata provider; OMDb acts purely as secondary fallback. Result cards display formatted hashtag genres and direct trailer buttons.
-- 🗂️ **Channel Indexing Workflow Fix**: Fixed channel forward detection in [index.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/index.py) to prioritize forwarded channel posts and prevent invalid link errors. Fixed public link username crashes.
-- 🔒 **Pagination Security Sync**: Corrected pagination button callback prefix in [pm_filter.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/pm_filter.py), ensuring `file_secure` content protection is preserved across all search pages.
-- 🏷️ **Caption Attribute Safety**: Added safe `.html` extraction on media captions in [ia_filterdb.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/database/ia_filterdb.py) and [filters.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/filters.py), eliminating `AttributeError` crashes on media without captions.
-- 🌐 **Inline Query Optimization**: Enforced 64-character limit on `switch_pm_text` in [inline.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/inline.py) to prevent Telegram API button data validation errors.
-- 🖥️ **Cross-Platform MediaInfo Execution**: Eliminated Windows backslash escaping errors in [mediainfo.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/mediainfo.py) by passing arguments directly without shell token splitting.
-- 📝 **UTF-8 Export Safety**: Added explicit UTF-8 encoding and automatic file cleanup for `/users` and `/chats` text exports in [p_ttishow.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/p_ttishow.py).
-- ⚙️ **Auto-Approve Inverted Logic Fix**: Fixed boolean comparison in [auto_approve.py](file:///c:/Users/Goutham%20Josh/Downloads/KuttuBot-main/plugins/auto_approve.py) so default `"OFF"` correctly disables welcome DMs.
+- 🎬 **Mini App** — poster grid → movie page → pick files → sent to your PM, header "KuttuBot · by Goutham Josh"
+- 🧩 **Duplicate fix** — one card per movie (merged by IMDb id), no subtitle cards, exact re-indexed files shown once
+- 🖼️ **HD posters** — imdbio first, OMDb backup, optional TMDB; full-resolution image on tap
+- ☑️ **Select & Send All** — "Select Files" button on top, ✅ ticks, Send All to PM, Back button
+- ⏳ **Auto-delete** — sent files are removed after `AUTO_DELETE_TIME` with a "🗑 Delete Now" button
+- 📝 **Full file names** — no truncation in buttons or captions
+- ⚡ **Auto-filter speed** — `get_settings` and `get_search_results` now run in parallel via `asyncio.gather`; typing action fires as a background task so the DB query starts instantly
+- 🗑️ **Cleaned filter buttons** — removed Years, Seasons, Episodes and Send All; only Language & Quality filters remain
+- 🧹 **Dead code removed** — ~300 lines of unused handlers and data lists eliminated from `pm_filter.py`
+- 🔍 **Search cache** — repeated queries within 60 s return instantly from memory (no DB round-trip)
+- ⚡ **Broadcast speed** — removed per-user 2-second delay; broadcasts are now ~40× faster
+- 🔧 **FloodWait fix** — updated `e.x` → `e.value` for Pyrogram v2+ compatibility
+- 🌐 **Async HTTP** — replaced blocking `requests` library with `aiohttp` for non-blocking searches
+- 🐛 **Search result bug** — fixed crash when regex fails in `get_search_results()` (wrong return type)
+- 📦 **Inline search fix** — removed deprecated `pyrogram.emoji` import that caused startup crash
 
 ---
 
 ## 🙏 Credits
 
-- [Dan](https://github.com/delivrance) for [Pyrogram](https://github.com/pyrogram/pyrogram)
-- [Goutham Josh](https://gouthamjosh.vercel.app) for maintenance, features & optimization
-- [rjriajul](https://github.com/rjriajul) for [imdbio](https://pypi.org/project/imdbio/)
-- [TroJanZ](https://github.com/trojanzhex) & [EvaMaria](https://github.com/ritheshrkrm) teams for early auto-filter foundations
-- All contributors, stargazers, and community members 💙
+- [Pyrogram](https://github.com/pyrogram/pyrogram) by **Dan** — the MTProto library powering this bot
+- [EvaMaria](https://github.com/ritheshrkrm) by **Mahesh & Ritesh** — original bot base
+- [TroJanZ](https://github.com/trojanzhex) — [AutoFilterBot](https://github.com/trojanzhex/auto-filter-bot) base
+- [Goutham Josh](https://gouthamjosh.vercel.app) — repo maintainer, features & bug fixes
+- Everyone who starred, forked, and contributed 💙
 
 ---
 
-## ⚖️ License & Disclaimer
+## ⚠️ Disclaimer
 
 [![GNU AGPL v3](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 
-This project is open-source under the [GNU Affero General Public License v3.0](./LICENSE).
+Licensed under [GNU AGPL v3.0](./LICENSE).
 
-> **Commercial resale of this code is strictly prohibited.**
-> You are free to fork, customize, and self-host for personal and non-commercial community use with proper attribution retained.
+> **Selling this code for money is strictly prohibited.**  
+> Forking for personal use is welcome — please credit the original authors and do not rebrand as your own work. Respect the community that built this. 🙏
