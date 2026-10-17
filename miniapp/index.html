@@ -1,745 +1,552 @@
 <!doctype html>
-<html lang="en" data-scheme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
-<title>KuttuBot</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KuttuBot — Find movies &amp; series, get them in Telegram</title>
+<meta name="description" content="Search movies and series, see posters and details, and get the files in Telegram with one tap. KuttuBot by Goutham Josh.">
+<meta name="theme-color" content="#0b0b10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23f5b83d'/%3E%3Cpath d='M20 14h8v14l12-14h10L36 31l15 19H40L28 35v15h-8z' fill='%231a1203'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* ── Tokens ─────────────────────────────────────────────────────────────
-     Surfaces follow the Telegram theme. Teal marks selection, amber is the
-     brand colour (logo tile + send stub). Edit these to re-skin the app. */
-  :root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --surface: var(--tg-theme-secondary-bg-color, #f1f2f4);
-    --text: var(--tg-theme-text-color, #15171a);
-    --hint: var(--tg-theme-hint-color, #6b7078);
-    --line: rgba(127, 127, 127, .22);
-    --teal: #0b8583;
-    --teal-soft: rgba(11, 133, 131, .11);
-    --on-teal: #ffffff;
-    --amber: #f4a53b;
-    --ink: #22160a;
-    --danger: #b3261e;
-    --ui: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+:root{
+  --bg:#0b0b10; --bg2:#101017; --surface:#15151d; --surface2:#1c1c26; --line:#272733;
+  --text:#f3f1ea; --muted:#a09eab; --accent:#f5b83d; --accent-ink:#1a1203; --accent-text:#f5b83d;
+  --danger:#ff7a7a; --ok:#6fd39a; --shadow:0 18px 50px rgba(0,0,0,.45);
+  --r:14px; --gutter:clamp(16px,4vw,40px);
+  --head:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#faf8f3; --bg2:#f3f0e8; --surface:#ffffff; --surface2:#f1ede3; --line:#e4dfd2;
+    --text:#17150f; --muted:#6a665a; --accent-text:#9a5b00; --shadow:0 18px 40px rgba(60,45,10,.14);
   }
-  :root[data-scheme="dark"] {
-    --bg: var(--tg-theme-bg-color, #17191c);
-    --surface: var(--tg-theme-secondary-bg-color, #24272c);
-    --text: var(--tg-theme-text-color, #eceef0);
-    --hint: var(--tg-theme-hint-color, #8d939b);
-    --teal: #3cc8c4;
-    --teal-soft: rgba(60, 200, 196, .14);
-    --on-teal: #052928;
-  }
+}
+:root[data-theme="light"]{
+  --bg:#faf8f3; --bg2:#f3f0e8; --surface:#ffffff; --surface2:#f1ede3; --line:#e4dfd2;
+  --text:#17150f; --muted:#6a665a; --accent-text:#9a5b00; --shadow:0 18px 40px rgba(60,45,10,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font:400 16px/1.55 var(--body);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wrap{width:100%;max-width:1320px;margin:0 auto;padding:0 var(--gutter)}
 
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); }
-  body {
-    font-family: var(--ui); font-size: 15px; line-height: 1.4;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
-    overscroll-behavior-y: none;
-  }
-  body.has-dock { padding-bottom: calc(env(safe-area-inset-bottom) + 112px); }
-  button { font: inherit; color: inherit; cursor: pointer; }
-  [hidden] { display: none !important; }
-  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-  .pad { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+/* ── header ── */
+header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:14px;height:64px}
+.brand{display:flex;align-items:center;gap:11px;flex:none}
+.mark{width:36px;height:36px;border-radius:10px;background:var(--accent);display:grid;place-items:center;position:relative;box-shadow:0 6px 18px rgba(245,184,61,.28)}
+.mark::before,.mark::after{content:"";position:absolute;top:50%;width:8px;height:8px;border-radius:50%;background:var(--bg);transform:translateY(-50%)}
+.mark::before{left:-4px}.mark::after{right:-4px}
+.mark svg{width:20px;height:20px;fill:var(--accent-ink)}
+.brand b{display:block;font:700 18px/1.1 var(--head);letter-spacing:-.01em}
+.brand small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.hsearch{flex:1;max-width:560px;margin:0 auto;display:none}
+body:not([data-view="home"]) .hsearch{display:block}
+.field{position:relative}
+.field input{width:100%;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);padding:0 44px 0 46px;outline:none;transition:border-color .15s,box-shadow .15s}
+.field input::placeholder{color:var(--muted)}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.field .ic{position:absolute;left:16px;top:50%;width:18px;height:18px;transform:translateY(-50%);stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.field .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.field .x:hover{background:var(--surface2)}
+.actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:none}
+body:not([data-view="home"]) .actions{margin-left:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;font:600 14px/1 var(--body);transition:transform .12s,background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
+.btn svg{width:17px;height:17px;flex:none}
+.btn.pri{background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 22px rgba(245,184,61,.25)}
+.btn.pri:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(245,184,61,.36)}
+.btn.pri:active{transform:none}
+.btn.ghost{border:1px solid var(--line);background:var(--surface)}
+.btn.ghost:hover{border-color:var(--accent)}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.icon-btn:hover{border-color:var(--accent)}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:640px){body:not([data-view="home"]) .brand>span:last-child{display:none}.brand small{display:none}.btn .lbl{display:none}.btn.pri{padding:0 12px}.bar{gap:10px}}
 
-  /* ── Brand header ────────────────────────────────────────────────────── */
-  .brand { display: flex; align-items: center; gap: 12px; padding-top: 14px; padding-bottom: 4px; }
-  .mark {                                   /* ticket-shaped tile, echoes the send stub */
-    position: relative; flex: none; width: 40px; height: 40px; border-radius: 11px;
-    background: var(--amber); color: var(--ink);
-    display: grid; place-items: center;
-    font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1;
-  }
-  .mark::before, .mark::after {
-    content: ""; position: absolute; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--bg);
-  }
-  .mark::before { left: -4px; }
-  .mark::after { right: -4px; }
-  .brand h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: .01em; }
-  .brand p { margin: 3px 0 0; font-size: 12.5px; color: var(--hint); }
+/* ── hero ── */
+.hero{position:relative;padding:clamp(40px,9vw,92px) 0 clamp(26px,5vw,44px);text-align:center;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-20% -10% auto;height:120%;background:
+  radial-gradient(60% 55% at 50% 0%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%),
+  radial-gradient(40% 40% at 85% 20%,color-mix(in srgb,#7a5cff 16%,transparent),transparent 70%);pointer-events:none}
+.hero>*{position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 12.5px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:999px;padding:8px 14px;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+h1.title{font:800 clamp(34px,6.4vw,66px)/1.04 var(--head);letter-spacing:-.035em;margin:20px auto 14px;max-width:15ch}
+h1.title em{font-style:normal;color:var(--accent-text)}
+.sub{color:var(--muted);max-width:52ch;margin:0 auto 28px;font-size:clamp(15px,2vw,18px)}
+.hero .field{max-width:640px;margin:0 auto}
+.hero .field input{height:58px;font-size:17px;padding-left:54px;box-shadow:var(--shadow)}
+.hero .field .ic{left:20px;width:21px;height:21px}
+.hero .steps{display:flex;justify-content:center;flex-wrap:wrap;gap:10px 26px;margin-top:26px;color:var(--muted);font-size:14px}
+.hero .steps span{display:inline-flex;align-items:center;gap:9px}
+.hero .steps b{width:22px;height:22px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center;font:700 11.5px/1 var(--head);color:var(--text)}
 
-  /* ── Search header ───────────────────────────────────────────────────── */
-  .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: 10px; padding-bottom: 6px; }
-  .search { position: relative; }
-  .search input {
-    width: 100%; height: 46px; padding: 0 44px 0 42px;
-    border: 1.5px solid transparent; border-radius: 12px;
-    background: var(--surface); color: var(--text);
-    font: inherit; font-size: 16px; outline: none;      /* 16px stops iOS zoom on focus */
-  }
-  .search input::placeholder { color: var(--hint); }
-  .search input:focus { border-color: var(--teal); }
-  .search input::-webkit-search-cancel-button { display: none; }
-  .search .icon { position: absolute; left: 13px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--hint); pointer-events: none; }
-  .search .clear { position: absolute; right: 0; top: 0; width: 46px; height: 46px; border: 0; background: none; color: var(--hint); display: grid; place-items: center; }
-  .search .clear svg { width: 16px; height: 16px; }
+/* ── filters ── */
+.filters{display:flex;gap:8px;overflow-x:auto;padding:4px var(--gutter) 6px;margin:0 calc(var(--gutter)*-1);scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;height:36px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 13.5px/1 var(--body);transition:all .15s}
+.chip:hover{color:var(--text);border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.fsep{flex:none;width:1px;background:var(--line);margin:6px 4px}
 
-  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 10px 14px 2px; margin: 0 -14px; }
-  .chips::-webkit-scrollbar { display: none; }
-  .chip {
-    flex: none; height: 34px; padding: 0 14px;
-    border: 1px solid var(--line); border-radius: 17px; background: transparent;
-    font-size: 14px; font-weight: 500; transition: background .12s, border-color .12s;
-  }
-  .chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--on-teal); }
+/* ── grid ── */
+main{flex:1}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:26px 0 16px}
+.sechead h2{font:700 clamp(20px,3vw,26px)/1.2 var(--head);letter-spacing:-.02em}
+.sechead span{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:clamp(14px,2vw,24px)}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.card{display:block;position:relative;border-radius:var(--r);transition:transform .2s}
+.card:hover{transform:translateY(-4px)}
+.poster{position:relative;aspect-ratio:2/3;border-radius:var(--r);overflow:hidden;background:var(--surface2);border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.poster img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .35s,transform .5s}
+.poster img.on{opacity:1}
+.card:hover .poster img{transform:scale(1.05)}
+.poster .ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(160deg,var(--c1),var(--c2));color:#fff}
+.poster .ph b{font:700 17px/1.15 var(--head);letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.35);overflow-wrap:anywhere}
+.poster .ph small{opacity:.8;font-size:12px;margin-top:4px}
+.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 38%);opacity:0;transition:opacity .2s;pointer-events:none}
+.card:hover .poster::after{opacity:1}
+.rate{position:absolute;top:9px;left:9px;z-index:2;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:rgba(10,10,14,.72);backdrop-filter:blur(8px);color:#fff;font:600 12px/1 var(--body)}
+.rate::before{content:"★";color:var(--accent)}
+.kind{position:absolute;top:9px;right:9px;z-index:2;padding:4px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 10.5px/1 var(--body);letter-spacing:.05em;text-transform:uppercase}
+.meta{padding:10px 2px 0}
+.meta b{display:block;font:600 14.5px/1.3 var(--head);letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta span{color:var(--muted);font-size:13px}
+.skel .poster{border:0;background:linear-gradient(100deg,var(--surface2) 30%,var(--surface) 50%,var(--surface2) 70%);background-size:300% 100%;animation:sh 1.3s infinite linear;box-shadow:none}
+.skel .line{height:12px;border-radius:6px;margin-top:11px;background:var(--surface2);width:80%}
+.skel .line.s{width:40%;height:10px;margin-top:8px}
+@keyframes sh{to{background-position:-100% 0}}
+.more{display:flex;justify-content:center;padding:34px 0 10px}
+.state{display:grid;place-items:center;text-align:center;gap:10px;padding:64px 16px;color:var(--muted)}
+.state .big{font:700 22px/1.2 var(--head);color:var(--text)}
+.state .em{font-size:44px;line-height:1}
 
-  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; padding-bottom: 6px; min-height: 40px; color: var(--hint); font-size: 13px; }
-  .bar .actions { display: flex; gap: 4px; flex: none; }
-  .link { border: 0; background: none; color: var(--teal); font-size: 13px; font-weight: 600; padding: 8px 8px; margin: -8px -4px; }
+/* ── movie page ── */
+.movie{position:relative;isolation:isolate}
+.backdrop{position:absolute;inset:0 0 auto;height:min(560px,70vh);z-index:-1;overflow:hidden}
+.backdrop img{width:100%;height:100%;object-fit:cover;filter:blur(38px) saturate(1.3);transform:scale(1.3);opacity:.34}
+.backdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0,var(--bg) 96%)}
+.crumb{display:inline-flex;align-items:center;gap:8px;margin:22px 0 6px;color:var(--muted);font-weight:500;font-size:14px;height:40px;padding:0 14px 0 8px;border-radius:999px}
+.crumb:hover{color:var(--text);background:var(--surface)}
+.crumb svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mhead{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:clamp(22px,4vw,48px);align-items:start;padding:10px 0 34px}
+@media (max-width:760px){.mhead{grid-template-columns:1fr;gap:20px;justify-items:center;text-align:center}.mposter{width:min(58vw,230px)}.facts,.genres,.cta{justify-content:center}.plot{text-align:left}}
+.mposter{aspect-ratio:2/3;border-radius:18px;overflow:hidden;background:var(--surface2);border:1px solid var(--line);box-shadow:var(--shadow);position:relative;width:100%}
+.mposter button{display:block;width:100%;height:100%}
+.mposter img{width:100%;height:100%;object-fit:cover}
+.mposter .zoom{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:rgba(10,10,14,.7);display:grid;place-items:center;color:#fff;backdrop-filter:blur(6px)}
+.mposter .zoom svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.info h1{font:800 clamp(28px,4.6vw,48px)/1.08 var(--head);letter-spacing:-.03em}
+.facts{display:flex;flex-wrap:wrap;gap:8px 10px;margin:14px 0;align-items:center;color:var(--muted);font-size:14.5px}
+.facts .pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:13.5px}
+.facts .pill.r::before{content:"★";color:var(--accent)}
+.genres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.genres span{font-size:13px;color:var(--accent-text);border:1px solid color-mix(in srgb,var(--accent) 38%,var(--line));padding:5px 12px;border-radius:999px}
+.plot{color:var(--muted);max-width:68ch;font-size:16px}
+.plot.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.plotbtn{margin-top:6px;color:var(--accent-text);font-weight:600;font-size:14px}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.cta .btn{height:46px;padding:0 20px;font-size:15px}
 
-  /* ── Poster grid ─────────────────────────────────────────────────────── */
-  .grid { list-style: none; margin: 0; padding-top: 6px; padding-bottom: 8px; display: grid; gap: 18px 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .card { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
-  .art {
-    position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden;
-    border-radius: 10px; background: var(--surface);
-    box-shadow: 0 0 0 1px var(--line);
-    transition: transform .12s;
-  }
-  .card:active .art { transform: scale(.98); }
-  .art img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .ph {                                   /* shown when no poster exists */
-    position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; text-align: center;
-    background: var(--teal-soft); color: var(--text);
-    font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.05; overflow: hidden;
-  }
-  .badge {
-    position: absolute; top: 8px; right: 8px; min-width: 26px; height: 26px; padding: 0 7px;
-    display: grid; place-items: center; border-radius: 13px;
-    background: var(--teal); color: var(--on-teal);
-    font-family: var(--display); font-weight: 700; font-size: 16px;
-    box-shadow: 0 0 0 2px var(--bg);
-  }
-  .ctitle { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 8px; font-weight: 600; line-height: 1.25; }
-  .cmeta { display: block; margin-top: 2px; color: var(--hint); font-size: 13px; }
+.files{padding-bottom:40px}
+.files .sechead{margin-top:6px}
+.flist{display:grid;gap:10px;margin-top:14px}
+.file{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 16px;padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);transition:border-color .15s,transform .15s}
+.file:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.file .nm{font:500 14.5px/1.45 var(--body);overflow-wrap:anywhere;word-break:break-word}
+.file .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font:600 11.5px/1 var(--body);padding:5px 8px;border-radius:7px;background:var(--surface2);color:var(--muted);letter-spacing:.02em}
+.tag.q{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-text)}
+.file .sz{color:var(--muted);font-size:13px;white-space:nowrap}
+.file .go{grid-row:1/3;grid-column:2;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+@media (max-width:560px){.file{grid-template-columns:1fr}.file .go{grid-row:auto;grid-column:auto;flex-direction:row;justify-content:space-between;align-items:center}.file .go .btn{flex:1}}
+.note{margin-top:22px;padding:14px 16px;border-radius:var(--r);background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px dashed color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--muted);font-size:14px;display:flex;gap:10px}
+.note b{color:var(--text)}
 
-  .sk-card .art { box-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
-  .sk-card i { display: block; height: 12px; border-radius: 6px; background: var(--surface); margin-top: 10px; width: 70%; animation: pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: .45; } }
+/* ── lightbox ── */
+.lb{position:fixed;inset:0;z-index:60;background:rgba(5,5,8,.9);display:grid;place-items:center;padding:20px;backdrop-filter:blur(6px)}
+.lb img{max-width:min(94vw,640px);max-height:88vh;border-radius:14px;box-shadow:var(--shadow)}
+.lb button{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center}
 
-  /* ── Movie view ──────────────────────────────────────────────────────── */
-  .mbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 4px; background: var(--bg); padding-top: 8px; padding-bottom: 8px; box-shadow: 0 1px 0 var(--line); }
-  .back { flex: none; display: flex; align-items: center; gap: 2px; height: 40px; padding: 0 10px 0 4px; border: 0; background: none; color: var(--teal); font-weight: 600; }
-  .back svg { width: 22px; height: 22px; }
-  .mbar-title { min-width: 0; flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .mhead { display: grid; grid-template-columns: 116px 1fr; gap: 16px; padding-top: 16px; padding-bottom: 12px; align-items: start; }
-  .mposter { position: relative; display: block; width: 116px; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
-  .mposter img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .minfo h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; overflow-wrap: anywhere; }
-  .facts { margin: 8px 0 0; color: var(--hint); font-size: 14px; }
-  .facts b { color: var(--text); font-weight: 600; }
-  .genres { margin: 4px 0 0; color: var(--hint); font-size: 14px; }
-  .plot { grid-column: 1 / -1; margin: 0; padding: 0; border: 0; background: none; text-align: left; color: var(--text); font-size: 14.5px; line-height: 1.5; opacity: .88;
-          display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-  .plot.open { -webkit-line-clamp: unset; display: block; }
-
-  .list { list-style: none; margin: 0; padding: 0; }
-  .list li { border-bottom: 1px solid var(--line); }
-  .row { position: relative; width: 100%; display: grid; grid-template-columns: 22px 1fr; gap: 14px; align-items: start; padding: 14px 14px; text-align: left; border: 0; background: transparent; }
-  .row[aria-checked="true"] { background: var(--teal-soft); }
-  .row[aria-checked="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--teal); }
-  .box { width: 22px; height: 22px; margin-top: 1px; border: 2px solid rgba(127, 127, 127, .55); border-radius: 7px; display: grid; place-items: center; transition: background .12s, border-color .12s; }
-  .box svg { width: 13px; height: 13px; opacity: 0; color: var(--on-teal); }
-  .row[aria-checked="true"] .box { background: var(--teal); border-color: var(--teal); }
-  .row[aria-checked="true"] .box svg { opacity: 1; }
-  .name { font-weight: 500; overflow-wrap: anywhere; }
-  .meta { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--hint); font-size: 13px; }
-  .q { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); }
-  .sent-tag { color: var(--teal); font-weight: 600; }
-  .sk-row { padding: 16px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 22px 1fr; gap: 14px; }
-  .sk-row i { display: block; border-radius: 7px; background: var(--surface); animation: pulse 1.2s ease-in-out infinite; }
-  .sk-row i:first-child { width: 22px; height: 22px; }
-  .sk-row .l1 { height: 14px; width: 86%; }
-  .sk-row .l2 { height: 12px; width: 38%; margin-top: 10px; }
-
-  .state { padding: 48px 28px; text-align: center; color: var(--hint); }
-  .state strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
-  .state .retry { margin-top: 16px; height: 40px; padding: 0 20px; border: 1.5px solid var(--teal); border-radius: 10px; background: none; color: var(--teal); font-weight: 600; }
-  .more { padding: 18px; text-align: center; color: var(--hint); font-size: 13px; }
-
-  /* ── Poster lightbox ─────────────────────────────────────────────────── */
-  .lightbox { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(0, 0, 0, .92); padding: 16px; }
-  .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
-
-  /* ── Send stub (the one loud element) ────────────────────────────────── */
-  .dock {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-    padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right));
-    background: var(--bg); box-shadow: 0 -1px 0 var(--line);
-    transform: translateY(110%); transition: transform .22s ease-out;
-  }
-  .dock.on { transform: none; }
-  .stub { position: relative; height: 64px; display: grid; grid-template-columns: auto 0 1fr; align-items: stretch; background: var(--amber); color: var(--ink); border-radius: 14px; }
-  .stub::before, .stub::after { content: ""; position: absolute; top: calc(50% - 7px); width: 14px; height: 14px; border-radius: 50%; background: var(--bg); }
-  .stub::before { left: -7px; }
-  .stub::after { right: -7px; }
-  .count { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px 0 24px; min-width: 92px; }
-  .count b { font-family: var(--display); font-weight: 700; font-size: 32px; line-height: .95; }
-  .count span { font-size: 12px; font-weight: 500; opacity: .8; }
-  .tear { position: relative; margin: 12px 0; border-left: 2px dashed rgba(34, 22, 10, .4); }
-  .tear::before, .tear::after { content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); }
-  .tear::before { top: -20px; }
-  .tear::after { bottom: -20px; }
-  .send { display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: none; color: var(--ink); font-size: 17px; font-weight: 600; padding: 0 22px; border-radius: 0 14px 14px 0; }
-  .send svg { width: 20px; height: 20px; }
-  .send:active { background: rgba(0, 0, 0, .08); }
-  .send:disabled { opacity: .6; cursor: default; }
-  .send:focus-visible { outline: 2px solid var(--ink); outline-offset: -6px; }
-
-  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); z-index: 40; translate: -50% 0; max-width: min(92vw, 420px); padding: 11px 16px; border-radius: 10px; background: var(--text); color: var(--bg); font-size: 14px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .18s; }
-  body.has-dock .toast { bottom: calc(env(safe-area-inset-bottom) + 108px); }
-  .toast.show { opacity: 1; }
-  .toast.error { background: var(--danger); color: #fff; }
-
-  .gate { min-height: 100vh; display: grid; place-content: center; text-align: center; padding: 32px; gap: 8px; }
-  .gate h1 { font-family: var(--display); font-size: 30px; margin: 0; }
-  .gate p { margin: 0; color: var(--hint); max-width: 28ch; }
-
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* ── footer / toast ── */
+footer{border-top:1px solid var(--line);margin-top:40px;padding:28px 0 40px;color:var(--muted);font-size:14px;background:var(--bg2)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center}
+footer b{color:var(--text);font-family:var(--head)}
+footer a{color:var(--accent-text);font-weight:500}
+footer a:hover{text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:90vw}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
-<body>
+<body data-view="home">
 
-<main id="gate" class="gate" hidden>
-  <h1>Open this from the bot</h1>
-  <p>This page only works inside Telegram. Open the bot and tap Open Mini App.</p>
-</main>
-
-<div id="app" hidden>
-
-  <!-- HOME: brand, search, poster grid -->
-  <section id="home">
-    <header class="brand pad">
-      <div class="mark" aria-hidden="true">K</div>
-      <div>
-        <h1>KuttuBot</h1>
-        <p>by Goutham Josh</p>
-      </div>
-    </header>
-
-    <div class="top pad">
-      <div class="search">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search movies or series" aria-label="Search movies or series">
-        <button id="clearQ" class="clear" type="button" aria-label="Clear search" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
-      </div>
-      <div class="chips" id="qualityChips" role="group" aria-label="Quality"></div>
-      <div class="chips" id="langChips" role="group" aria-label="Language"></div>
-    </div>
-
-    <div class="bar pad"><span id="summary" aria-live="polite"></span></div>
-    <ul id="grid" class="grid pad"></ul>
-    <div id="state" class="state" hidden></div>
-    <div id="more" class="more" hidden>Loading more…</div>
-    <div id="sentinel" aria-hidden="true"></div>
-  </section>
-
-  <!-- MOVIE: poster, details, that title's files -->
-  <section id="movie" hidden>
-    <div class="mbar pad">
-      <button id="back" class="back" type="button" aria-label="Back to results">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>
-        Back
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#/" aria-label="KuttuBot home">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h3.4v7.2L14.2 3h4.4l-6.2 7.7L19.4 21h-4.5l-5.2-7.4-1.3 1.6V21H5z"/></svg></span>
+      <span><b>KuttuBot</b><small>by Goutham Josh</small></span>
+    </a>
+    <form class="hsearch field" role="search" id="hform">
+      <label class="sr" for="hq">Search movies and series</label>
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="hq" type="search" placeholder="Search movies or series…" autocomplete="off" enterkeyhint="search">
+      <button type="button" class="x" id="hx" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </form>
+    <div class="actions">
+      <button class="icon-btn" id="theme" aria-label="Toggle light / dark theme" title="Theme">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
       </button>
-      <span id="mbarTitle" class="mbar-title"></span>
-    </div>
-
-    <div class="mhead pad">
-      <button id="mposter" class="mposter" type="button" aria-label="View full poster"></button>
-      <div class="minfo">
-        <h2 id="mtitle"></h2>
-        <p id="mfacts" class="facts"></p>
-        <p id="mgenres" class="genres"></p>
-      </div>
-      <button id="mplot" class="plot" type="button" hidden></button>
-    </div>
-
-    <div class="pad"><div class="chips" id="mChips" role="group" aria-label="Filter files by quality" hidden></div></div>
-    <div class="bar pad">
-      <span id="msummary" aria-live="polite"></span>
-      <span class="actions">
-        <button id="selectAll" class="link" type="button" hidden>Select all</button>
-        <button id="clearSel" class="link" type="button" hidden>Clear</button>
-      </span>
-    </div>
-    <ul id="files" class="list"></ul>
-    <div id="mstate" class="state" hidden></div>
-  </section>
-
-  <div id="lightbox" class="lightbox" role="dialog" aria-label="Poster" hidden><img id="lightImg" alt=""></div>
-
-  <div id="dock" class="dock" aria-hidden="true">
-    <div class="stub">
-      <div class="count" aria-live="polite"><b id="count">0</b><span>selected</span></div>
-      <div class="tear"></div>
-      <button id="send" class="send" type="button">
-        Send to PM
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/></svg>
-      </button>
+      <a class="btn pri" id="tgTop" href="https://t.me/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3L18.6 19.6c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.3 12.9 1.4 11.4c-1.1-.3-1.1-1 .2-1.5L20.5 2.6c.9-.3 1.7.2 1.4 1.7z"/></svg>
+        <span class="lbl">Open in Telegram</span>
+      </a>
     </div>
   </div>
+</header>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-</div>
+<main>
+  <!-- HOME + SEARCH -->
+  <section id="browse">
+    <div class="hero wrap" id="hero">
+      <span class="eyebrow"><i></i>Free · Fast · In Telegram</span>
+      <h1 class="title">Find your next <em>movie</em> night</h1>
+      <p class="sub">Search any movie or series, check the poster and details, then get the file sent straight to your Telegram.</p>
+      <form class="field" role="search" id="form">
+        <label class="sr" for="q">Search movies and series</label>
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Try “Leo”, “Kaithi”, “Money Heist”…" autocomplete="off" enterkeyhint="search">
+        <button type="button" class="x" id="x" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </form>
+      <div class="steps" aria-hidden="true">
+        <span><b>1</b>Search</span><span><b>2</b>Pick the movie</span><span><b>3</b>Tap “Get on Telegram”</span>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="filters" id="filters" role="group" aria-label="Filters"></div>
+      <div class="sechead"><h2 id="sectitle">Latest uploads</h2><span id="secsub"></span></div>
+      <div class="grid" id="grid" aria-live="polite"></div>
+      <div class="state" id="state" hidden></div>
+      <div class="more" id="more" hidden><button class="btn ghost" id="moreBtn">Load more</button></div>
+      <div id="sentinel" style="height:1px"></div>
+    </div>
+  </section>
+
+  <!-- MOVIE -->
+  <section id="movie" class="movie" hidden>
+    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+    <div class="wrap">
+      <a class="crumb" id="back" href="#/"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</a>
+      <div id="mbody"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><b>KuttuBot</b> · built by <a href="https://gouthamjosh.vercel.app" target="_blank" rel="noopener">Goutham Josh</a></div>
+    <div>Files are delivered by our Telegram bot. <a id="tgFoot" href="https://t.me/" target="_blank" rel="noopener">Open the bot</a></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 (() => {
   'use strict';
-
-  const tg = window.Telegram && window.Telegram.WebApp;
-  const initData = (tg && tg.initData) || '';
-  const $ = (id) => document.getElementById(id);
-
-  if (!initData) { $('gate').hidden = false; return; }
-  $('app').hidden = false;
-
-  // ── Telegram integration ────────────────────────────────────────────────
-  tg.ready();
-  tg.expand();
-  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-  const applyScheme = () => { document.documentElement.dataset.scheme = tg.colorScheme === 'dark' ? 'dark' : 'light'; };
-  applyScheme();
-  tg.onEvent('themeChanged', applyScheme);
-  const haptic = (kind) => {
-    const h = tg.HapticFeedback; if (!h) return;
-    if (kind === 'tick') h.selectionChanged(); else h.notificationOccurred(kind);   // 'success' | 'error'
-  };
-
-  // ── Config ─────────────────────────────────────────────────────────────
-  const BASE = location.pathname.replace(/\/$/, '');         // "/app"
-  const MAX_SEND = 20;                                       // keep equal to MAX_SEND in plugins/miniapp.py
-  const QUALITIES = ['480p', '720p', '1080p', '2160p'];
-  const LANGUAGES = ['Malayalam', 'Tamil', 'Telugu', 'Hindi', 'English', 'Kannada'];
-  const QUALITY_RE = /(2160p|4k|1440p|1080p|720p|540p|480p|360p)/i;
-  const qualityOf = (name) => {
-    const m = name.match(QUALITY_RE); if (!m) return '';
-    const q = m[1].toLowerCase(); return q === '4k' ? '2160p' : q;
-  };
-
-  // ── State ──────────────────────────────────────────────────────────────
-  const state = { query: '', quality: '', lang: '', next: null, loading: false, seq: 0, view: 'home' };
-  const selected = new Map();    // file id -> {name, key}
-  const sent = new Set();        // file ids delivered this session
-  const movies = [];             // movies currently in the grid
-  const movieByM = new Map();    // mkey -> movie (one card per real title, even across pages)
-  let ctrl = null;
-  let homeScroll = 0;
-  let current = null;            // the open movie: {key, files, filter, seq, info}
-  let movieSeq = 0;
-
+  const $ = s => document.querySelector(s);
   const el = {
-    q: $('q'), clearQ: $('clearQ'), grid: $('grid'), summary: $('summary'), state: $('state'),
-    more: $('more'), sentinel: $('sentinel'), home: $('home'), movie: $('movie'),
-    back: $('back'), mbarTitle: $('mbarTitle'), mposter: $('mposter'), mtitle: $('mtitle'),
-    mfacts: $('mfacts'), mgenres: $('mgenres'), mplot: $('mplot'), mChips: $('mChips'),
-    msummary: $('msummary'), selectAll: $('selectAll'), clearSel: $('clearSel'),
-    files: $('files'), mstate: $('mstate'), lightbox: $('lightbox'), lightImg: $('lightImg'),
-    dock: $('dock'), count: $('count'), send: $('send'), toast: $('toast'),
+    body: document.body, hero: $('#hero'), q: $('#q'), hq: $('#hq'), x: $('#x'), hx: $('#hx'),
+    form: $('#form'), hform: $('#hform'), filters: $('#filters'), grid: $('#grid'), state: $('#state'),
+    more: $('#more'), moreBtn: $('#moreBtn'), sentinel: $('#sentinel'), title: $('#sectitle'), sub: $('#secsub'),
+    browse: $('#browse'), movie: $('#movie'), mbody: $('#mbody'), backdrop: $('#backdrop'), toast: $('#toast'),
+    tgTop: $('#tgTop'), tgFoot: $('#tgFoot'), theme: $('#theme'), back: $('#back'),
   };
 
-  // ── API ────────────────────────────────────────────────────────────────
-  async function api(path, payload, signal) {
-    let res, data = null;
-    try {
-      res = await fetch(BASE + path, {
-        method: 'POST', signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ init_data: initData, ...payload }),
-      });
-    } catch (e) {
-      if (e.name === 'AbortError') throw e;
-      throw new Error('No connection. Check your internet and try again.');
-    }
-    try { data = await res.json(); } catch (_) {}
-    if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'Something went wrong. Try again.');
-    return data;
-  }
+  const QUALITY = ['480p', '720p', '1080p', '4K'];
+  const LANGS = ['Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada', 'English'];
+  const state = { query: '', lang: '', quality: '', next: null, loading: false, seq: 0, movies: new Map(), total: 0, bot: '', scroll: 0, from: 'home' };
 
-  // ── Helpers ────────────────────────────────────────────────────────────
-  const svgCheck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  /* ── helpers ── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let toastT;
+  const toast = msg => { el.toast.textContent = msg; el.toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.toast.classList.remove('on'), 2400); };
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  const hue = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
   const effectiveQuery = () => [state.query, state.lang, state.quality].filter(Boolean).join(' ');
+  const fileTags = name => {
+    const out = [];
+    const q = name.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i); if (q) out.push([q[1].toLowerCase() === '2160p' ? '4K' : q[1].toUpperCase().replace('P', 'p'), 1]);
+    const src = name.match(/\b(web[\s-]?dl|webrip|hdrip|bluray|brrip|hdtv|dvdrip|hdcam|camrip|predvd)\b/i); if (src) out.push([src[1].replace(/\s|-/g, '').toUpperCase().replace('WEBDL', 'WEB-DL'), 0]);
+    const codec = name.match(/\b(x265|hevc|h 265|x264|h 264|av1)\b/i); if (codec) out.push([/265|hevc/i.test(codec[1]) ? 'HEVC' : /av1/i.test(codec[1]) ? 'AV1' : 'x264', 0]);
+    const lang = name.match(/\b(tamil|telugu|hindi|malayalam|kannada|english|dual|multi|bengali|marathi|punjabi)\b/i); if (lang) out.push([lang[1][0].toUpperCase() + lang[1].slice(1).toLowerCase(), 0]);
+    if (/\b(esub|e sub|subs?)\b/i.test(name)) out.push(['Subs', 0]);
+    if (/\bsrt\s*$/i.test(name)) out.push(['Subtitle', 0]);
+    return out;
+  };
+  const api = async (url, opts) => {
+    let r;
+    try { r = await fetch(url, opts); } catch { throw new Error('No connection. Check your internet and try again.'); }
+    let j = null; try { j = await r.json(); } catch {}
+    if (!r.ok || !j || j.ok === false) throw new Error((j && j.error) || 'Something went wrong. Please try again.');
+    return j;
+  };
+  const tgLink = (path = '') => `https://t.me/${state.bot}${path}`;
 
-  let toastTimer;
-  function toast(msg, isError) {
-    el.toast.textContent = msg;
-    el.toast.className = 'toast show' + (isError ? ' error' : '');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.toast.classList.remove('show'), 4200);
+  /* ── poster ── */
+  function posterHTML(m, big) {
+    const h = hue(m.title), src = big ? (m.poster || m.thumb) : m.thumb;
+    const ph = `<div class="ph" style="--c1:hsl(${h} 48% 30%);--c2:hsl(${(h + 50) % 360} 55% 16%)"><b>${esc(m.title)}</b><small>${esc(m.year || '')}</small></div>`;
+    return ph + (src ? `<img alt="${esc(m.title)} poster" ${big ? '' : 'loading="lazy"'} decoding="async" src="${esc(src)}">` : '');
   }
-
-  function showState(box, title, body, retry) {
-    box.hidden = false;
-    box.replaceChildren();
-    const s = document.createElement('strong'); s.textContent = title;
-    const p = document.createElement('span'); p.textContent = body;
-    box.append(s, p);
-    if (retry) {
-      const b = document.createElement('button');
-      b.className = 'retry'; b.type = 'button'; b.textContent = 'Try again';
-      b.onclick = retry; box.append(document.createElement('br'), b);
-    }
-  }
-
-  function placeholder(title) {
-    const d = document.createElement('span'); d.className = 'ph'; d.textContent = title; return d;
-  }
-  function posterEl(url, title) {
-    if (!url) return placeholder(title);
-    const img = new Image();
-    img.alt = ''; img.decoding = 'async'; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
-    img.onerror = () => img.replaceWith(placeholder(title));
-    img.src = url;
-    return img;
-  }
-  const fmtRating = (r) => Number(r).toFixed(1);
-  const wrapSeps = (s) => s.replace(/([._-])/g, '$1​');    // allow wrapping at separators; text stays complete
-
-  // ── HOME: poster grid ──────────────────────────────────────────────────
-  function skeletonGrid() {
-    el.grid.replaceChildren();
-    for (let i = 0; i < 6; i++) {
-      const li = document.createElement('li'); li.className = 'sk-card';
-      li.innerHTML = '<span class="art"></span><i></i>';
-      el.grid.append(li);
-    }
+  function wireImgs(root) {
+    root.querySelectorAll('img').forEach(img => {
+      const ok = () => { img.classList.add('on'); const ph = img.parentElement.querySelector('.ph'); if (ph) ph.hidden = true; };
+      img.addEventListener('load', ok, { once: true });
+      img.addEventListener('error', () => img.remove(), { once: true });
+      if (img.complete && img.naturalWidth) ok();
+    });
   }
 
-  function buildCard(m) {
-    const li = document.createElement('li');
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'card'; b.dataset.key = m.key;
-    b.setAttribute('aria-label', `${m.title}${m.year ? ' ' + m.year : ''}`);
-    const art = document.createElement('span'); art.className = 'art';
-    art.append(posterEl(m.thumb, m.title));
-    const badge = document.createElement('span'); badge.className = 'badge'; badge.hidden = true; art.append(badge);
-    const t = document.createElement('span'); t.className = 'ctitle'; t.textContent = m.title;
-    const meta = document.createElement('span'); meta.className = 'cmeta';
-    meta.textContent = [m.year, m.kind === 'series' ? 'Series' : '', m.rating ? `★ ${fmtRating(m.rating)}` : ''].filter(Boolean).join(' · ');
-    b.append(art, t, meta);
-    b.onclick = () => openMovie(m);
-    li.append(b);
-    return li;
+  /* ── grid ── */
+  const movieHref = m => '#/m/' + encodeURIComponent(JSON.stringify({ k: m.keys, q: m.qs, t: m.title, y: m.year, kd: m.kind }));
+  function cardHTML(m) {
+    return `<a class="card" href="${movieHref(m)}" aria-label="${esc(m.title)} ${esc(m.year || '')}">
+      <div class="poster">${m.rating ? `<span class="rate">${Number(m.rating).toFixed(1)}</span>` : ''}${m.kind === 'series' ? '<span class="kind">Series</span>' : ''}${posterHTML(m)}</div>
+      <div class="meta"><b>${esc(m.title)}</b><span>${esc(m.year || (m.kind === 'series' ? 'Series' : 'Movie'))}</span></div></a>`;
   }
+  const skeletons = n => Array.from({ length: n }, () => '<div class="card skel"><div class="poster"></div><div class="line"></div><div class="line s"></div></div>').join('');
+  function showState(html) { el.state.innerHTML = html; el.state.hidden = !html; }
 
   async function load(append) {
-    if (append && (state.loading || state.next === null)) return;
-    const mySeq = append ? state.seq : ++state.seq;
+    if (state.loading && append) return;
+    syncView();
+    const seq = ++state.seq; state.loading = true;
+    const q = effectiveQuery();
     if (!append) {
-      if (ctrl) ctrl.abort();
-      ctrl = new AbortController();
-      state.next = null; movies.length = 0; movieByM.clear();
-      el.state.hidden = true; el.more.hidden = true;
-      el.summary.textContent = 'Searching…';
-      skeletonGrid();
-    } else {
-      el.more.hidden = false;
+      state.movies.clear(); state.next = null; state.total = 0;
+      el.grid.innerHTML = skeletons(12); showState(''); el.more.hidden = true;
+      el.title.textContent = q ? `Results for “${q}”` : 'Latest uploads'; el.sub.textContent = '';
     }
-    state.loading = true;
     try {
-      const data = await api('/api/search', { query: effectiveQuery(), offset: append ? state.next : 0 }, ctrl.signal);
-      if (mySeq !== state.seq) return;
-      if (!append) el.grid.replaceChildren();
-      data.movies.forEach((m) => {
-        const ex = movieByM.get(m.mkey);
-        if (ex) {                                       // same title on another page: merge its name variants
-          m.keys.forEach((k) => { if (!ex.keys.includes(k)) ex.keys.push(k); });
-          m.qs.forEach((q) => { if (!ex.qs.includes(q)) ex.qs.push(q); });
-          return;
-        }
-        movieByM.set(m.mkey, m); movies.push(m); el.grid.append(buildCard(m));
-      });
-      state.next = data.next_offset;
-      const q = effectiveQuery();
-      el.summary.textContent = !movies.length ? '' : !q ? 'Latest uploads' : `Results for “${q}”`;
-      if (!movies.length && state.next === null) {     // still more pages? keep loading instead
-        showState(el.state, q ? `No titles for “${q}”` : 'Nothing uploaded yet',
-                  q ? 'Check the spelling, use fewer words, or clear a filter.' : 'Come back after new files are added.');
+      const j = await api(`/api/search?q=${encodeURIComponent(q)}&offset=${append ? state.next : 0}`);
+      if (seq !== state.seq) return;
+      const fresh = [];
+      for (const m of j.movies) {
+        const have = state.movies.get(m.mkey);
+        if (have) { have.keys = [...new Set([...have.keys, ...m.keys])]; have.qs = [...new Set([...have.qs, ...m.qs])]; continue; }
+        state.movies.set(m.mkey, m); fresh.push(m);
       }
-      syncSelection();
+      state.next = j.next_offset; state.total = j.total;
+      if (!append) el.grid.innerHTML = '';
+      el.grid.insertAdjacentHTML('beforeend', fresh.map(cardHTML).join(''));
+      wireImgs(el.grid);
+      el.more.hidden = state.next === null;
+      if (!state.movies.size) {
+        showState(state.next === null
+          ? `<div class="em">🎞️</div><div class="big">Nothing found</div><div>Check the spelling, or try a shorter name${state.lang || state.quality ? ' and clear the filters' : ''}.</div>`
+          : '');
+        if (state.next !== null) { state.loading = false; return load(true); }
+      }
+      el.sub.textContent = state.movies.size ? `${state.movies.size} title${state.movies.size === 1 ? '' : 's'}${state.next !== null ? '+' : ''}` : '';
     } catch (e) {
-      if (e.name === 'AbortError' || mySeq !== state.seq) return;
-      if (!append) { el.grid.replaceChildren(); el.summary.textContent = ''; }
-      showState(el.state, 'Could not load titles', e.message, () => load(append));
+      if (seq !== state.seq) return;
+      if (!append) el.grid.innerHTML = '';
+      showState(`<div class="em">⚠️</div><div class="big">Couldn’t load</div><div>${esc(e.message)}</div><button class="btn pri" id="retry">Try again</button>`);
+      const r = $('#retry'); if (r) r.onclick = () => load(append);
     } finally {
-      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; }
-      requestAnimationFrame(maybeFill);
+      if (seq === state.seq) state.loading = false;
     }
   }
 
-  // keep loading while the sentinel is on screen (a page can add no new titles)
-  function maybeFill() {
-    if (state.view !== 'home' || state.loading || state.next === null) return;
-    if (el.sentinel.getBoundingClientRect().top < window.innerHeight + 600) load(true);
+  /* ── filters ── */
+  function renderFilters() {
+    const chip = (kind, v, label) => `<button class="chip" data-k="${kind}" data-v="${esc(v)}" aria-pressed="${state[kind] === v}">${esc(label || v)}</button>`;
+    el.filters.innerHTML = chip('quality', '', 'All quality')
+      + QUALITY.map(v => chip('quality', v)).join('') + '<span class="fsep"></span>'
+      + chip('lang', '', 'All languages') + LANGS.map(v => chip('lang', v)).join('');
   }
-  new IntersectionObserver((entries) => { if (entries[0].isIntersecting) maybeFill(); }, { rootMargin: '600px 0px' }).observe(el.sentinel);
+  el.filters.addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const k = b.dataset.k, v = b.dataset.v;
+    state[k] = state[k] === v ? '' : v;
+    renderFilters(); load(false);
+  });
 
+  /* ── search inputs (hero + header share state) ── */
   let typing;
-  el.q.addEventListener('input', () => {
-    el.clearQ.hidden = !el.q.value;
-    clearTimeout(typing);
-    typing = setTimeout(() => { state.query = el.q.value.trim(); load(false); }, 350);
-  });
-  el.q.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(typing); state.query = el.q.value.trim(); el.q.blur(); load(false); }
-  });
-  el.clearQ.onclick = () => { el.q.value = ''; el.clearQ.hidden = true; state.query = ''; el.q.focus(); load(false); };
-
-  function buildChips(container, values, key) {
-    values.forEach((v) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.textContent = v; b.setAttribute('aria-pressed', 'false');
-      b.onclick = () => {
-        state[key] = state[key] !== v ? v : '';
-        container.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === state[key] ? 'true' : 'false'));
-        haptic('tick'); load(false);
-      };
-      container.append(b);
-    });
+  function setQuery(v, run) {
+    state.query = v.trim();
+    if (el.q.value !== v) el.q.value = v;
+    if (el.hq.value !== v) el.hq.value = v;
+    el.x.hidden = el.hx.hidden = !v;
+    if (run) { clearTimeout(typing); typing = setTimeout(() => { go('#/'); load(false); }, 380); }
   }
-  buildChips($('qualityChips'), QUALITIES, 'quality');
-  buildChips($('langChips'), LANGUAGES, 'lang');
+  [el.q, el.hq].forEach(i => i.addEventListener('input', () => setQuery(i.value, true)));
+  [el.form, el.hform].forEach(f => f.addEventListener('submit', e => { e.preventDefault(); clearTimeout(typing); document.activeElement.blur(); go('#/'); load(false); }));
+  [el.x, el.hx].forEach(b => b.addEventListener('click', () => { setQuery('', false); go('#/'); load(false); (el.body.dataset.view === 'home' ? el.q : el.hq).focus(); }));
 
-  // ── MOVIE view ─────────────────────────────────────────────────────────
-  function setPoster(url, title) {
-    el.mposter.replaceChildren(posterEl(url, title));
+  /* ── load more ── */
+  el.moreBtn.onclick = () => load(true);
+  new IntersectionObserver(es => { if (es[0].isIntersecting && state.next !== null && !state.loading && !el.browse.hidden) load(true); }, { rootMargin: '700px' }).observe(el.sentinel);
+
+  /* ── movie page ── */
+  const go = h => { if (location.hash !== h && !(h === '#/' && !location.hash)) location.hash = h; };
+  let lightbox;
+  function openLightbox(src) {
+    closeLightbox();
+    lightbox = document.createElement('div'); lightbox.className = 'lb'; lightbox.setAttribute('role', 'dialog'); lightbox.setAttribute('aria-label', 'Poster');
+    lightbox.innerHTML = `<img alt="Poster" src="${esc(src)}"><button aria-label="Close poster">✕</button>`;
+    lightbox.onclick = closeLightbox; document.body.appendChild(lightbox); lightbox.querySelector('button').focus();
   }
+  function closeLightbox() { if (lightbox) { lightbox.remove(); lightbox = null; } }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-  function renderHead(info) {
-    el.mbarTitle.textContent = info.title;
-    el.mtitle.textContent = info.title;
-    setPoster(info.thumb, info.title);
-    const facts = [];
-    if (info.year) facts.push(info.year);
-    if (info.kind === 'series') facts.push('Series');
-    if (info.runtime) facts.push(info.runtime);
-    el.mfacts.replaceChildren(document.createTextNode(facts.join(' · ')));
-    if (info.rating) {
-      if (facts.length) el.mfacts.append(document.createTextNode(' · '));
-      const b = document.createElement('b'); b.textContent = `★ ${fmtRating(info.rating)}`; el.mfacts.append(b);
+  async function showMovie(ref) {
+    const seq = ++state.seq; state.loading = false;
+    el.mbody.innerHTML = `<div class="mhead"><div class="mposter"></div><div class="info"><h1>${esc(ref.t || 'Loading…')}</h1><div class="facts"><span>${esc(ref.y || '')}</span></div></div></div>
+      <div class="files"><div class="flist">${'<div class="file skel" style="height:78px"></div>'.repeat(3)}</div></div>`;
+    el.backdrop.innerHTML = '';
+    document.title = `${ref.t || 'Movie'} — KuttuBot`;
+    try {
+      const j = await api('/api/movie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keys: ref.k, qs: ref.q }) });
+      if (seq !== state.seq) return;
+      renderMovie(ref, j);
+    } catch (e) {
+      if (seq !== state.seq) return;
+      el.mbody.innerHTML = `<div class="state"><div class="em">⚠️</div><div class="big">Couldn’t load this title</div><div>${esc(e.message)}</div><button class="btn pri" id="retry">Try again</button></div>`;
+      $('#retry').onclick = () => showMovie(ref);
     }
-    el.mgenres.textContent = (info.genres || []).join(', ');
-    el.mgenres.hidden = !(info.genres && info.genres.length);
-    el.mplot.textContent = info.plot || '';
-    el.mplot.hidden = !info.plot;
-    el.mplot.classList.remove('open');
   }
 
-  function visibleFiles() {
-    if (!current) return [];
-    return current.filter ? current.files.filter((f) => qualityOf(f.name) === current.filter) : current.files;
+  function renderMovie(ref, j) {
+    const info = j.info;
+    if (!info || !j.files.length) {
+      el.mbody.innerHTML = `<div class="state"><div class="em">🎞️</div><div class="big">No files for this title yet</div><div>It may have been removed. Go back and search again.</div></div>`;
+      return;
+    }
+    document.title = `${info.title}${info.year ? ' (' + info.year + ')' : ''} — KuttuBot`;
+    const poster = info.poster || info.thumb;
+    if (poster) { el.backdrop.innerHTML = `<img alt="" src="${esc(info.thumb || poster)}">`; }
+    const qset = [...new Set(j.files.flatMap(f => fileTags(f.name).filter(t => t[1]).map(t => t[0])))];
+    const order = ['4K', '1080p', '720p', '480p', '360p'];
+    qset.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const plot = info.plot || '';
+    const words = (info.title || ref.t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 52);
+    const allLink = tgLink(`?start=getfile-${words}`);
+    el.mbody.innerHTML = `
+      <div class="mhead">
+        <div class="mposter">${poster ? `<button id="zoom" aria-label="View full poster">${posterHTML({ title: info.title, year: info.year, poster: info.poster, thumb: info.thumb }, true)}<span class="zoom"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></span></button>` : posterHTML({ title: info.title, year: info.year })}</div>
+        <div class="info">
+          <h1>${esc(info.title)}</h1>
+          <div class="facts">
+            ${info.year ? `<span class="pill">${esc(info.year)}</span>` : ''}
+            <span class="pill">${info.kind === 'series' ? 'Series' : 'Movie'}</span>
+            ${info.runtime ? `<span class="pill">${esc(info.runtime)}</span>` : ''}
+            ${info.rating ? `<span class="pill r">${Number(info.rating).toFixed(1)} / 10</span>` : ''}
+          </div>
+          ${info.genres && info.genres.length ? `<div class="genres">${info.genres.slice(0, 5).map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
+          ${plot ? `<p class="plot ${plot.length > 230 ? 'clamp' : ''}" id="plot">${esc(plot)}</p>${plot.length > 230 ? '<button class="plotbtn" id="plotbtn">Read more</button>' : ''}` : ''}
+          <div class="cta">
+            <a class="btn pri" href="${esc(allLink)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3L18.6 19.6c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L6.3 12.9 1.4 11.4c-1.1-.3-1.1-1 .2-1.5L20.5 2.6c.9-.3 1.7.2 1.4 1.7z"/></svg>Open in Telegram</a>
+            <button class="btn ghost" id="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Share</button>
+          </div>
+        </div>
+      </div>
+      <div class="files">
+        <div class="sechead"><h2>Files</h2><span id="fcount">${j.files.length} available</span></div>
+        ${qset.length > 1 ? `<div class="filters" id="qf" role="group" aria-label="Filter by quality"><button class="chip" data-q="" aria-pressed="true">All</button>${qset.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join('')}</div>` : ''}
+        <div class="flist" id="flist"></div>
+        <div class="note"><span>💡</span><span><b>How it works:</b> tap <b>Get on Telegram</b>. The bot opens and sends you the file. Press <b>Start</b> if it’s your first time. Files are removed from your chat after a few minutes, so save or forward them.</span></div>
+      </div>`;
+    wireImgs(el.mbody);
+    const list = $('#flist');
+    const draw = q => {
+      const rows = j.files.filter(f => !q || fileTags(f.name).some(t => t[0] === q));
+      $('#fcount').textContent = q ? `${rows.length} of ${j.files.length}` : `${j.files.length} available`;
+      list.innerHTML = rows.map(f => {
+        const tags = fileTags(f.name).map(t => `<span class="tag ${t[1] ? 'q' : ''}">${esc(t[0])}</span>`).join('');
+        return `<div class="file"><div><div class="nm">${esc(f.name)}</div>${tags ? `<div class="tags">${tags}</div>` : ''}</div>
+          <div class="go"><span class="sz">${esc(f.size)}</span><a class="btn pri" href="${esc(tgLink('?start=wf_' + f.id))}" target="_blank" rel="noopener">Get on Telegram</a></div></div>`;
+      }).join('');
+    };
+    draw('');
+    const qf = $('#qf');
+    if (qf) qf.addEventListener('click', e => {
+      const b = e.target.closest('.chip'); if (!b) return;
+      qf.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+      draw(b.dataset.q);
+    });
+    const z = $('#zoom'); if (z) z.onclick = () => openLightbox(info.poster || info.thumb);
+    const pb = $('#plotbtn'); if (pb) pb.onclick = () => { const p = $('#plot'); const c = p.classList.toggle('clamp'); pb.textContent = c ? 'Read more' : 'Show less'; };
+    $('#share').onclick = async () => {
+      const data = { title: info.title, text: `${info.title}${info.year ? ' (' + info.year + ')' : ''} on KuttuBot`, url: location.href };
+      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+      try { await navigator.clipboard.writeText(location.href); toast('Link copied'); } catch { toast('Copy the address bar link to share'); }
+    };
   }
 
-  function buildRow(f, key) {
-    const li = document.createElement('li');
-    li.dataset.id = f.id;
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'row'; btn.setAttribute('role', 'checkbox');
-    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
-    const box = document.createElement('span'); box.className = 'box'; box.innerHTML = svgCheck;
-    const body = document.createElement('span');
-    const name = document.createElement('span'); name.className = 'name'; name.textContent = wrapSeps(f.name);
-    const meta = document.createElement('span'); meta.className = 'meta';
-    const ql = qualityOf(f.name);
-    if (ql) { const q = document.createElement('span'); q.className = 'q'; q.textContent = ql.toUpperCase(); meta.append(q); }
-    const size = document.createElement('span'); size.textContent = f.size; meta.append(size);
-    if (sent.has(f.id)) { const t = document.createElement('span'); t.className = 'sent-tag'; t.textContent = 'Sent'; meta.append(t); }
-    body.append(name, meta);
-    btn.append(box, body);
-    btn.onclick = () => toggle(f, key, btn);
-    li.append(btn);
-    return li;
-  }
-
-  function toggle(f, key, btn) {
-    if (selected.has(f.id)) {
-      selected.delete(f.id);
+  /* ── routing ── */
+  function route() {
+    closeLightbox();
+    const h = location.hash;
+    if (h.startsWith('#/m/')) {
+      let ref = null;
+      try { ref = JSON.parse(decodeURIComponent(h.slice(4))); } catch {}
+      if (!ref || !Array.isArray(ref.k) || !Array.isArray(ref.q)) { location.hash = '#/'; return; }
+      if (el.body.dataset.view !== 'movie') state.scroll = window.scrollY;
+      el.body.dataset.view = 'movie'; el.browse.hidden = true; el.movie.hidden = false;
+      window.scrollTo(0, 0);
+      showMovie(ref);
     } else {
-      if (selected.size >= MAX_SEND) { toast(`You can send up to ${MAX_SEND} files at once.`, true); haptic('error'); return; }
-      selected.set(f.id, { name: f.name, key });
-    }
-    btn.setAttribute('aria-checked', selected.has(f.id) ? 'true' : 'false');
-    haptic('tick');
-    syncSelection();
-  }
-
-  function renderFiles() {
-    const list = visibleFiles();
-    el.files.replaceChildren();
-    list.forEach((f) => el.files.append(buildRow(f, current.key)));
-    const n = list.length, total = current.files.length;
-    el.msummary.textContent = n === total ? `${n} ${n === 1 ? 'file' : 'files'}` : `${n} of ${total} files`;
-    syncSelection();
-  }
-
-  function renderQualityChips() {
-    el.mChips.replaceChildren();
-    const present = QUALITIES.filter((q) => current.files.some((f) => qualityOf(f.name) === q));
-    el.mChips.hidden = present.length < 2;
-    present.forEach((q) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.textContent = q;
-      b.setAttribute('aria-pressed', current.filter === q ? 'true' : 'false');
-      b.onclick = () => {
-        current.filter = current.filter === q ? '' : q;
-        el.mChips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === current.filter ? 'true' : 'false'));
-        haptic('tick'); renderFiles();
-      };
-      el.mChips.append(b);
-    });
-  }
-
-  function skeletonRows() {
-    el.files.replaceChildren();
-    for (let i = 0; i < 4; i++) {
-      const li = document.createElement('li'); li.className = 'sk-row';
-      li.innerHTML = '<i></i><div><i class="l1"></i><i class="l2"></i></div>';
-      el.files.append(li);
+      const wasMovie = el.body.dataset.view === 'movie';
+      state.seq++;
+      el.body.dataset.view = (state.query || state.lang || state.quality) ? 'search' : 'home';
+      el.movie.hidden = true; el.browse.hidden = false;
+      el.hero.hidden = el.body.dataset.view !== 'home';
+      document.title = 'KuttuBot — Find movies & series, get them in Telegram';
+      if (wasMovie) requestAnimationFrame(() => window.scrollTo(0, state.scroll));
     }
   }
-
-  async function openMovie(m) {
-    homeScroll = window.scrollY;
-    state.view = 'movie';
-    el.home.hidden = true; el.movie.hidden = false;
-    window.scrollTo(0, 0);
-    if (tg.BackButton) tg.BackButton.show();
-    const mySeq = ++movieSeq;
-    current = { key: m.key, files: [], filter: '', seq: mySeq, info: null };
-    // show what we already know straight away, then fill in
-    renderHead({ title: m.title, year: m.year, kind: m.kind, thumb: m.thumb, rating: m.rating, genres: [], plot: '', runtime: '' });
-    el.mChips.hidden = true; el.mstate.hidden = true;
-    el.msummary.textContent = 'Loading files…';
-    skeletonRows(); syncSelection();
-    try {
-      const d = await api('/api/movie', { keys: m.keys, qs: m.qs });
-      if (mySeq !== movieSeq) return;
-      current.files = d.files;
-      current.info = d.info;
-      if (d.info) renderHead(d.info);
-      if (!d.files.length) {
-        el.files.replaceChildren(); el.msummary.textContent = '';
-        showState(el.mstate, 'No files right now', 'This title has no files available at the moment. Try again later.');
-        syncSelection();
-        return;
-      }
-      renderQualityChips();
-      renderFiles();
-    } catch (e) {
-      if (mySeq !== movieSeq) return;
-      el.files.replaceChildren(); el.msummary.textContent = '';
-      showState(el.mstate, 'Could not load files', e.message, () => openMovie(m));
-    }
-  }
-
-  function closeMovie() {
-    movieSeq++; current = null;
-    state.view = 'home';
-    el.movie.hidden = true; el.home.hidden = false;
-    if (tg.BackButton) tg.BackButton.hide();
-    window.scrollTo(0, homeScroll);
-    syncSelection();
-    requestAnimationFrame(maybeFill);
-  }
-
-  // ── Lightbox (full-resolution poster) ──────────────────────────────────
-  function openLightbox() {
-    const url = current && current.info && current.info.poster;
-    if (!url) return;
-    el.lightImg.onerror = () => { el.lightbox.hidden = true; toast('Could not load the full poster.', true); };
-    el.lightImg.src = url;
-    el.lightbox.hidden = false;
-  }
-  const closeLightbox = () => { el.lightbox.hidden = true; el.lightImg.removeAttribute('src'); };
-  el.mposter.onclick = openLightbox;
-  el.lightbox.onclick = closeLightbox;
-
-  function goBack() {
-    if (!el.lightbox.hidden) return closeLightbox();
-    if (state.view === 'movie') closeMovie();
-  }
-  el.back.onclick = goBack;
-  if (tg.BackButton) tg.BackButton.onClick(goBack);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') goBack(); });
-  el.mplot.onclick = () => el.mplot.classList.toggle('open');
-
-  // ── Selection ──────────────────────────────────────────────────────────
-  function syncSelection() {
-    const n = selected.size;
-    el.count.textContent = n;
-    el.dock.classList.toggle('on', n > 0);
-    el.dock.setAttribute('aria-hidden', n > 0 ? 'false' : 'true');
-    document.body.classList.toggle('has-dock', n > 0);
-    el.clearSel.hidden = n === 0;
-    const vis = visibleFiles();
-    el.selectAll.hidden = vis.length === 0 || vis.every((f) => selected.has(f.id));
-    // count badges on poster cards
-    const per = new Map();
-    selected.forEach((v) => per.set(v.key, (per.get(v.key) || 0) + 1));
-    el.grid.querySelectorAll('.card').forEach((c) => {
-      const badge = c.querySelector('.badge'); const k = per.get(c.dataset.key) || 0;
-      badge.hidden = k === 0; badge.textContent = k;
-    });
-  }
-
-  function syncRows() {
-    el.files.querySelectorAll('li[data-id]').forEach((li) => {
-      li.firstElementChild.setAttribute('aria-checked', selected.has(li.dataset.id) ? 'true' : 'false');
-    });
-  }
-
-  el.selectAll.onclick = () => {
-    let hitLimit = false;
-    for (const f of visibleFiles()) {
-      if (selected.has(f.id)) continue;
-      if (selected.size >= MAX_SEND) { hitLimit = true; break; }
-      selected.set(f.id, { name: f.name, key: current.key });
-    }
-    if (hitLimit) toast(`Selected the first ${MAX_SEND}. That is the most you can send at once.`, true);
-    haptic('tick'); syncRows(); syncSelection();
+  const syncView = () => {
+    if (el.browse.hidden) return;
+    const v = (state.query || state.lang || state.quality) ? 'search' : 'home';
+    const ae = document.activeElement;
+    el.body.dataset.view = v; el.hero.hidden = v !== 'home';
+    // the input the user is typing in may just have been hidden: hand focus to the other one
+    const to = v === 'home' ? el.q : el.hq, from = v === 'home' ? el.hq : el.q;
+    if (ae === from) { to.focus(); try { to.setSelectionRange(to.value.length, to.value.length); } catch {} }
   };
-  el.clearSel.onclick = () => { selected.clear(); haptic('tick'); syncRows(); syncSelection(); };
+  window.addEventListener('hashchange', route);
 
-  // ── Send ───────────────────────────────────────────────────────────────
-  let sending = false;
-  el.send.onclick = async () => {
-    if (sending || !selected.size) return;
-    sending = true; el.send.disabled = true;
-    const label = el.send.firstChild; const original = label.textContent;
-    label.textContent = 'Sending ';
-    const ids = [...selected.keys()];
-    try {
-      const d = await api('/api/send', { ids });
-      ids.forEach((id) => sent.add(id));
-      selected.clear();
-      if (current) renderFiles(); else syncSelection();   // re-render so "Sent" tags show
-      const mins = d.delete_after ? Math.max(1, Math.round(d.delete_after / 60)) : 0;
-      const base = d.sent < d.requested
-        ? `Sent ${d.sent} of ${d.requested} files. The rest could not be sent.`
-        : `Sent ${d.sent} ${d.sent === 1 ? 'file' : 'files'} to your chat.`;
-      toast(mins ? `${base} They delete in ${mins} min.` : base);
-      haptic('success');
-    } catch (e) {
-      toast(e.message, true); haptic('error');
-    } finally {
-      label.textContent = original; sending = false; el.send.disabled = false;
-    }
+  /* ── theme ── */
+  const applyTheme = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; };
+  applyTheme(store.get('kb-theme'));
+  el.theme.onclick = () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    const next = cur === 'dark' ? 'light' : 'dark'; applyTheme(next); store.set('kb-theme', next);
   };
 
-  // ── Go ─────────────────────────────────────────────────────────────────
-  load(false);
+  /* ── boot ── */
+  (async function init() {
+    renderFilters();
+    try { const c = await api('/api/config'); state.bot = c.bot || ''; } catch {}
+    const link = tgLink(); el.tgTop.href = link; el.tgFoot.href = link;
+    route();
+    load(false);
+  })();
 })();
 </script>
 </body>
