@@ -133,7 +133,9 @@ async def api_search(request):
     except Exception:
         logger.exception("site search failed")
         return _err("Database is busy. Try again.", 500)
-    return web.json_response(data)
+    resp = web.json_response(data, headers={"Cache-Control": "public, max-age=60"})
+    resp.enable_compression()
+    return resp
 
 
 @routes.post("/api/movie")
@@ -158,4 +160,6 @@ async def api_movie(request):
         files.append({"token": _token(f["id"]), "_fid": f["id"], "name": f["name"], "size": f["size"]})
     await _save_tokens(files)
     data["files"] = [{"id": f["token"], "name": f["name"], "size": f["size"]} for f in files]
-    return web.json_response(data)
+    resp = web.json_response(data)
+    resp.enable_compression()
+    return resp

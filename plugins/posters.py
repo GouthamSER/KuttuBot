@@ -361,7 +361,7 @@ async def get_info(title, year='', kind='movie', detail=False):
     return full
 
 
-async def get_infos(items, budget=5.0):
+async def get_infos(items, budget=3.0):
     """items: list of (title, year, kind). Resolve concurrently within `budget` seconds.
     Slow lookups keep running in the background (and fill the cache); their slots return None."""
     tasks = [asyncio.ensure_future(get_info(*it)) for it in items]

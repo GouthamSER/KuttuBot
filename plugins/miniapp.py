@@ -234,36 +234,53 @@ async def movie_core(body):
         return None
     keyset = set(keys)
 
-    matched, seen_ids, seen_sig = [], set(), set()
-    for q in qs:
-        offset = 0
+    # Poster/details lookup starts now and runs while the database is searched.
+    # keys[0] is "<normalized title>|<year>" (movie) or "<normalized title>" (series).
+    g_year = keys[0].split("|", 1)[1] if "|" in keys[0] else ""
+    g_kind = "movie" if "|" in keys[0] else "series"
+    info_task = asyncio.ensure_future(get_info(qs[0], g_year, g_kind, detail=True))
+
+    async def fetch(q):
+        out, offset = [], 0
         for _ in range(MOVIE_MAX_PAGES):
             files, next_offset, _total = await get_search_results(
                 q, max_results=MOVIE_PAGE_SIZE, offset=offset, filter=True
             )
-            for f in files:
-                if parse_name(f.file_name)["key"] not in keyset:
-                    continue
-                # the same file indexed twice (two channels) has a different file_id but the same name + size
-                sig = (" ".join(f.file_name.lower().split()), f.file_size)
-                if f.file_id in seen_ids or sig in seen_sig:
-                    continue
-                seen_ids.add(f.file_id)
-                seen_sig.add(sig)
-                matched.append(f)
+            out += [f for f in files if parse_name(f.file_name)["key"] in keyset]
             if next_offset == "" or not files:
                 break
             offset = next_offset
-        if len(matched) >= MOVIE_MAX_FILES:
-            break
+        return out
+
+    try:
+        batches = await asyncio.gather(*(fetch(q) for q in qs))      # every filename variant at once
+    except Exception:
+        info_task.cancel()
+        raise
+
+    matched, seen_ids, seen_sig = [], set(), set()
+    for batch in batches:
+        for f in batch:
+            # the same file indexed twice (two channels) has a different file_id but the same name + size
+            sig = (" ".join(f.file_name.lower().split()), f.file_size)
+            if f.file_id in seen_ids or sig in seen_sig:
+                continue
+            seen_ids.add(f.file_id)
+            seen_sig.add(sig)
+            matched.append(f)
     matched = matched[:MOVIE_MAX_FILES]
 
     if not matched:
+        info_task.cancel()
         return {"ok": True, "info": None, "files": []}
 
     lead = next((f for f in matched if parse_name(f.file_name)["key"] == keys[0]), matched[0])
     p = parse_name(lead.file_name)
-    info = await get_info(p["title"], p["year"], p["kind"], detail=True)
+    try:
+        info = await info_task
+    except Exception:
+        info = {}
+    info = info or {}
     if p["kind"] == "series":
         matched.sort(key=lambda f: f.file_name.lower())
     return {
