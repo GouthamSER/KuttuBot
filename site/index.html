@@ -414,6 +414,17 @@ footer a:hover{text-decoration:underline}
   function closeLightbox() { if (lightbox) { lightbox.remove(); lightbox = null; } }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
+  const prefetched = new Map();      // movie hash -> promise, filled on hover / touch so the page opens instantly
+  function prefetch(card) {
+    const h = card.getAttribute('href');
+    if (prefetched.has(h) || prefetched.size > 12) return;
+    let ref; try { ref = JSON.parse(decodeURIComponent(h.slice(4))); } catch { return; }
+    const pr = movieRequest(ref); pr.catch(() => prefetched.delete(h)); prefetched.set(h, pr);
+    setTimeout(() => prefetched.delete(h), 45000);
+  }
+  const movieRequest = ref => api('/api/movie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keys: ref.k, qs: ref.q }) });
+  ['pointerenter', 'touchstart'].forEach(ev => el.grid.addEventListener(ev, e => { const c = e.target.closest && e.target.closest('.card[href]'); if (c) prefetch(c); }, { passive: true, capture: true }));
+
   async function showMovie(ref) {
     const seq = ++state.seq; state.loading = false;
     el.mbody.innerHTML = `<div class="mhead"><div class="mposter"></div><div class="info"><h1>${esc(ref.t || 'Loading…')}</h1><div class="facts"><span>${esc(ref.y || '')}</span></div></div></div>
@@ -421,7 +432,7 @@ footer a:hover{text-decoration:underline}
     el.backdrop.innerHTML = '';
     document.title = `${ref.t || 'Movie'} — KuttuBot`;
     try {
-      const j = await api('/api/movie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keys: ref.k, qs: ref.q }) });
+      const j = await (prefetched.get(location.hash) || movieRequest(ref));
       if (seq !== state.seq) return;
       renderMovie(ref, j);
     } catch (e) {
@@ -550,4 +561,4 @@ footer a:hover{text-decoration:underline}
 })();
 </script>
 </body>
-  </html>
+</html>
