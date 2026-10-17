@@ -137,18 +137,17 @@ async def app_page(request):
     )
 
 
-@routes.post("/app/api/search")
-async def api_search(request):
-    auth, resp = await _auth(request)
-    if resp is not None:
-        return resp
-    _, body = auth
-
-    query = _clean_query(body.get("query"))
+def _offset(v):
     try:
-        offset = max(0, int(body.get("offset", 0)))
+        return max(0, int(v))
     except (TypeError, ValueError):
-        offset = 0
+        return 0
+
+
+async def search_core(query, offset=0):
+    """Grouped movie cards for a search text (shared by the Mini App and the public website)."""
+    query = _clean_query(query)
+    offset = _offset(offset)
 
     # Fetch until we have at least one video title (a page can be all subtitles / audio files).
     groups, cursor = {}, offset
@@ -198,12 +197,21 @@ async def api_search(request):
             by_ident.setdefault(ident, []).append(m)
     for m in movies:
         m.pop("_year")
-    return web.json_response({
+    return {
         "ok": True,
         "movies": movies,
         "next_offset": next_offset if next_offset != "" else None,
         "total": total,
-    })
+    }
+
+
+@routes.post("/app/api/search")
+async def api_search(request):
+    auth, resp = await _auth(request)
+    if resp is not None:
+        return resp
+    _, body = auth
+    return web.json_response(await search_core(body.get("query"), body.get("offset", 0)))
 
 
 def _str_list(v, single=None, clean=False):
@@ -217,18 +225,13 @@ def _str_list(v, single=None, clean=False):
     return out[:MAX_KEYS]
 
 
-@routes.post("/app/api/movie")
-async def api_movie(request):
-    """All files of one movie/series (every filename variant of it), plus poster and details."""
-    auth, resp = await _auth(request)
-    if resp is not None:
-        return resp
-    _, body = auth
-
+async def movie_core(body):
+    """All files of one movie/series (every filename variant of it), plus poster and details.
+    Returns a dict, or None when the request names no movie."""
     keys = _str_list(body.get("keys"), body.get("key"))
     qs = _str_list(body.get("qs"), body.get("q"), clean=True)
     if not keys or not qs:
-        return _err("Missing movie")
+        return None
     keyset = set(keys)
 
     matched, seen_ids, seen_sig = [], set(), set()
@@ -256,14 +259,14 @@ async def api_movie(request):
     matched = matched[:MOVIE_MAX_FILES]
 
     if not matched:
-        return web.json_response({"ok": True, "info": None, "files": []})
+        return {"ok": True, "info": None, "files": []}
 
     lead = next((f for f in matched if parse_name(f.file_name)["key"] == keys[0]), matched[0])
     p = parse_name(lead.file_name)
     info = await get_info(p["title"], p["year"], p["kind"], detail=True)
     if p["kind"] == "series":
         matched.sort(key=lambda f: f.file_name.lower())
-    return web.json_response({
+    return {
         "ok": True,
         "info": {
             "title": info.get("title") or p["title"],
@@ -277,7 +280,17 @@ async def api_movie(request):
             "runtime": info.get("runtime") or "",
         },
         "files": [{"id": f.file_id, "name": f.file_name, "size": get_size(f.file_size)} for f in matched],
-    })
+    }
+
+
+@routes.post("/app/api/movie")
+async def api_movie(request):
+    auth, resp = await _auth(request)
+    if resp is not None:
+        return resp
+    _, body = auth
+    data = await movie_core(body)
+    return _err("Missing movie") if data is None else web.json_response(data)
 
 
 @routes.post("/app/api/send")
