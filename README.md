@@ -32,6 +32,7 @@
 | Manual Filter | ✅ |
 | IMDb Info & Search (imdbio → OMDb backup) | ✅ |
 | 🎬 Telegram Mini App (poster grid, search, send to PM) | ✅ |
+| 🌐 Public Website (posters, search, one-tap Telegram delivery) | ✅ |
 | Multi-select & Send All with ✅ ticks | ✅ |
 | Auto-Delete of Sent Files (+ "Delete Now" button) | ✅ |
 | Full, Untrimmed File Names | ✅ |
@@ -100,6 +101,17 @@ Copy `sample_info.py` → `info.py` and fill in your values, **or** set them as 
 | `INDEX_REQ_CHANNEL` | `LOG_CHANNEL` | Channel where index requests are logged |
 
 > Full list with defaults: [`info.py`](./info.py) · Example config: [`sample_info.py`](./sample_info.py)
+
+---
+
+## 🌐 Website
+
+Your bot's web address (e.g. `https://yourapp.koyeb.app`) now opens a movie website: poster grid, search, quality / language filters, movie pages with details and every file, light & dark theme, mobile friendly.
+
+- **Get a file:** tap **Get on Telegram** → the bot opens and sends the file to your chat (ban list, force-subscribe and auto-delete still apply). Nothing is downloaded from the site itself.
+- **Safe by design:** the site never shows Telegram file IDs, each file gets a short token (stored in Mongo, auto-expires after 14 days); API is rate-limited per IP.
+- **Shareable:** every movie page has its own link (`/#/m/...`), with a Share button.
+- **No extra setup** — it uses the same database and poster keys (`OMDB_API_KEY`, optional `TMDB_API_KEY`). `/health` returns `ok` for uptime checks.
 
 ---
 
@@ -252,6 +264,7 @@ KuttuBot/
 │   ├── commands.py         # Start, help, file store & user commands
 │   ├── channel.py          # Channel media handler
 │   ├── miniapp.py          # Mini App API (search, movie, send) + initData auth
+│   ├── website.py          # Public website API + token links
 │   ├── posters.py          # Filename parser + poster/info lookup (imdbio → OMDb → TMDB)
 │   ├── webcode.py          # aiohttp web server routes
 │   ├── misc.py             # ID, info, IMDb commands
@@ -261,6 +274,8 @@ KuttuBot/
 │   └── etc.py              # Extra/miscellaneous commands
 ├── miniapp/
 │   └── index.html          # Mini App front-end (single file)
+├── site/
+│   └── index.html          # Public website front-end (single file)
 └── database/
     ├── ia_filterdb.py      # Indexed file database (with search cache)
     ├── filters_mdb.py      # Manual filter database
@@ -272,6 +287,7 @@ KuttuBot/
 
 ## 🔄 Recent Improvements
 
+- 🌐 **Website** — public movie site at your bot's URL, files delivered through the bot with short expiring tokens
 - 🎬 **Mini App** — poster grid → movie page → pick files → sent to your PM, header "KuttuBot · by Goutham Josh"
 - 🧩 **Duplicate fix** — one card per movie (merged by IMDb id), no subtitle cards, exact re-indexed files shown once
 - 🖼️ **HD posters** — imdbio first, OMDb backup, optional TMDB; full-resolution image on tap
