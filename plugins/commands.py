@@ -115,6 +115,8 @@ async def start(client, message):
         if message.command[1] != "subscribe":
             try:
                 kk, file_id = message.command[1].split("_", 1)
+                if kk == "wf":      # website link: retry through the same link
+                    raise ValueError
                 pre = 'checksubp' if kk == 'filep' else 'checksub'
                 btn.append([InlineKeyboardButton(" 🔄 Try Again", callback_data=f"{pre}#{file_id}")])
             except (IndexError, ValueError):
@@ -152,6 +154,14 @@ async def start(client, message):
             parse_mode=enums.ParseMode.HTML
         )
         return
+
+    if len(message.command) == 2 and message.command[1].startswith('wf_'):
+        # link from the website: short token -> real file_id
+        from plugins.website import resolve_token
+        fid = await resolve_token(message.command[1][3:])
+        if not fid:
+            return await message.reply("❌ This link expired. Open the website again and pick the file.")
+        message.command[1] = f"file_{fid}"
 
     data = message.command[1]
     try:
