@@ -39,6 +39,59 @@ def _cache_set(key, files, next_offset, total_results):
 # ──────────────────────────────────────────────────────────────────────────────
 
 
+# ── Full file names ────────────────────────────────────────────────────────────
+# Telegram / some uploaders cut long file names (about 64 chars, middle removed, extension kept):
+#   "...AC3 5.1 10bit HEVC - SP1EG3L).mkv"  ->  "...AC3 5 1 10bit HEV mkv"
+# The full name is usually still in the post caption, so recover it from there.
+_HTML_BR = re.compile(r'<\s*br\s*/?>', re.I)
+_HTML_TAG = re.compile(r'<[^>]+>')
+_NAME_EXT = re.compile(r'[\s._-]([A-Za-z0-9]{2,5})$')
+
+
+def _alnum(s):
+    return re.sub(r'[^a-z0-9]+', '', (s or '').lower())
+
+
+def recover_full_name(name, caption):
+    """Return the full file name found in the caption, or `name` unchanged."""
+    if not name or not caption:
+        return name
+    m = _NAME_EXT.search(name)
+    if not m:
+        return name
+    ext = m.group(1).lower()
+    base = _alnum(name[:m.start()])
+    if len(base) < 12:
+        return name
+    prefix = base[:25]
+    try:
+        import html as _html
+        text = _html.unescape(_HTML_TAG.sub('', _HTML_BR.sub('\n', caption)))
+    except Exception:
+        return name
+    for line in text.splitlines():
+        line = line.strip().strip('`"\'')
+        if len(line) <= len(name) or not line.lower().endswith(ext):
+            continue
+        ln = _alnum(line)
+        if ln.startswith(prefix) and ln.endswith(ext) and len(ln) > len(_alnum(name)):
+            return line
+    return name
+
+
+def _restore_names(files):
+    """Show full names for already-indexed files too (in memory only, nothing is written back)."""
+    for f in files:
+        try:
+            full = recover_full_name(f.file_name, f.caption)
+            if full != f.file_name:
+                f.file_name = full
+        except Exception:
+            pass
+    return files
+# ──────────────────────────────────────────────────────────────────────────────
+
+
 client = AsyncIOMotorClient(DATABASE_URI)
 db = client[DATABASE_NAME]
 instance = Instance.from_db(db)
@@ -61,7 +114,8 @@ class Media(Document):
 async def save_file(media):
     """Save file in database"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    full_name = recover_full_name(str(media.file_name), media.caption.html if media.caption else None)
+    file_name = re.sub(r"(_|\-|\.|\+)", " ", full_name)
     try:
         file = Media(
             file_id=file_id,
@@ -70,7 +124,7 @@ async def save_file(media):
             file_size=media.file_size,
             file_type=media.file_type,
             mime_type=media.mime_type,
-            caption=getattr(media.caption, 'html', media.caption) if media.caption else None,
+            caption=media.caption.html if media.caption else None,
         )
     except ValidationError:
         logger.exception('Error occurred while saving file in database')
@@ -130,6 +184,7 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
     files_task = _asyncio.ensure_future(cursor.to_list(length=max_results))
 
     total_results, files = await _asyncio.gather(total_task, files_task)
+    _restore_names(files)
     # ─────────────────────────────────────────────────────────────────────────
 
     next_offset = offset + max_results
@@ -147,7 +202,7 @@ async def get_file_details(query):
     filter = {'file_id': query}
     cursor = Media.find(filter)
     filedetails = await cursor.to_list(length=1)
-    return filedetails
+    return _restore_names(filedetails)
 
 
 async def get_movie_list(max_results=30):
@@ -186,7 +241,7 @@ async def get_movie_list(max_results=30):
                 break
 
         # Store in cache (reuse cache infra with TTL=300s)
-        _cache_set(ck, movies, '', 0)
+        _SEARCH_CACHE[ck] = (movies, '', 0, time.time())
         return movies
     except Exception as e:
         logger.exception(f"Error in get_movie_list: {e}")
@@ -234,7 +289,7 @@ async def get_series_grouped(max_results=50):
                 break
 
         result = {title: sorted(eps) for title, eps in series_dict.items()}
-        _cache_set(ck, result, '', 0)
+        _SEARCH_CACHE[ck] = (result, '', 0, time.time())
         return result
     except Exception as e:
         logger.exception(f"Error in get_series_grouped: {e}")
