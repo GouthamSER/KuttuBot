@@ -35,6 +35,16 @@ _JUNK = re.compile(
     r'hdcam|camrip|cam|hdts|predvd|x264|x265|h\.?26[45]|hevc|10bit|aac|ac3|dd\+?\d?|ddp\d?|atmos|esubs?|msubs?|'
     r'dual|multi|proper|uncut|extended|org|true|amzn|nf|hotstar|zee5|sonyliv)\b', re.I)
 _LANG = re.compile(r'\b(?:hindi|tamil|telugu|malayalam|kannada|english|bengali|marathi|punjabi)\b', re.I)
+# language / audio tags that sit between the title and the year ("Leo Kannada 2023", "Leo Tam 2023")
+_TRAIL_LANG = re.compile(
+    r'(?:\s+(?:hindi|tamil|telugu|malayalam|kannada|english|bengali|marathi|punjabi|urdu|dubbed|dub|hq|hd|clean|audio|line|'
+    r'tam|tel|hin|mal|kan|eng))+$', re.I)
+
+
+def _strip_lang(title: str) -> str:
+    """Drop trailing language words, but never leave less than a real title behind."""
+    out = _TRAIL_LANG.sub('', title)
+    return out if len(out) >= 2 else title
 
 
 def _clean(s: str) -> str:
@@ -94,6 +104,7 @@ def parse_name(file_name: str) -> dict:
         title = _clean(text[:min(soft)]) if soft else _clean(text)
     if not title:
         title = _clean(raw) or file_name
+    title = _strip_lang(title)
 
     kind = 'series' if ep else 'movie'
     year = ym.group(1) if (ym and kind == 'movie') else ''
