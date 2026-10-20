@@ -110,6 +110,7 @@ Your bot's web address (e.g. `https://yourapp.koyeb.app`) now opens a movie webs
 
 - **Get a file:** tap **Get on Telegram** → the bot opens and sends the file to your chat (ban list, force-subscribe and auto-delete still apply). Nothing is downloaded from the site itself.
 - **Safe by design:** the site never shows Telegram file IDs, each file gets a short token (stored in Mongo, auto-expires after 14 days); API is rate-limited per IP.
+- **Series & filters:** series files are grouped by season (S01, S02 …) in episode order; every title gets quality (480p–4K) and language chips built from its own files, and they combine.
 - **Shareable:** every movie page has its own link (`/#/m/...`), with a Share button.
 - **No extra setup** — it uses the same database and poster keys (`OMDB_API_KEY`, optional `TMDB_API_KEY`). `/health` returns `ok` for uptime checks.
 
@@ -121,6 +122,7 @@ A movie-poster browser that opens inside Telegram.
 
 - **Poster grid** — search, then tap a poster to open the movie page
 - **Movie page** — full-size poster, rating, genres, plot, quality chips and every file of that movie
+- **Series & filters** — season chips + grouped episodes, quality and language chips, all auto-detected from file names
 - **Select files → send to PM** — pick one or many, the bot sends them to your chat and they auto-delete after `AUTO_DELETE_TIME`
 - **No duplicates** — different filenames of the same movie are merged into one card; subtitles / audio files never get their own card; the same file indexed twice is shown once
 - **Poster chain** — imdbio → OMDb → TMDB (optional), cached in memory
