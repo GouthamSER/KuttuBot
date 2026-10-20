@@ -91,6 +91,15 @@ async def _save_tokens(files):
         logger.exception("saving web tokens failed")
 
 
+async def clear_tokens():
+    """Delete every website token. Called on bot start, so a restart leaves no old links behind."""
+    try:
+        res = await db.web_tokens.delete_many({})
+        logger.info(f"website tokens cleared on start: {res.deleted_count}")
+    except Exception:
+        logger.exception("clearing website tokens failed")
+
+
 async def resolve_token(token: str):
     """token -> Telegram file_id (or None). Used by the /start handler."""
     if not token or len(token) > 32 or not token.isalnum():
