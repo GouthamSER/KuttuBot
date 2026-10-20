@@ -1,14 +1,12 @@
-import html
-import os
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.errors.exceptions.bad_request_400 import MessageTooLong, PeerIdInvalid
-from info import ADMINS, LOG_CHANNEL, SUPPORT_CHAT
+from info import ADMINS, LOG_CHANNEL, SUPPORT_CHAT, MELCOW_NEW_USERS
 from database.users_chats_db import db
 from database.ia_filterdb import Media
 from utils import get_size, temp, get_settings
 from Script import script
-from pyrogram.errors import ChatAdminRequired
+from pyrogram.errors import ChatAdminRequired, ChatWriteForbidden
 
 """-----------------------------------------https://t.me/GetTGLink/4179 --------------------------------------"""
 
@@ -87,11 +85,18 @@ async def save_group(bot, message):
                             ]]
                         )
                     )
+                except ChatWriteForbidden:
+                    return      # bot is muted / has no right to write in this group: nothing to send
                 except Exception:
-                    temp.MELCOW['welcome'] = await message.reply_text(
-                        f"👋 Welcome {u.mention} to **{message.chat.title}**\n\n"
-                        f"Enjoy your stay 😊"
-                    )
+                    try:
+                        temp.MELCOW['welcome'] = await message.reply_text(
+                            f"👋 Welcome {u.mention} to **{message.chat.title}**\n\n"
+                            f"Enjoy your stay 😊"
+                        )
+                    except ChatWriteForbidden:
+                        return
+                    except Exception:
+                        pass
 
 @Client.on_message(filters.command('leave') & filters.user(ADMINS))
 async def leave_a_chat(bot, message):
@@ -170,8 +175,7 @@ async def re_enable_chat(bot, message):
     if not sts.get('is_disabled'):
         return await message.reply('This chat is not yet disabled.')
     await db.re_enable_chat(int(chat_))
-    if int(chat_) in temp.BANNED_CHATS:
-        temp.BANNED_CHATS.remove(int(chat_))
+    temp.BANNED_CHATS.remove(int(chat_))
     await message.reply("Chat Successfully re-enabled")
 
 
@@ -188,8 +192,9 @@ async def get_ststs(bot, message):
     await rju.edit(script.STATUS_TXT.format(files, total_users, totl_chats, size, free))
 
 
-# Generates an invite link for a chat the bot is already an admin in (with invite rights).
-@Client.on_message(filters.command('invite') & filters.user(ADMINS))
+# a function for trespassing into others groups, Inspired by a Vazha
+# Not to be used , But Just to showcase his vazhatharam.
+# @Client.on_message(filters.command('invite') & filters.user(ADMINS))
 async def gen_invite(bot, message):
     if len(message.command) == 1:
         return await message.reply('Give me a chat id')
@@ -246,9 +251,11 @@ async def unban_a_user(bot, message):
         return await message.reply('Give me a user id / username')
     r = message.text.split(None)
     if len(r) > 2:
+        reason = message.text.split(None, 2)[2]
         chat = message.text.split(None, 2)[1]
     else:
         chat = message.command[1]
+        reason = "No reason Provided"
     try:
         chat = int(chat)
     except:
@@ -266,8 +273,7 @@ async def unban_a_user(bot, message):
         if not jar['is_banned']:
             return await message.reply(f"{k.mention} is not yet banned.")
         await db.remove_ban(k.id)
-        if k.id in temp.BANNED_USERS:
-            temp.BANNED_USERS.remove(k.id)
+        temp.BANNED_USERS.remove(k.id)
         await message.reply(f"Successfully unbanned {k.mention}")
 
 
@@ -279,22 +285,16 @@ async def list_users(bot, message):
     users = await db.get_all_users()
     out = "Users Saved In DB Are:\n\n"
     async for user in users:
-        user_name = html.escape(str(user.get('name') or ''))
-        out += f"<a href=tg://user?id={user['id']}>{user_name}</a>"
+        out += f"<a href=tg://user?id={user['id']}>{user['name']}</a>"
         if user['ban_status']['is_banned']:
-            out += ' ( Banned User )'
+            out += '( Banned User )'
         out += '\n'
     try:
         await raju.edit_text(out)
     except MessageTooLong:
-        file_path = 'users.txt'
-        try:
-            with open(file_path, 'w+', encoding='utf-8') as outfile:
-                outfile.write(out)
-            await message.reply_document(file_path, caption="List Of Users")
-        finally:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+        with open('users.txt', 'w+') as outfile:
+            outfile.write(out)
+        await message.reply_document('users.txt', caption="List Of Users")
 
 @Client.on_message(filters.command('chats') & filters.user(ADMINS))
 async def list_chats(bot, message):
@@ -304,16 +304,11 @@ async def list_chats(bot, message):
     async for chat in chats:
         out += f"**Title:** `{chat['title']}`\n**- ID:** `{chat['id']}`"
         if chat['chat_status']['is_disabled']:
-            out += ' ( Disabled Chat )'
+            out += '( Disabled Chat )'
         out += '\n'
     try:
         await raju.edit_text(out)
     except MessageTooLong:
-        file_path = 'chats.txt'
-        try:
-            with open(file_path, 'w+', encoding='utf-8') as outfile:
-                outfile.write(out)
-            await message.reply_document(file_path, caption="List Of Chats")
-        finally:
-            if os.path.exists(file_path):
-                os.remove(file_path)
+        with open('chats.txt', 'w+') as outfile:
+            outfile.write(out)
+        await message.reply_document('chats.txt', caption="List Of Chats")
