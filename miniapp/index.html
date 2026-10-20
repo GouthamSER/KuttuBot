@@ -156,6 +156,9 @@
   .meta { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--hint); font-size: 13px; }
   .q { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); }
   .sent-tag { color: var(--teal); font-weight: 600; }
+  .lg { font-size: 12.5px; padding: 0 6px; border-radius: 4px; background: var(--surface); color: var(--text); }
+  .list li.grp { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  .list li.grp small { font-family: var(--ui); font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--hint); }
   .sk-row { padding: 16px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 22px 1fr; gap: 14px; }
   .sk-row i { display: block; border-radius: 7px; background: var(--surface); animation: pulse 1.2s ease-in-out infinite; }
   .sk-row i:first-child { width: 22px; height: 22px; }
@@ -267,7 +270,11 @@
       <button id="mplot" class="plot" type="button" hidden></button>
     </div>
 
-    <div class="pad"><div class="chips" id="mChips" role="group" aria-label="Filter files by quality" hidden></div></div>
+    <div class="pad">
+      <div class="chips" id="mSeason" role="group" aria-label="Season" hidden></div>
+      <div class="chips" id="mChips" role="group" aria-label="Filter files by quality" hidden></div>
+      <div class="chips" id="mLang" role="group" aria-label="Filter files by language" hidden></div>
+    </div>
     <div class="bar pad">
       <span id="msummary" aria-live="polite"></span>
       <span class="actions">
@@ -329,6 +336,22 @@
     const q = m[1].toLowerCase(); return q === '4k' ? '2160p' : q;
   };
 
+  // Season / episode / language parsed from a file name ("Show S02E05 ...", "... Tamil Telugu ...")
+  const LANG_MAP = { malayalam: 'Malayalam', mal: 'Malayalam', tamil: 'Tamil', tam: 'Tamil', telugu: 'Telugu', tel: 'Telugu',
+    hindi: 'Hindi', hin: 'Hindi', english: 'English', eng: 'English', kannada: 'Kannada', kan: 'Kannada',
+    bengali: 'Bengali', marathi: 'Marathi', punjabi: 'Punjabi' };
+  const LANG_RE = /\b(malayalam|mal|tamil|tam|telugu|tel|hindi|hin|english|eng|kannada|kan|bengali|marathi|punjabi)\b/gi;
+  const langsOf = (name) => [...new Set((name.match(LANG_RE) || []).map((w) => LANG_MAP[w.toLowerCase()]))];
+  const seasonOf = (name) => {
+    const m = name.match(/\bS(\d{1,2})(?=[\s._-]*(?:E\d|\b))/i) || name.match(/\bseason[\s._-]*(\d{1,2})\b/i);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+  const episodeOf = (name) => {
+    const m = name.match(/\bS\d{1,2}[\s._-]*E(\d{1,3})\b/i) || name.match(/\bep(?:isode)?[\s._-]*(\d{1,3})\b/i);
+    return m ? parseInt(m[1], 10) : 0;       // 0 = whole-season pack
+  };
+  const pad2 = (n) => String(n).padStart(2, '0');
+
   // ── State ──────────────────────────────────────────────────────────────
   const state = { query: '', quality: '', lang: '', next: null, loading: false, seq: 0, view: 'home' };
   const selected = new Map();    // file id -> {name, key}
@@ -344,7 +367,7 @@
     q: $('q'), clearQ: $('clearQ'), grid: $('grid'), summary: $('summary'), state: $('state'),
     more: $('more'), sentinel: $('sentinel'), home: $('home'), movie: $('movie'),
     back: $('back'), mbarTitle: $('mbarTitle'), mposter: $('mposter'), mtitle: $('mtitle'),
-    mfacts: $('mfacts'), mgenres: $('mgenres'), mplot: $('mplot'), mChips: $('mChips'),
+    mfacts: $('mfacts'), mgenres: $('mgenres'), mplot: $('mplot'), mChips: $('mChips'), mSeason: $('mSeason'), mLang: $('mLang'),
     msummary: $('msummary'), selectAll: $('selectAll'), clearSel: $('clearSel'),
     files: $('files'), mstate: $('mstate'), lightbox: $('lightbox'), lightImg: $('lightImg'),
     dock: $('dock'), count: $('count'), send: $('send'), toast: $('toast'),
@@ -539,7 +562,10 @@
 
   function visibleFiles() {
     if (!current) return [];
-    return current.filter ? current.files.filter((f) => qualityOf(f.name) === current.filter) : current.files;
+    const { season, quality, lang } = current.f;
+    return current.files.filter((f) => (!season || seasonOf(f.name) === season)
+      && (!quality || qualityOf(f.name) === quality)
+      && (!lang || langsOf(f.name).includes(lang)));
   }
 
   function buildRow(f, key) {
@@ -554,6 +580,7 @@
     const meta = document.createElement('span'); meta.className = 'meta';
     const ql = qualityOf(f.name);
     if (ql) { const q = document.createElement('span'); q.className = 'q'; q.textContent = ql.toUpperCase(); meta.append(q); }
+    langsOf(f.name).slice(0, 3).forEach((l) => { const g = document.createElement('span'); g.className = 'lg'; g.textContent = l; meta.append(g); });
     const size = document.createElement('span'); size.textContent = f.size; meta.append(size);
     if (sent.has(f.id)) { const t = document.createElement('span'); t.className = 'sent-tag'; t.textContent = 'Sent'; meta.append(t); }
     body.append(name, meta);
@@ -578,27 +605,50 @@
   function renderFiles() {
     const list = visibleFiles();
     el.files.replaceChildren();
-    list.forEach((f) => el.files.append(buildRow(f, current.key)));
+    const grouped = current.series && !current.f.season && new Set(list.map((f) => seasonOf(f.name))).size > 1;
+    let last = null;
+    list.forEach((f) => {
+      if (grouped) {
+        const sn = seasonOf(f.name);
+        if (sn !== last) {
+          last = sn;
+          const li = document.createElement('li'); li.className = 'grp';
+          const count = list.filter((x) => seasonOf(x.name) === sn).length;
+          li.innerHTML = `<span>${sn ? 'Season ' + sn : 'Other files'}</span><small>${count} ${count === 1 ? 'file' : 'files'}</small>`;
+          el.files.append(li);
+        }
+      }
+      el.files.append(buildRow(f, current.key));
+    });
     const n = list.length, total = current.files.length;
     el.msummary.textContent = n === total ? `${n} ${n === 1 ? 'file' : 'files'}` : `${n} of ${total} files`;
     syncSelection();
   }
 
-  function renderQualityChips() {
-    el.mChips.replaceChildren();
-    const present = QUALITIES.filter((q) => current.files.some((f) => qualityOf(f.name) === q));
-    el.mChips.hidden = present.length < 2;
-    present.forEach((q) => {
+  // One row of filter chips (season / quality / language). Values come from the files themselves.
+  function fillChips(box, values, label, field) {
+    box.replaceChildren();
+    box.hidden = values.length < 2;
+    values.forEach((v) => {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.textContent = q;
-      b.setAttribute('aria-pressed', current.filter === q ? 'true' : 'false');
+      b.type = 'button'; b.className = 'chip'; b.textContent = label(v); b.dataset.v = String(v);
+      b.setAttribute('aria-pressed', current.f[field] === v ? 'true' : 'false');
       b.onclick = () => {
-        current.filter = current.filter === q ? '' : q;
-        el.mChips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.textContent === current.filter ? 'true' : 'false'));
+        current.f[field] = current.f[field] === v ? (typeof v === 'number' ? 0 : '') : v;
+        box.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.v === String(current.f[field]) ? 'true' : 'false'));
         haptic('tick'); renderFiles();
       };
-      el.mChips.append(b);
+      box.append(b);
     });
+  }
+
+  function renderFilterChips() {
+    const files = current.files;
+    const seasons = [...new Set(files.map((f) => seasonOf(f.name)))].filter(Boolean).sort((x, y) => x - y);
+    fillChips(el.mSeason, current.series ? seasons : [], (n) => 'S' + pad2(n), 'season');
+    fillChips(el.mChips, QUALITIES.filter((q) => files.some((f) => qualityOf(f.name) === q)), (q) => q, 'quality');
+    const langs = [...new Set(files.flatMap((f) => langsOf(f.name)))].sort();
+    fillChips(el.mLang, langs, (l) => l, 'lang');
   }
 
   function skeletonRows() {
@@ -617,10 +667,10 @@
     window.scrollTo(0, 0);
     if (tg.BackButton) tg.BackButton.show();
     const mySeq = ++movieSeq;
-    current = { key: m.key, files: [], filter: '', seq: mySeq, info: null };
+    current = { key: m.key, files: [], f: { season: 0, quality: '', lang: '' }, series: m.kind === 'series', seq: mySeq, info: null };
     // show what we already know straight away, then fill in
     renderHead({ title: m.title, year: m.year, kind: m.kind, thumb: m.thumb, rating: m.rating, genres: [], plot: '', runtime: '' });
-    el.mChips.hidden = true; el.mstate.hidden = true;
+    el.mSeason.hidden = el.mChips.hidden = el.mLang.hidden = true; el.mstate.hidden = true;
     el.msummary.textContent = 'Loading files…';
     skeletonRows(); syncSelection();
     try {
@@ -628,6 +678,10 @@
       if (mySeq !== movieSeq) return;
       current.files = d.files;
       current.info = d.info;
+      if (d.info && d.info.kind) current.series = d.info.kind === 'series';
+      if (current.series) {                       // season, then episode (season packs first), then name
+        current.files.sort((a, b) => seasonOf(a.name) - seasonOf(b.name) || episodeOf(a.name) - episodeOf(b.name) || a.name.localeCompare(b.name));
+      }
       if (d.info) renderHead(d.info);
       if (!d.files.length) {
         el.files.replaceChildren(); el.msummary.textContent = '';
@@ -635,7 +689,7 @@
         syncSelection();
         return;
       }
-      renderQualityChips();
+      renderFilterChips();
       renderFiles();
     } catch (e) {
       if (mySeq !== movieSeq) return;
