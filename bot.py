@@ -18,6 +18,7 @@ from pyrogram import types
 from Script import script
 
 from plugins.webcode import bot_run
+from plugins.website import clear_tokens
 from os import environ
 from aiohttp import web as webserver
 
@@ -57,6 +58,7 @@ class Bot(Client):
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT)#RESTART SND IN LOG_CHANNEL
         print("Goutham SER own Bot</>")
         
+        await clear_tokens()   # old website links die with the restart
         client = webserver.AppRunner(await bot_run(self))
         await client.setup()
         bind_address = "0.0.0.0"
