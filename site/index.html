@@ -168,6 +168,11 @@ main{flex:1}
 .file .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag{font:600 11.5px/1 var(--body);padding:5px 8px;border-radius:7px;background:var(--surface2);color:var(--muted);letter-spacing:.02em}
 .tag.q{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-text)}
+.fgroup{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.fgroup .lbl{font:600 11.5px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
+.season{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.season h3{font:700 19px/1.2 var(--head);letter-spacing:-.01em}
+.season span{color:var(--muted);font-size:13px}
 .file .sz{color:var(--muted);font-size:13px;white-space:nowrap}
 .file .go{grid-row:1/3;grid-column:2;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 @media (max-width:560px){.file{grid-template-columns:1fr}.file .go{grid-row:auto;grid-column:auto;flex-direction:row;justify-content:space-between;align-items:center}.file .go .btn{flex:1}}
@@ -277,7 +282,7 @@ footer a:hover{text-decoration:underline}
 
   const QUALITY = ['480p', '720p', '1080p', '4K'];
   const LANGS = ['Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada', 'English'];
-  const state = { query: '', lang: '', quality: '', next: null, loading: false, seq: 0, movies: new Map(), total: 0, bot: '', scroll: 0, from: 'home' };
+  const state = { query: '', lang: '', quality: '', next: null, loading: false, seq: 0, mseq: 0, movies: new Map(), total: 0, bot: '', scroll: 0, from: 'home' };
 
   /* ── helpers ── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -291,11 +296,27 @@ footer a:hover{text-decoration:underline}
     const q = name.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i); if (q) out.push([q[1].toLowerCase() === '2160p' ? '4K' : q[1].toUpperCase().replace('P', 'p'), 1]);
     const src = name.match(/\b(web[\s-]?dl|webrip|hdrip|bluray|brrip|hdtv|dvdrip|hdcam|camrip|predvd)\b/i); if (src) out.push([src[1].replace(/\s|-/g, '').toUpperCase().replace('WEBDL', 'WEB-DL'), 0]);
     const codec = name.match(/\b(x265|hevc|h 265|x264|h 264|av1)\b/i); if (codec) out.push([/265|hevc/i.test(codec[1]) ? 'HEVC' : /av1/i.test(codec[1]) ? 'AV1' : 'x264', 0]);
-    const lang = name.match(/\b(tamil|telugu|hindi|malayalam|kannada|english|dual|multi|bengali|marathi|punjabi)\b/i); if (lang) out.push([lang[1][0].toUpperCase() + lang[1].slice(1).toLowerCase(), 0]);
+    langsOf(name).slice(0, 3).forEach(l => out.push([l, 0]));
+    if (/\b(dual|multi)\b/i.test(name)) out.push(['Dual Audio', 0]);
+    const sn = seasonOf(name); if (sn) out.push(['S' + pad2(sn) + (episodeOf(name) ? ' E' + pad2(episodeOf(name)) : ' Pack'), 0]);
     if (/\b(esub|e sub|subs?)\b/i.test(name)) out.push(['Subs', 0]);
     if (/\bsrt\s*$/i.test(name)) out.push(['Subtitle', 0]);
     return out;
   };
+  const LANG_MAP = { malayalam: 'Malayalam', mal: 'Malayalam', tamil: 'Tamil', tam: 'Tamil', telugu: 'Telugu', tel: 'Telugu', hindi: 'Hindi', hin: 'Hindi',
+    english: 'English', eng: 'English', kannada: 'Kannada', kan: 'Kannada', bengali: 'Bengali', marathi: 'Marathi', punjabi: 'Punjabi' };
+  const LANG_RE = /\b(malayalam|mal|tamil|tam|telugu|tel|hindi|hin|english|eng|kannada|kan|bengali|marathi|punjabi)\b/gi;
+  const langsOf = name => [...new Set((name.match(LANG_RE) || []).map(w => LANG_MAP[w.toLowerCase()]))];
+  const qualityOf = name => { const q = name.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i); return q ? (/^(2160p|4k)$/i.test(q[1]) ? '4K' : q[1].toLowerCase()) : ''; };
+  const seasonOf = name => {
+    const m = name.match(/\bS(\d{1,2})(?=[\s._-]*(?:E\d|\b))/i) || name.match(/\bseason[\s._-]*(\d{1,2})\b/i);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+  const episodeOf = name => {
+    const m = name.match(/\bS\d{1,2}[\s._-]*E(\d{1,3})\b/i) || name.match(/\bep(?:isode)?[\s._-]*(\d{1,3})\b/i);
+    return m ? parseInt(m[1], 10) : 0;      // 0 = whole-season pack
+  };
+  const pad2 = n => String(n).padStart(2, '0');
   const api = async (url, opts) => {
     let r;
     try { r = await fetch(url, opts); } catch { throw new Error('No connection. Check your internet and try again.'); }
@@ -426,17 +447,17 @@ footer a:hover{text-decoration:underline}
   ['pointerenter', 'touchstart'].forEach(ev => el.grid.addEventListener(ev, e => { const c = e.target.closest && e.target.closest('.card[href]'); if (c) prefetch(c); }, { passive: true, capture: true }));
 
   async function showMovie(ref) {
-    const seq = ++state.seq; state.loading = false;
+    const seq = ++state.mseq;
     el.mbody.innerHTML = `<div class="mhead"><div class="mposter"></div><div class="info"><h1>${esc(ref.t || 'Loading…')}</h1><div class="facts"><span>${esc(ref.y || '')}</span></div></div></div>
       <div class="files"><div class="flist">${'<div class="file skel" style="height:78px"></div>'.repeat(3)}</div></div>`;
     el.backdrop.innerHTML = '';
     document.title = `${ref.t || 'Movie'} — KuttuBot`;
     try {
       const j = await (prefetched.get(location.hash) || movieRequest(ref));
-      if (seq !== state.seq) return;
+      if (seq !== state.mseq) return;
       renderMovie(ref, j);
     } catch (e) {
-      if (seq !== state.seq) return;
+      if (seq !== state.mseq) return;
       el.mbody.innerHTML = `<div class="state"><div class="em">⚠️</div><div class="big">Couldn’t load this title</div><div>${esc(e.message)}</div><button class="btn pri" id="retry">Try again</button></div>`;
       $('#retry').onclick = () => showMovie(ref);
     }
@@ -451,9 +472,9 @@ footer a:hover{text-decoration:underline}
     document.title = `${info.title}${info.year ? ' (' + info.year + ')' : ''} — KuttuBot`;
     const poster = info.poster || info.thumb;
     if (poster) { el.backdrop.innerHTML = `<img alt="" src="${esc(info.thumb || poster)}">`; }
-    const qset = [...new Set(j.files.flatMap(f => fileTags(f.name).filter(t => t[1]).map(t => t[0])))];
-    const order = ['4K', '1080p', '720p', '480p', '360p'];
-    qset.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const isSeries = info.kind === 'series';
+    const files = j.files.slice();
+    if (isSeries) files.sort((a, b) => seasonOf(a.name) - seasonOf(b.name) || episodeOf(a.name) - episodeOf(b.name) || a.name.localeCompare(b.name));
     const plot = info.plot || '';
     const words = (info.title || ref.t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 52);
     const allLink = tgLink(`?start=getfile-${words}`);
@@ -478,27 +499,48 @@ footer a:hover{text-decoration:underline}
       </div>
       <div class="files">
         <div class="sechead"><h2>Files</h2><span id="fcount">${j.files.length} available</span></div>
-        ${qset.length > 1 ? `<div class="filters" id="qf" role="group" aria-label="Filter by quality"><button class="chip" data-q="" aria-pressed="true">All</button>${qset.map(q => `<button class="chip" data-q="${esc(q)}" aria-pressed="false">${esc(q)}</button>`).join('')}</div>` : ''}
+        <div class="fgroup" id="fgroup"></div>
         <div class="flist" id="flist"></div>
         <div class="note"><span>💡</span><span><b>How it works:</b> tap <b>Get on Telegram</b>. The bot opens and sends you the file. Press <b>Start</b> if it’s your first time. Files are removed from your chat after a few minutes, so save or forward them.</span></div>
       </div>`;
     wireImgs(el.mbody);
     const list = $('#flist');
-    const draw = q => {
-      const rows = j.files.filter(f => !q || fileTags(f.name).some(t => t[0] === q));
-      $('#fcount').textContent = q ? `${rows.length} of ${j.files.length}` : `${j.files.length} available`;
-      list.innerHTML = rows.map(f => {
-        const tags = fileTags(f.name).map(t => `<span class="tag ${t[1] ? 'q' : ''}">${esc(t[0])}</span>`).join('');
-        return `<div class="file"><div><div class="nm">${esc(f.name)}</div>${tags ? `<div class="tags">${tags}</div>` : ''}</div>
-          <div class="go"><span class="sz">${esc(f.size)}</span><a class="btn pri" href="${esc(tgLink('?start=wf_' + f.id))}" target="_blank" rel="noopener">Get on Telegram</a></div></div>`;
-      }).join('');
+    const sel = { season: 0, quality: '', lang: '' };
+    const order = ['4K', '1080p', '720p', '480p', '360p'];
+    const groups = [
+      { k: 'season', label: 'Season', vals: isSeries ? [...new Set(files.map(f => seasonOf(f.name)))].filter(Boolean).sort((x, y) => x - y) : [], text: v => 'S' + pad2(v) },
+      { k: 'quality', label: 'Quality', vals: [...new Set(files.map(f => qualityOf(f.name)).filter(Boolean))].sort((x, y) => order.indexOf(x) - order.indexOf(y)), text: v => v },
+      { k: 'lang', label: 'Language', vals: [...new Set(files.flatMap(f => langsOf(f.name)))].sort(), text: v => v },
+    ].filter(g => g.vals.length > 1);
+    $('#fgroup').innerHTML = groups.map(g => `<span class="lbl">${g.label}</span><div class="filters" data-k="${g.k}" role="group" aria-label="Filter by ${g.label.toLowerCase()}">
+      <button class="chip" data-v="" aria-pressed="true">All</button>${g.vals.map(v => `<button class="chip" data-v="${esc(v)}" aria-pressed="false">${esc(g.text(v))}</button>`).join('')}</div>`).join('');
+    const rowHTML = f => {
+      const tags = fileTags(f.name).map(t => `<span class="tag ${t[1] ? 'q' : ''}">${esc(t[0])}</span>`).join('');
+      return `<div class="file"><div><div class="nm">${esc(f.name)}</div>${tags ? `<div class="tags">${tags}</div>` : ''}</div>
+        <div class="go"><span class="sz">${esc(f.size)}</span><a class="btn pri" href="${esc(tgLink('?start=wf_' + f.id))}" target="_blank" rel="noopener">Get on Telegram</a></div></div>`;
     };
-    draw('');
-    const qf = $('#qf');
-    if (qf) qf.addEventListener('click', e => {
+    const draw = () => {
+      const rows = files.filter(f => (!sel.season || seasonOf(f.name) === sel.season) && (!sel.quality || qualityOf(f.name) === sel.quality) && (!sel.lang || langsOf(f.name).includes(sel.lang)));
+      $('#fcount').textContent = rows.length === files.length ? `${files.length} available` : `${rows.length} of ${files.length}`;
+      if (!rows.length) { list.innerHTML = '<div class="state"><div class="big">No files match</div><div>Try another filter.</div></div>'; return; }
+      const grouped = isSeries && !sel.season && new Set(rows.map(f => seasonOf(f.name))).size > 1;
+      let last = null, html = '';
+      for (const f of rows) {
+        if (grouped) {
+          const sn = seasonOf(f.name);
+          if (sn !== last) { last = sn; const n = rows.filter(x => seasonOf(x.name) === sn).length; html += `<div class="season"><h3>${sn ? 'Season ' + sn : 'Other files'}</h3><span>${n} file${n === 1 ? '' : 's'}</span></div>`; }
+        }
+        html += rowHTML(f);
+      }
+      list.innerHTML = html;
+    };
+    draw();
+    $('#fgroup').addEventListener('click', e => {
       const b = e.target.closest('.chip'); if (!b) return;
-      qf.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
-      draw(b.dataset.q);
+      const box = b.parentElement, k = box.dataset.k;
+      sel[k] = k === 'season' ? (b.dataset.v ? Number(b.dataset.v) : 0) : b.dataset.v;
+      box.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+      draw();
     });
     const z = $('#zoom'); if (z) z.onclick = () => openLightbox(info.poster || info.thumb);
     const pb = $('#plotbtn'); if (pb) pb.onclick = () => { const p = $('#plot'); const c = p.classList.toggle('clamp'); pb.textContent = c ? 'Read more' : 'Show less'; };
@@ -523,7 +565,7 @@ footer a:hover{text-decoration:underline}
       showMovie(ref);
     } else {
       const wasMovie = el.body.dataset.view === 'movie';
-      state.seq++;
+      state.mseq++;      // drop a movie response that arrives after leaving the page
       el.body.dataset.view = (state.query || state.lang || state.quality) ? 'search' : 'home';
       el.movie.hidden = true; el.browse.hidden = false;
       el.hero.hidden = el.body.dataset.view !== 'home';
