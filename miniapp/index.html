@@ -156,6 +156,10 @@
   .meta { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--hint); font-size: 13px; }
   .q { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .03em; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); }
   .sent-tag { color: var(--teal); font-weight: 600; }
+  .loadnote { display: flex; align-items: center; gap: 10px; margin: 10px 14px 4px; padding: 11px 13px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--hint); font-size: 13.5px; line-height: 1.35; }
+  .loadnote .spin { flex: none; width: 16px; height: 16px; border: 2.5px solid var(--line); border-top-color: var(--teal); border-radius: 50%; animation: kspin .8s linear infinite; }
+  @keyframes kspin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .loadnote .spin { animation: none; } }
   .lg { font-size: 12.5px; padding: 0 6px; border-radius: 4px; background: var(--surface); color: var(--text); }
   .list li.grp { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; position: sticky; top: 0; background: var(--bg); z-index: 1; }
   .list li.grp small { font-family: var(--ui); font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--hint); }
@@ -457,6 +461,21 @@
     return li;
   }
 
+  // "Still loading" note: appears after 0.3 s (no flash on fast loads); wording grows with the wait.
+  function loadNote(place, msgs) {
+    const n = document.createElement('div'); n.className = 'loadnote'; n.setAttribute('role', 'status');
+    n.innerHTML = '<span class="spin" aria-hidden="true"></span><span></span>';
+    const txt = n.lastChild, t0 = Date.now();
+    const set = () => { const w = Date.now() - t0; txt.textContent = w > 12000 ? msgs[2] : w > 4000 ? msgs[1] : msgs[0]; };
+    set();
+    const show = setTimeout(() => place(n), 300);
+    const tick = setInterval(set, 1000);
+    return () => { clearTimeout(show); clearInterval(tick); n.remove(); };
+  }
+  const GRID_MSGS = ['Loading titles… posters can take a few seconds to appear.', 'Still fetching posters, thanks for waiting.', 'Taking longer than usual. The server may be busy or waking up, please hang tight.'];
+  const MOVIE_MSGS = ['Loading poster and files… this can take a few seconds.', 'Still fetching details and files, thanks for waiting.', 'Taking longer than usual. The server may be busy, please wait or reopen.'];
+  let stopGridNote = null, stopMovieNote = null;
+
   async function load(append) {
     if (append && (state.loading || state.next === null)) return;
     const mySeq = append ? state.seq : ++state.seq;
@@ -467,6 +486,8 @@
       el.state.hidden = true; el.more.hidden = true;
       el.summary.textContent = 'Searching…';
       skeletonGrid();
+      if (stopGridNote) stopGridNote();
+      stopGridNote = loadNote((n) => el.grid.before(n), GRID_MSGS);
     } else {
       el.more.hidden = false;
     }
@@ -497,7 +518,7 @@
       if (!append) { el.grid.replaceChildren(); el.summary.textContent = ''; }
       showState(el.state, 'Could not load titles', e.message, () => load(append));
     } finally {
-      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; }
+      if (mySeq === state.seq) { state.loading = false; el.more.hidden = true; if (stopGridNote) { stopGridNote(); stopGridNote = null; } }
       requestAnimationFrame(maybeFill);
     }
   }
@@ -673,9 +694,12 @@
     el.mSeason.hidden = el.mChips.hidden = el.mLang.hidden = true; el.mstate.hidden = true;
     el.msummary.textContent = 'Loading files…';
     skeletonRows(); syncSelection();
+    if (stopMovieNote) stopMovieNote();
+    stopMovieNote = loadNote((n) => el.files.before(n), MOVIE_MSGS);
     try {
       const d = await api('/api/movie', { keys: m.keys, qs: m.qs });
       if (mySeq !== movieSeq) return;
+      if (stopMovieNote) { stopMovieNote(); stopMovieNote = null; }
       current.files = d.files;
       current.info = d.info;
       if (d.info && d.info.kind) current.series = d.info.kind === 'series';
@@ -693,6 +717,7 @@
       renderFiles();
     } catch (e) {
       if (mySeq !== movieSeq) return;
+      if (stopMovieNote) { stopMovieNote(); stopMovieNote = null; }
       el.files.replaceChildren(); el.msummary.textContent = '';
       showState(el.mstate, 'Could not load files', e.message, () => openMovie(m));
     }
@@ -700,6 +725,7 @@
 
   function closeMovie() {
     movieSeq++; current = null;
+    if (stopMovieNote) { stopMovieNote(); stopMovieNote = null; }
     state.view = 'home';
     el.movie.hidden = true; el.home.hidden = false;
     if (tg.BackButton) tg.BackButton.hide();
