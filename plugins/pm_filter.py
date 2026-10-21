@@ -6,13 +6,15 @@ import math
 from urllib.parse import quote_plus
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from Script import script
+import pyrogram
 from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, \
     make_inactive
-from info import ADMINS, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, AUTO_DELETE_TIME
+from info import ADMINS, AUTH_CHANNEL, AUTH_USERS, CUSTOM_FILE_CAPTION, AUTH_GROUPS, P_TTI_SHOW_OFF, IMDB, \
+    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE, AUTO_DELETE_TIME
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, QueryIdInvalid
-from utils import get_size, is_subscribed, get_poster, temp, get_settings, save_group_settings
+from utils import get_size, is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
 from database.filters_mdb import (
@@ -90,7 +92,7 @@ async def _auto_delete_result(result_msg, delay: int = 300):
 
 # Language: display label → search keyword
 LANGUAGES = [
-    ("Multi", "mul"),
+    ("Multi", "multi"),
     ("Maʟᴀʏaʟᴀᴍ", "mal"),
     ("Taᴍɪʟ", "tam"),
     ("Kaɴɴaᴅᴀ", "kan"),
@@ -137,7 +139,7 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
     if settings["button"]:
         btn = [
             [InlineKeyboardButton(
-                text=f"|{get_size(file.file_size)}| {file.file_name}",
+                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
                 callback_data=f"{pre}#{file.file_id}"
             )]
             for file in files
@@ -172,32 +174,13 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
 def _build_select_btn(msg_key):
     files_map = SELECT_FILES.get(msg_key, {})
     selected = SELECTED.get(msg_key, set())
-    meta = SELECT_META.get(msg_key, {})
-    # only render the files that belong to the page currently being viewed
-    page_ids = meta.get("page_ids") or list(files_map.keys())
     btn = []
-    for fid in page_ids:
-        f = files_map.get(fid)
-        if not f:
-            continue
+    for fid, f in files_map.items():
         mark = "✅" if fid in selected else "⬜"
         btn.append([InlineKeyboardButton(
-            text=f"{mark} |{get_size(f.file_size)}| {f.file_name}",
+            text=f"{mark} {f.file_name}",
             callback_data=f"tick#{msg_key}#{fid}"
         )])
-
-    nav = []
-    if meta.get("history"):
-        nav.append(InlineKeyboardButton("◀️ PREV", callback_data=f"selprev#{msg_key}"))
-    total = meta.get("total") or 0
-    page_num = len(meta.get("history", [])) + 1
-    total_pages = max(1, math.ceil(int(total) / 10)) if total else 1
-    nav.append(InlineKeyboardButton(text=f"📃 {page_num}/{total_pages}", callback_data="pages"))
-    if meta.get("next_offset") not in ("", 0, None):
-        nav.append(InlineKeyboardButton("NEXT ▶️", callback_data=f"selnext#{msg_key}"))
-    if nav:
-        btn.append(nav)
-
     btn.append([
         InlineKeyboardButton("🔙 Back", callback_data=f"selback#{msg_key}"),
         InlineKeyboardButton(f"✅ Send All ({len(selected)})", callback_data=f"sendall#{msg_key}"),
@@ -273,8 +256,8 @@ async def next_page(bot, query):
     if settings['button']:
         btn = [
             [InlineKeyboardButton(
-                text=f"|{get_size(file.file_size)}| {file.file_name}",
-                callback_data=f'{pre}#{file.file_id}'
+                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                callback_data=f'files#{file.file_id}'
             )]
             for file in files
         ]
@@ -282,7 +265,7 @@ async def next_page(bot, query):
         btn = [
             [InlineKeyboardButton(
                 text=f"{file.file_name} [{get_size(file.file_size)}]",
-                callback_data=f'{pre}#{file.file_id}'
+                callback_data=f'files#{file.file_id}'
             )]
             for file in files
         ]
@@ -506,13 +489,9 @@ async def select_mode_handler(client, query):
         return await safe_answer(query, script.OLD_MES, show_alert=True)
 
     msg_key = f"{query.message.chat.id}:{query.message.id}"
-    page_ids = [f.file_id for f in files]
     SELECT_FILES[msg_key] = {f.file_id: f for f in files}
-    SELECTED.setdefault(msg_key, set())  # keep any prior selection if re-entering select mode
-    SELECT_META[msg_key] = {
-        "key": key, "offset": offset, "req": req,
-        "page_ids": page_ids, "next_offset": n_offset, "total": total, "history": [],
-    }
+    SELECTED[msg_key] = set()
+    SELECT_META[msg_key] = {"key": key, "offset": offset, "req": req}
     _trim_dict(SELECT_FILES)
     _trim_dict(SELECTED)
     _trim_dict(SELECT_META)
@@ -522,73 +501,6 @@ async def select_mode_handler(client, query):
     except MessageNotModified:
         pass
     await safe_answer(query, "Tap files to select, then Send All ✅")
-
-
-@Client.on_callback_query(filters.regex(r"^selnext#"))
-async def select_next_handler(client, query):
-    _, msg_key = query.data.split("#")
-    meta = SELECT_META.get(msg_key)
-    if not meta:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-    if int(meta["req"]) not in (query.from_user.id, 0):
-        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
-    if meta.get("next_offset") in ("", 0, None):
-        return await safe_answer(query, "No more pages", show_alert=True)
-
-    search = BUTTONS.get(meta["key"]) or FRESH.get(meta["key"])
-    if not search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    files, n_offset, total = await get_search_results(search, offset=meta["next_offset"], filter=True)
-    if not files:
-        return await safe_answer(query, "No more pages", show_alert=True)
-
-    # merge new files into the pool so selections made on earlier pages stay intact
-    SELECT_FILES.setdefault(msg_key, {}).update({f.file_id: f for f in files})
-    meta["history"] = meta.get("history", []) + [meta["offset"]]
-    meta["offset"] = meta["next_offset"]
-    meta["next_offset"] = n_offset
-    meta["page_ids"] = [f.file_id for f in files]
-    meta["total"] = total
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
-
-
-@Client.on_callback_query(filters.regex(r"^selprev#"))
-async def select_prev_handler(client, query):
-    _, msg_key = query.data.split("#")
-    meta = SELECT_META.get(msg_key)
-    if not meta:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-    if int(meta["req"]) not in (query.from_user.id, 0):
-        return await safe_answer(query, "Search for Yourself 🔎", show_alert=True)
-    if not meta.get("history"):
-        return await safe_answer(query, "Already on the first page", show_alert=True)
-
-    search = BUTTONS.get(meta["key"]) or FRESH.get(meta["key"])
-    if not search:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    prev_offset = meta["history"].pop()
-    files, n_offset, total = await get_search_results(search, offset=prev_offset, filter=True)
-    if not files:
-        return await safe_answer(query, script.OLD_MES, show_alert=True)
-
-    SELECT_FILES.setdefault(msg_key, {}).update({f.file_id: f for f in files})
-    meta["next_offset"] = meta["offset"]  # what we were showing becomes "next" again
-    meta["offset"] = prev_offset
-    meta["page_ids"] = [f.file_id for f in files]
-    meta["total"] = total
-
-    try:
-        await query.edit_message_reply_markup(reply_markup=_build_select_btn(msg_key))
-    except MessageNotModified:
-        pass
-    await safe_answer(query)
 
 
 @Client.on_callback_query(filters.regex(r"^tick#"))
@@ -742,7 +654,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             return await safe_answer(query, 'Piracy Is Crime')
 
         st = await client.get_chat_member(grp_id, userid)
-        if (st.status == enums.ChatMemberStatus.OWNER) or (userid in ADMINS or str(userid) in ADMINS):
+        if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
             await del_all(query.message, grp_id, title)
         else:
             await safe_answer(query, "You need to be Group Owner or an Auth User to do that!", show_alert=True)
@@ -758,7 +670,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
             grp_id = query.message.chat.id
             st = await client.get_chat_member(grp_id, userid)
-            if (st.status == enums.ChatMemberStatus.OWNER) or (userid in ADMINS or str(userid) in ADMINS):
+            if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
                 await query.message.delete()
                 try:
                     await query.message.reply_to_message.delete()
@@ -824,7 +736,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
         else:
             await query.message.edit_text(
-                "Some error occurred!!",
+                f"Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await safe_answer(query, 'Piracy Is Crime')
@@ -838,7 +750,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_text("Successfully deleted connection")
         else:
             await query.message.edit_text(
-                "Some error occurred!!",
+                f"Some error occurred!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await safe_answer(query, 'Piracy Is Crime')
@@ -928,7 +840,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_answer(query, 'Unblock the bot mahn !', show_alert=True)
         except PeerIdInvalid:
             await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
-        except Exception:
+        except Exception as e:
             await safe_answer(query, url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}")
         return
 
@@ -1360,6 +1272,34 @@ async def auto_filter(client, msg, spoll=False):
 #  SPELL-CHECK
 # ══════════════════════════════════════════════════════════════════════════════
 
+async def _spell_not_found(msg, text):
+    """"Not found" reply with language + Google buttons. The query is URL-encoded and capped:
+    raw text with spaces, '&', '#', emoji or a very long message makes Telegram answer BUTTON_URL_INVALID."""
+    query = quote_plus((text or "").strip()[:100])
+    button = [[
+        InlineKeyboardButton('ENG', callback_data='esp'),
+        InlineKeyboardButton('MAL', callback_data='msp'),
+        InlineKeyboardButton('HIN', callback_data='hsp'),
+        InlineKeyboardButton('TAM', callback_data='tsp'),
+    ]]
+    if query:
+        button.append([InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={query}")])
+    try:
+        k = await msg.reply_text(
+            text=script.SPOLL_NOT_FND,
+            reply_markup=InlineKeyboardMarkup(button),
+            reply_to_message_id=msg.id
+        )
+    except Exception as e:                       # never let a failed helper message crash the handler
+        logger.warning(f"spell-check not-found reply failed: {e}")
+        return
+    await asyncio.sleep(60)
+    try:
+        await k.delete()
+    except Exception:
+        pass
+
+
 async def advantage_spell_chok(client, msg):
     mv_id = msg.id
     mv_rqst = msg.text
@@ -1373,45 +1313,16 @@ async def advantage_spell_chok(client, msg):
     )
     cleaned_query = cleaned_query.strip()
 
+    settings = await get_settings(msg.chat.id)
+
     try:
         movies = await get_poster(cleaned_query, bulk=True)
     except Exception as e:
         logger.exception(e)
-        reqst_gle = quote_plus(mv_rqst)
-        button = [[
-            InlineKeyboardButton('ENG', callback_data='esp'),
-            InlineKeyboardButton('MAL', callback_data='msp'),
-            InlineKeyboardButton('HIN', callback_data='hsp'),
-            InlineKeyboardButton('TAM', callback_data='tsp'),
-        ], [
-            InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
-        k = await msg.reply_text(
-            text=script.SPOLL_NOT_FND,
-            reply_markup=InlineKeyboardMarkup(button),
-            reply_to_message_id=msg.id
-        )
-        await asyncio.sleep(45)
-        await k.delete()
-        return
+        movies = None
 
     if not movies:
-        reqst_gle = mv_rqst.replace(" ", "+")
-        button = [[
-            InlineKeyboardButton('ENG', callback_data='esp'),
-            InlineKeyboardButton('MAL', callback_data='msp'),
-            InlineKeyboardButton('HIN', callback_data='hsp'),
-            InlineKeyboardButton('TAM', callback_data='tsp'),
-        ], [
-            InlineKeyboardButton('🔍 ɢᴏᴏɢʟᴇ 🔎', url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
-        k = await msg.reply_text(
-            text=script.SPOLL_NOT_FND,
-            reply_markup=InlineKeyboardMarkup(button),
-            reply_to_message_id=msg.id
-        )
-        await asyncio.sleep(60)
-        await k.delete()
+        await _spell_not_found(msg, mv_rqst)
         return
 
     movielist = [movie.get('title') for movie in movies]
@@ -1457,7 +1368,7 @@ async def manual_filters(client, message, text=False):
 
             if btn is not None:
                 try:
-                    if fileid in ("None", None):
+                    if fileid == "None":
                         if btn == "[]":
                             await client.send_message(
                                 group_id,
