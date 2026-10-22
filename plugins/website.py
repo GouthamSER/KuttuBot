@@ -3,6 +3,8 @@ Public website for KuttuBot.
 
 Routes (mounted by plugins/webcode.py):
   GET  /                -> site/index.html  (single page, hash routing)
+  GET  /m/<slug>        -> same page, short share link for a movie   (e.g. /m/the-paradise-2026)
+  GET  /s/<slug>        -> same page, short share link for a series  (e.g. /s/money-heist)
   GET  /health          -> "ok"             (uptime / health checks)
   GET  /api/config      -> {bot, name}
   GET  /api/search      -> ?q=&offset=      -> movie cards (grouped, posters)
@@ -13,8 +15,11 @@ and the bot sends the file there (so ban list, force-subscribe and auto-delete a
 keep working). The site never exposes Telegram file_ids: each file is given a short
 token, stored in Mongo, and the bot turns the token back into the file on /start.
 """
+import re
 import time
+import asyncio
 import hashlib
+from html import escape
 import logging
 from pathlib import Path
 from collections import defaultdict, deque
@@ -23,6 +28,7 @@ from aiohttp import web
 
 from database.ia_filterdb import db, get_file_details
 from plugins.miniapp import search_core, movie_core
+from plugins.posters import get_info
 from utils import temp
 
 logger = logging.getLogger(__name__)
@@ -119,6 +125,43 @@ async def site_page(request):
         html = SITE_FILE.read_text(encoding="utf-8")
     except FileNotFoundError:
         return web.json_response("KuttuBot is running")          # site files not deployed: keep health checks green
+    return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-cache"})
+
+
+_BOT_UA = re.compile(r"telegrambot|whatsapp|facebookexternalhit|twitterbot|discordbot|slackbot|linkedinbot|skypeuripreview", re.I)
+_SLUG_YEAR = re.compile(r"^(.+)-((?:19|20)\d{2})$")
+
+
+@routes.get("/m/{slug}", allow_head=True)
+@routes.get("/s/{slug}", allow_head=True)
+async def share_page(request):
+    """Short share link. Serves the same single page; the page resolves the slug itself.
+    Adds title / poster tags so Telegram, WhatsApp etc. show a proper link preview."""
+    try:
+        html = SITE_FILE.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise web.HTTPNotFound()
+    kind = "series" if request.path.startswith("/s/") else "movie"
+    slug = re.sub(r"[^a-z0-9-]", "", request.match_info["slug"].lower())[:100]
+    m = _SLUG_YEAR.match(slug) if kind == "movie" else None
+    title = (m.group(1) if m else slug).replace("-", " ").strip().title()
+    year = m.group(2) if m else ""
+    if title:
+        image = ""
+        if _BOT_UA.search(request.headers.get("User-Agent", "")):      # only link-preview crawlers wait for the poster
+            try:
+                info = await asyncio.wait_for(get_info(title, year, kind), 2.5)
+                image = (info or {}).get("poster") or (info or {}).get("thumb") or ""
+            except Exception:
+                image = ""
+        label = f"{title} ({year})" if year else title
+        tags = (
+            f'<meta property="og:type" content="website"><meta property="og:site_name" content="KuttuBot">'
+            f'<meta property="og:title" content="{escape(label)} — KuttuBot">'
+            f'<meta property="og:description" content="Poster, details and files for {escape(label)}. Get it in Telegram with one tap.">'
+            + (f'<meta property="og:image" content="{escape(image)}"><meta name="twitter:card" content="summary_large_image">' if image else "")
+        )
+        html = html.replace("</head>", tags + "</head>", 1)
     return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-cache"})
 
 
