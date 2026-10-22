@@ -111,7 +111,7 @@ Your bot's web address (e.g. `https://yourapp.koyeb.app`) now opens a movie webs
 - **Get a file:** tap **Get on Telegram** → the bot opens and sends the file to your chat (ban list, force-subscribe and auto-delete still apply). Nothing is downloaded from the site itself.
 - **Safe by design:** the site never shows Telegram file IDs, each file gets a short token (stored in Mongo, deleted on every bot restart and auto-expires after 14 days); API is rate-limited per IP.
 - **Series & filters:** series files are grouped by season (S01, S02 …) in episode order; every title gets quality (480p–4K) and language chips built from its own files, and they combine.
-- **Shareable:** every movie page has its own link (`/#/m/...`), with a Share button.
+- **Short share links:** the Share button copies a short link like `/m/the-paradise-2026` (movie) or `/s/money-heist` (series). Telegram / WhatsApp show a proper preview with the poster. You can also write one by hand: `https://yourapp.koyeb.app/m/<title-with-dashes>-<year>`.
 - **No extra setup** — it uses the same database and poster keys (`OMDB_API_KEY`, optional `TMDB_API_KEY`). `/health` returns `ok` for uptime checks.
 
 ---
