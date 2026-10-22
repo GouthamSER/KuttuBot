@@ -569,10 +569,41 @@ footer a:hover{text-decoration:underline}
     const z = $('#zoom'); if (z) z.onclick = () => openLightbox(info.poster || info.thumb);
     const pb = $('#plotbtn'); if (pb) pb.onclick = () => { const p = $('#plot'); const c = p.classList.toggle('clamp'); pb.textContent = c ? 'Read more' : 'Show less'; };
     $('#share').onclick = async () => {
-      const data = { title: info.title, text: `${info.title}${info.year ? ' (' + info.year + ')' : ''} on KuttuBot`, url: location.href };
+      const link = shortUrl(ref);
+      const data = { title: info.title, text: `${info.title}${info.year ? ' (' + info.year + ')' : ''} on KuttuBot`, url: link };
       try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-      try { await navigator.clipboard.writeText(location.href); toast('Link copied'); } catch { toast('Copy the address bar link to share'); }
+      try { await navigator.clipboard.writeText(link); toast('Link copied'); } catch { toast('Copy the address bar link to share'); }
     };
+  }
+
+  /* ── short share links: /m/the-paradise-2026 (movie), /s/money-heist (series) ── */
+  const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const normKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  function shortUrl(ref) {
+    const k0 = (ref.k && ref.k[0]) || '', slug = slugify((ref.q && ref.q[0]) || '');
+    if (!slug) return location.href;                         // title has no latin letters: keep the long link
+    const series = !k0.includes('|'), year = series ? '' : k0.split('|')[1];
+    return `${location.origin}/${series ? 's' : 'm'}/${slug}${year ? '-' + year : ''}`;
+  }
+  // slug -> the same {k, q, t, y, kd} a card would carry. Searches once so every filename variant of the title is included.
+  async function refFromSlug(kind, slug) {
+    const words = s => s.replace(/-/g, ' ').trim(), cap = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
+    const cands = [];
+    if (kind === 's') cands.push({ title: words(slug), key: normKey(slug) });
+    else {
+      const ym = slug.match(/^(.+)-((?:19|20)\d{2})$/);
+      if (ym) cands.push({ title: words(ym[1]), key: normKey(ym[1]) + '|' + ym[2], year: ym[2] });
+      cands.push({ title: words(slug), key: normKey(slug) + '|', year: '' });      // a title that really ends in a year ("Blade Runner 2049")
+    }
+    for (const c of cands) {
+      try {
+        const j = await api('/api/search?q=' + encodeURIComponent(c.title) + '&offset=0');
+        const m = j.movies.find(x => x.keys.includes(c.key));
+        if (m) return { k: m.keys, q: m.qs, t: m.title, y: m.year, kd: m.kind };
+      } catch {}
+    }
+    const c = cands[0];
+    return { k: [c.key], q: [cap(c.title)], t: cap(c.title), y: c.year || '', kd: kind === 's' ? 'series' : 'movie' };
   }
 
   /* ── routing ── */
@@ -622,6 +653,13 @@ footer a:hover{text-decoration:underline}
     renderFilters();
     try { const c = await api('/api/config'); state.bot = c.bot || ''; } catch {}
     const link = tgLink(); el.tgTop.href = link; el.tgFoot.href = link;
+    const sm = location.pathname.match(/^\/([ms])\/([a-z0-9-]+)\/?$/);
+    if (sm) {                                                 // opened a short link: resolve it, then continue as a normal movie page
+      el.body.dataset.view = 'movie'; el.browse.hidden = true; el.movie.hidden = false;
+      el.mbody.innerHTML = '<div class="state"><div class="big">Opening…</div></div>';
+      const ref = await refFromSlug(sm[1], sm[2]);
+      history.replaceState(null, '', '/#/m/' + encodeURIComponent(JSON.stringify(ref)));
+    }
     route();
     load(false);
   })();
