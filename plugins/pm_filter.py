@@ -4,7 +4,7 @@ import re
 import ast
 import math
 from urllib.parse import quote_plus
-from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
+from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, ReplyMarkupTooLong, PhotoInvalidDimensions, WebpageMediaEmpty
 from Script import script
 import pyrogram
 from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, \
@@ -126,6 +126,29 @@ def _filter_rows(key):
     ]
 
 
+# ── Helper: keep button labels short enough for Telegram's reply_markup size cap ──
+BTN_TEXT_MAX = 100
+
+
+def _lbl(text, limit=BTN_TEXT_MAX):
+    """Shorten a long button label, keeping the file extension visible."""
+    text = " ".join(str(text).split())
+    if len(text) <= limit:
+        return text
+    m = re.search(r"\.[A-Za-z0-9]{2,4}$", text)
+    tail = m.group(0) if m else ""
+    return text[: limit - len(tail) - 1].rstrip() + "…" + tail
+
+
+def _shrink_markup(btn, limit=50):
+    """Last-resort: cut every button label down to `limit` chars (in place)."""
+    for row in btn:
+        for b in row:
+            if b.text and len(b.text) > limit:
+                b.text = _lbl(b.text, limit)
+    return InlineKeyboardMarkup(btn)
+
+
 # ── Helper: top row with the "Select Files" toggle (only if >1 file) ──────────
 def _select_row(key, offset, req, n_files):
     if n_files <= 1:
@@ -139,7 +162,7 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
     if settings["button"]:
         btn = [
             [InlineKeyboardButton(
-                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                text=_lbl(f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}"),
                 callback_data=f"{pre}#{file.file_id}"
             )]
             for file in files
@@ -147,7 +170,7 @@ def _build_file_btn(files, settings, pre, key, offset, total_results, req, page_
     else:
         btn = [
             [InlineKeyboardButton(
-                text=f"{file.file_name} [{get_size(file.file_size)}]",
+                text=_lbl(f"{file.file_name} [{get_size(file.file_size)}]"),
                 callback_data=f"{pre}#{file.file_id}"
             )]
             for file in files
@@ -178,7 +201,7 @@ def _build_select_btn(msg_key):
     for fid, f in files_map.items():
         mark = "✅" if fid in selected else "⬜"
         btn.append([InlineKeyboardButton(
-            text=f"{mark} {f.file_name}",
+            text=_lbl(f"{mark} {f.file_name}"),
             callback_data=f"tick#{msg_key}#{fid}"
         )])
     btn.append([
@@ -256,7 +279,7 @@ async def next_page(bot, query):
     if settings['button']:
         btn = [
             [InlineKeyboardButton(
-                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                text=_lbl(f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}"),
                 callback_data=f'files#{file.file_id}'
             )]
             for file in files
@@ -264,7 +287,7 @@ async def next_page(bot, query):
     else:
         btn = [
             [InlineKeyboardButton(
-                text=f"{file.file_name} [{get_size(file.file_size)}]",
+                text=_lbl(f"{file.file_name} [{get_size(file.file_size)}]"),
                 callback_data=f'files#{file.file_id}'
             )]
             for file in files
@@ -1178,7 +1201,7 @@ async def auto_filter(client, msg, spoll=False):
     if settings["button"]:
         btn = [
             [InlineKeyboardButton(
-                text=f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}",
+                text=_lbl(f"📁[{get_size(file.file_size)}]-🎭-{file.file_name}"),
                 callback_data=f'{pre}#{file.file_id}'
             )]
             for file in files
@@ -1186,7 +1209,7 @@ async def auto_filter(client, msg, spoll=False):
     else:
         btn = [
             [InlineKeyboardButton(
-                text=f"{file.file_name} [{get_size(file.file_size)}]",
+                text=_lbl(f"{file.file_name} [{get_size(file.file_size)}]"),
                 callback_data=f'{pre}#{file.file_id}'
             )]
             for file in files
@@ -1241,31 +1264,38 @@ async def auto_filter(client, msg, spoll=False):
         cap = script.RESULT_TXT.format(search)
 
     result_msg = None
-    if imdb and imdb.get('poster'):
-        try:
-            result_msg = await message.reply_photo(
-                photo=imdb.get('poster'), caption=cap[:1024],
-                reply_markup=InlineKeyboardMarkup(btn)
-            )
-        except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
-            pic = imdb.get('poster')
-            poster = pic.replace('.jpg', "._V1_UX360.jpg")
-            result_msg = await message.reply_photo(
-                photo=poster, caption=cap[:1024],
-                reply_markup=InlineKeyboardMarkup(btn)
-            )
-        except Exception as e:
-            logger.exception(e)
-            result_msg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-    else:
-        result_msg = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-
-    #if spoll:
-        #await msg.message.delete()
+    try:
+        result_msg = await _send_result(message, imdb, cap, btn)
+    except ReplyMarkupTooLong:
+        logger.warning("reply markup too long, retrying with short labels")
+        result_msg = await _send_result(message, imdb, cap, btn, markup=_shrink_markup(btn, 40))
 
     # ── Auto-delete result after 5 min for copyright protection ───────────────
     if result_msg:
         asyncio.create_task(_auto_delete_result(result_msg))
+
+
+async def _send_result(message, imdb, cap, btn, markup=None):
+    markup = markup or InlineKeyboardMarkup(btn)
+    if imdb and imdb.get('poster'):
+        try:
+            return await message.reply_photo(
+                photo=imdb.get('poster'), caption=cap[:1024],
+                reply_markup=markup
+            )
+        except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
+            pic = imdb.get('poster')
+            poster = pic.replace('.jpg', "._V1_UX360.jpg")
+            return await message.reply_photo(
+                photo=poster, caption=cap[:1024],
+                reply_markup=markup
+            )
+        except ReplyMarkupTooLong:
+            raise
+        except Exception as e:
+            logger.exception(e)
+            return await message.reply_text(cap, reply_markup=markup)
+    return await message.reply_text(cap, reply_markup=markup)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
