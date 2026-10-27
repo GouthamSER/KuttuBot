@@ -10,7 +10,7 @@ Routes (mounted by plugins/webcode.py):
   GET  /api/search      -> ?q=&offset=      -> movie cards (grouped, posters)
   POST /api/movie       -> {keys, qs}       -> one movie's files + details
 
-Files are never downloaded from the site. A file button opens https://t.me/<bot>?start=wf_<token>
+Files are never downloaded from the site. A file button opens https://telegram.dog/<bot>?start=wf_<token>
 and the bot sends the file there (so ban list, force-subscribe and auto-delete all
 keep working). The site never exposes Telegram file_ids: each file is given a short
 token, stored in Mongo, and the bot turns the token back into the file on /start.
