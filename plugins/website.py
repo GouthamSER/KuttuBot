@@ -5,6 +5,7 @@ Routes (mounted by plugins/webcode.py):
   GET  /                -> site/index.html  (single page, hash routing)
   GET  /m/<slug>        -> same page, short share link for a movie   (e.g. /m/the-paradise-2026)
   GET  /s/<slug>        -> same page, short share link for a series  (e.g. /s/money-heist)
+  GET  /sw.js, /manifest.webmanifest, /icons/*.png -> PWA (installable app)
   GET  /health          -> "ok"             (uptime / health checks)
   GET  /api/config      -> {bot, name}
   GET  /api/search      -> ?q=&offset=      -> movie cards (grouped, posters)
@@ -163,6 +164,39 @@ async def share_page(request):
         )
         html = html.replace("</head>", tags + "</head>", 1)
     return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-cache"})
+
+
+# ── PWA files (installable app) ────────────────────────────────────────────────
+_SITE_DIR = SITE_FILE.parent
+_PWA = {
+    "/sw.js": ("sw.js", "application/javascript", {"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"}),
+    "/manifest.webmanifest": ("manifest.webmanifest", "application/manifest+json", {"Cache-Control": "public, max-age=3600"}),
+}
+
+
+def _pwa_handler(rel, ctype, headers):
+    async def handler(request):
+        try:
+            data = (_SITE_DIR / rel).read_bytes()
+        except FileNotFoundError:
+            raise web.HTTPNotFound()
+        return web.Response(body=data, content_type=ctype, headers=headers)
+    return handler
+
+
+for _path, (_rel, _ct, _hd) in _PWA.items():
+    routes.get(_path, allow_head=True)(_pwa_handler(_rel, _ct, _hd))
+
+
+@routes.get("/icons/{name}", allow_head=True)
+async def pwa_icon(request):
+    name = request.match_info["name"]
+    if not re.fullmatch(r"[a-z0-9-]+\.png", name):
+        raise web.HTTPNotFound()
+    f = _SITE_DIR / "icons" / name
+    if not f.is_file():
+        raise web.HTTPNotFound()
+    return web.Response(body=f.read_bytes(), content_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @routes.get("/health", allow_head=True)
