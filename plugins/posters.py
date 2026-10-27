@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # ── Filename -> title / year ───────────────────────────────────────────────────
 _LEADING_TAGS = re.compile(r'^\s*(?:\[[^\]]*\]|\([^)]*\)|@\w+|www\.\S+?\.\w{2,4}\b)[\s._-]*', re.I)
 _YEAR = re.compile(r'(?<![0-9])((?:19|20)\d{2})(?![0-9])')
-_EPISODE = re.compile(r'\b(?:S\d{1,2}[\s._-]*E\d{1,3}|S\d{1,2}\b|E\d{2,3}\b|Season[\s._-]*\d+|Ep(?:isode)?[\s._-]*\d+)', re.I)
+_EPISODE = re.compile(r'\b(?:S\d{1,2}[\s._-]*EP?(?:isode)?[\s._-]*\d{1,3}|S\d{1,2}\b|E\d{2,3}\b|Season[\s._-]*\d+|Ep(?:isode)?[\s._-]*\d+)', re.I)
 _JUNK = re.compile(
     r'\b(?:480p|576p|720p|1080p|1440p|2160p|4k|uhd|hdr|web[\s-]?dl|webrip|web|hdrip|hdtv|bluray|brrip|bdrip|dvdrip|'
     r'hdcam|camrip|cam|hdts|predvd|x264|x265|h\.?26[45]|hevc|10bit|aac|ac3|dd\+?\d?|ddp\d?|atmos|esubs?|msubs?|'
