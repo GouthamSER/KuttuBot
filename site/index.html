@@ -6,6 +6,11 @@
 <title>KuttuBot — Find movies &amp; series, get them in Telegram</title>
 <meta name="description" content="Search movies and series, see posters and details, and get the files in Telegram with one tap. KuttuBot by Goutham Josh.">
 <meta name="theme-color" content="#0b0b10">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KuttuBot">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23f5b83d'/%3E%3Cpath d='M20 14h8v14l12-14h10L36 31l15 19H40L28 35v15h-8z' fill='%231a1203'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -265,7 +270,7 @@ footer a:hover{text-decoration:underline}
 <footer>
   <div class="wrap">
     <div><b>KuttuBot</b> · built by <a href="https://gouthamjosh.vercel.app" target="_blank" rel="noopener">Goutham Josh</a></div>
-    <div>Files are delivered by our Telegram bot. <a id="tgFoot" href="https://telegram.dog/" target="_blank" rel="noopener">Open the bot</a></div>
+    <div>Files are delivered by our Telegram bot. <a id="tgFoot" href="https://telegram.dog/" target="_blank" rel="noopener">Open the bot</a> · <a href="#" id="installBtn" hidden>Install app</a></div>
   </div>
 </footer>
 
@@ -647,6 +652,20 @@ footer a:hover{text-decoration:underline}
     const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     const next = cur === 'dark' ? 'light' : 'dark'; applyTheme(next); store.set('kb-theme', next);
   };
+
+  /* ── install app (PWA) ── */
+  let deferredInstall = null;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; installBtn.hidden = false; });
+  installBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    try { await deferredInstall.userChoice; } catch {}
+    deferredInstall = null; installBtn.hidden = true;
+  });
+  window.addEventListener('appinstalled', () => { installBtn.hidden = true; });
+  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 
   /* ── boot ── */
   (async function init() {
