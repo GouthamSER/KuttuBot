@@ -55,8 +55,7 @@ header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--b
 .mark svg{width:20px;height:20px;fill:var(--accent-ink)}
 .brand b{display:block;font:700 18px/1.1 var(--head);letter-spacing:-.01em}
 .brand small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
-.hsearch{flex:1;max-width:560px;margin:0 auto;display:none}
-body:not([data-view="home"]) .hsearch{display:block}
+.hsearch{display:none}
 .field{position:relative}
 .field input{width:100%;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);padding:0 44px 0 46px;outline:none;transition:border-color .15s,box-shadow .15s}
 .field input::placeholder{color:var(--muted)}
@@ -65,7 +64,6 @@ body:not([data-view="home"]) .hsearch{display:block}
 .field .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
 .field .x:hover{background:var(--surface2)}
 .actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:none}
-body:not([data-view="home"]) .actions{margin-left:0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;font:600 14px/1 var(--body);transition:transform .12s,background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
 .btn svg{width:17px;height:17px;flex:none}
 .btn.pri{background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 22px rgba(245,184,61,.25)}
@@ -76,7 +74,7 @@ body:not([data-view="home"]) .actions{margin-left:0}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
 .icon-btn:hover{border-color:var(--accent)}
 .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-@media (max-width:640px){body:not([data-view="home"]) .brand>span:last-child{display:none}.brand small{display:none}.btn .lbl{display:none}.btn.pri{padding:0 12px}.bar{gap:10px}}
+@media (max-width:640px){.brand small{display:none}.btn .lbl{display:none}.btn.pri{padding:0 12px}.bar{gap:10px}}
 
 /* ── hero ── */
 .hero{position:relative;padding:clamp(40px,9vw,92px) 0 clamp(26px,5vw,44px);text-align:center;overflow:hidden}
@@ -187,6 +185,48 @@ main{flex:1}
 .note{margin-top:22px;padding:14px 16px;border-radius:var(--r);background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px dashed color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--muted);font-size:14px;display:flex;gap:10px}
 .note b{color:var(--text)}
 
+
+/* ── bottom tab bar (mobile) / pill row (desktop) ── */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;align-items:center;height:calc(68px + env(safe-area-inset-bottom));padding:0 8px env(safe-area-inset-bottom);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:64px;min-height:48px;font:600 11px/1 var(--body);color:var(--muted)}
+.tabs a svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabs a[aria-current="page"]{color:var(--accent-text)}
+body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+@media (min-width:761px){
+  .tabs{position:sticky;top:64px;bottom:auto;height:auto;justify-content:center;gap:8px;padding:12px 0;background:color-mix(in srgb,var(--bg) 85%,transparent);border:0;z-index:25}
+  .tabs a{flex-direction:row;gap:8px;min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+  .tabs a svg{width:18px;height:18px}
+  .tabs a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  body{padding-bottom:0}
+  .toast{bottom:24px}
+}
+
+/* ── home: featured carousel + numbered rail ── */
+.compact-search{padding:18px 0 0}
+.compact-search .field input{height:52px;font-size:16px}
+.feat{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:18px calc(var(--gutter)*-1) 0;padding:0 var(--gutter)}
+.feat::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;max-width:560px;scroll-snap-align:center;position:relative;min-height:220px;border-radius:24px;overflow:hidden;background:linear-gradient(120deg,var(--c1),var(--c2));color:#fff;display:flex;align-items:flex-end;padding:18px}
+@media (min-width:761px){.slide{flex-basis:520px;min-height:250px}}
+.slide .txt{position:relative;z-index:1;max-width:calc(100% - 96px)}
+.slide small{display:block;font:600 12px/1 var(--body);letter-spacing:.1em;opacity:.85}
+.slide h3{font:800 26px/1.1 var(--head);letter-spacing:-.02em;margin:8px 0 6px}
+.slide p{font-size:13px;opacity:.85;margin-bottom:12px}
+.slide .go{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:12px;background:#fff;color:#1b1030;font:700 13px/1 var(--head)}
+.slide .sp{position:absolute;right:16px;bottom:16px;width:80px;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+.slide .sp img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .3s}
+.slide .sp img.on{opacity:1}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:all .2s}
+.dots i.on{width:18px;background:var(--accent)}
+.rail{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 calc(var(--gutter)*-1);padding:2px var(--gutter) 6px}
+.rail::-webkit-scrollbar{display:none}
+.rcard{flex:none;display:flex;align-items:flex-end;width:158px}
+.rcard .n{font:800 78px/.78 var(--head);color:var(--bg);-webkit-text-stroke:2px var(--accent);margin-right:-16px;position:relative;z-index:1;pointer-events:none}
+.rcard .poster{width:104px;flex:none;border-radius:12px}
+.rcard:hover{transform:none}
+
 /* ── lightbox ── */
 .lb{position:fixed;inset:0;z-index:60;background:rgba(5,5,8,.9);display:grid;place-items:center;padding:20px;backdrop-filter:blur(6px)}
 .lb img{max-width:min(94vw,640px);max-height:88vh;border-radius:14px;box-shadow:var(--shadow)}
@@ -211,13 +251,14 @@ footer a:hover{text-decoration:underline}
       <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h3.4v7.2L14.2 3h4.4l-6.2 7.7L19.4 21h-4.5l-5.2-7.4-1.3 1.6V21H5z"/></svg></span>
       <span><b>KuttuBot</b><small>by Goutham Josh</small></span>
     </a>
-    <form class="hsearch field" role="search" id="hform">
+    <form class="hsearch field" role="search" id="hform" aria-hidden="true">
       <label class="sr" for="hq">Search movies and series</label>
       <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input id="hq" type="search" placeholder="Search movies or series…" autocomplete="off" enterkeyhint="search">
       <button type="button" class="x" id="hx" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </form>
     <div class="actions">
+      <a class="icon-btn" id="sIcon" href="#/search" aria-label="Search" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a>
       <button class="icon-btn" id="theme" aria-label="Toggle light / dark theme" title="Theme">
         <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
       </button>
@@ -229,26 +270,34 @@ footer a:hover{text-decoration:underline}
   </div>
 </header>
 
+<nav class="tabs" id="tabs" aria-label="Main">
+  <a href="#/" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></svg><span>Home</span></a>
+  <a href="#/movies" data-tab="movies"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14M16 5v14"/></svg><span>Movies</span></a>
+  <a href="#/series" data-tab="series"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M9 21h6M12 18v3"/></svg><span>Series</span></a>
+  <a href="#/search" data-tab="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search</span></a>
+</nav>
+
+
 <main>
   <!-- HOME + SEARCH -->
   <section id="browse">
-    <div class="hero wrap" id="hero">
-      <span class="eyebrow"><i></i>Free · Fast · In Telegram</span>
-      <h1 class="title">Find your next <em>movie</em> night</h1>
-      <p class="sub">Search any movie or series, check the poster and details, then get the file sent straight to your Telegram.</p>
+    <div class="wrap compact-search" id="hero" hidden>
       <form class="field" role="search" id="form">
         <label class="sr" for="q">Search movies and series</label>
         <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Try “Leo”, “Kaithi”, “Money Heist”…" autocomplete="off" enterkeyhint="search">
         <button type="button" class="x" id="x" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </form>
-      <div class="steps" aria-hidden="true">
-        <span><b>1</b>Search</span><span><b>2</b>Pick the movie</span><span><b>3</b>Tap “Get on Telegram”</span>
-      </div>
     </div>
 
     <div class="wrap">
-      <div class="filters" id="filters" role="group" aria-label="Filters"></div>
+      <div id="homeTop" hidden>
+        <div class="feat" id="feat" aria-label="Featured"></div>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+        <div class="sechead"><h2>Newest additions</h2></div>
+        <div class="rail" id="rail"></div>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Filters" hidden></div>
       <div class="sechead"><h2 id="sectitle">Latest uploads</h2><span id="secsub"></span></div>
       <div class="grid" id="grid" aria-live="polite"></div>
       <div class="state" id="state" hidden></div>
@@ -285,12 +334,16 @@ footer a:hover{text-decoration:underline}
     form: $('#form'), hform: $('#hform'), filters: $('#filters'), grid: $('#grid'), state: $('#state'),
     more: $('#more'), moreBtn: $('#moreBtn'), sentinel: $('#sentinel'), title: $('#sectitle'), sub: $('#secsub'),
     browse: $('#browse'), movie: $('#movie'), mbody: $('#mbody'), backdrop: $('#backdrop'), toast: $('#toast'),
-    tgTop: $('#tgTop'), tgFoot: $('#tgFoot'), theme: $('#theme'), back: $('#back'),
+    homeTop: $('#homeTop'), feat: $('#feat'), dots: $('#dots'), rail: $('#rail'), tabs: $('#tabs'), tgTop: $('#tgTop'), tgFoot: $('#tgFoot'), theme: $('#theme'), back: $('#back'),
   };
 
   const QUALITY = ['480p', '720p', '1080p', '4K'];
   const LANGS = ['Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada', 'English'];
-  const state = { query: '', lang: '', quality: '', next: null, loading: false, seq: 0, mseq: 0, movies: new Map(), total: 0, bot: '', scroll: 0, from: 'home' };
+  const state = { query: '', lang: '', quality: '', next: null, loading: false, seq: 0, mseq: 0, movies: new Map(), total: 0, bot: '', scroll: 0, from: 'home', tab: 'home', loadedTab: null, top: new Set() };
+  const TAB_HASH = { home: '#/', movies: '#/movies', series: '#/series', search: '#/search' };
+  const tabFromHash = h => ({ '#/movies': 'movies', '#/series': 'series', '#/search': 'search' }[h] || 'home');
+  const tabKind = () => state.tab === 'movies' ? 'movie' : state.tab === 'series' ? 'series' : '';
+  const TAB_TITLE = { home: 'Just added', movies: 'Movies', series: 'Series', search: 'Latest uploads' };
 
   /* ── helpers ── */
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -298,7 +351,7 @@ footer a:hover{text-decoration:underline}
   const toast = msg => { el.toast.textContent = msg; el.toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.toast.classList.remove('on'), 2400); };
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const hue = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-  const effectiveQuery = () => [state.query, state.lang, state.quality].filter(Boolean).join(' ');
+  const effectiveQuery = () => [state.tab === 'search' ? state.query : '', state.lang, state.quality].filter(Boolean).join(' ');
   const fileTags = name => {
     const out = [];
     const q = name.match(/\b(2160p|4k|1080p|720p|480p|360p)\b/i); if (q) out.push([q[1].toLowerCase() === '2160p' ? '4K' : q[1].toUpperCase().replace('P', 'p'), 1]);
@@ -364,6 +417,29 @@ footer a:hover{text-decoration:underline}
   const MOVIE_MSGS = ['Loading poster and files… this can take a few seconds.', 'Still fetching details and files, thanks for waiting.', 'Taking longer than usual. The server may be busy, please wait or reload the page.'];
   let stopGridNote = null, stopMovieNote = null;
 
+  /* ── home top: featured slides + numbered rail ── */
+  function slideHTML(m) {
+    const h = hue(m.title);
+    return `<a class="slide" href="${movieHref(m)}" style="--c1:hsl(${h} 50% 32%);--c2:hsl(${(h + 60) % 360} 55% 18%)" aria-label="${esc(m.title)}">
+      <div class="txt"><small>${m.kind === 'series' ? 'SERIES' : 'MOVIE'}</small><h3>${esc(m.title)}</h3><p>${esc([m.year, m.rating ? '★ ' + Number(m.rating).toFixed(1) : ''].filter(Boolean).join(' · ') || 'New on KuttuBot')}</p><span class="go">View details</span></div>
+      ${m.thumb ? `<div class="sp"><img alt="" decoding="async" src="${esc(m.thumb)}"></div>` : ''}</a>`;
+  }
+  function renderTop(items) {
+    if (!items.length) { el.homeTop.hidden = true; return; }
+    const feat = items.slice(0, 3);
+    el.feat.innerHTML = feat.map(slideHTML).join('');
+    el.dots.innerHTML = feat.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
+    el.dots.hidden = feat.length < 2;
+    el.rail.innerHTML = items.slice(0, 6).map((m, i) => `<a class="card rcard" href="${movieHref(m)}" aria-label="${i + 1}. ${esc(m.title)}"><span class="n" aria-hidden="true">${i + 1}</span><div class="poster">${m.kind === 'series' ? '<span class="kind">Series</span>' : ''}${posterHTML(m)}</div></a>`).join('');
+    wireImgs(el.feat); wireImgs(el.rail);
+    el.homeTop.hidden = false;
+  }
+  el.feat.addEventListener('scroll', () => {
+    const w = el.feat.firstElementChild ? el.feat.firstElementChild.getBoundingClientRect().width : 1;
+    const i = Math.round(el.feat.scrollLeft / (w + 12));
+    [...el.dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+  }, { passive: true });
+
   /* ── grid ── */
   const movieHref = m => '#/m/' + encodeURIComponent(JSON.stringify({ k: m.keys, q: m.qs, t: m.title, y: m.year, kd: m.kind }));
   function cardHTML(m) {
@@ -380,24 +456,31 @@ footer a:hover{text-decoration:underline}
     const seq = ++state.seq; state.loading = true;
     const q = effectiveQuery();
     if (!append) {
-      state.movies.clear(); state.next = null; state.total = 0;
+      state.movies.clear(); state.next = null; state.total = 0; state.top.clear(); state.chain = 0;
+      state.loadedTab = state.tab; el.homeTop.hidden = true;
       el.grid.innerHTML = skeletons(12); showState(''); el.more.hidden = true;
       if (stopGridNote) stopGridNote();
       stopGridNote = loadNote(n => el.grid.before(n), GRID_MSGS);
-      el.title.textContent = q ? `Results for “${q}”` : 'Latest uploads'; el.sub.textContent = '';
+      el.title.textContent = (state.tab === 'search' && state.query) ? `Results for “${state.query}”` : TAB_TITLE[state.tab]; el.sub.textContent = '';
     }
     try {
       const j = await api(`/api/search?q=${encodeURIComponent(q)}&offset=${append ? state.next : 0}`);
       if (seq !== state.seq) return;
-      const fresh = [];
+      const fresh = [], kd = tabKind();
       for (const m of j.movies) {
+        if (kd && m.kind !== kd) continue;
         const have = state.movies.get(m.mkey);
         if (have) { have.keys = [...new Set([...have.keys, ...m.keys])]; have.qs = [...new Set([...have.qs, ...m.qs])]; continue; }
         state.movies.set(m.mkey, m); fresh.push(m);
       }
       state.next = j.next_offset; state.total = j.total;
       if (!append) el.grid.innerHTML = '';
-      el.grid.insertAdjacentHTML('beforeend', fresh.map(cardHTML).join(''));
+      let shown = fresh;
+      if (!append && state.tab === 'home') {                        // first page on Home: top items go to the featured slides + rail
+        const topItems = fresh.slice(0, 6); topItems.forEach(m => state.top.add(m.mkey));
+        renderTop(topItems); shown = fresh.slice(6);
+      }
+      el.grid.insertAdjacentHTML('beforeend', shown.map(cardHTML).join(''));
       wireImgs(el.grid);
       el.more.hidden = state.next === null;
       if (!state.movies.size) {
@@ -406,6 +489,7 @@ footer a:hover{text-decoration:underline}
           : '');
         if (state.next !== null) { state.loading = false; return load(true); }
       }
+      if (state.tab !== 'home' && state.next !== null && el.grid.children.length < 8 && state.chain++ < 6) { state.loading = false; return load(true); }   // kind filter can leave a page nearly empty
       el.sub.textContent = state.movies.size ? `${state.movies.size} title${state.movies.size === 1 ? '' : 's'}${state.next !== null ? '+' : ''}` : '';
     } catch (e) {
       if (seq !== state.seq) return;
@@ -433,16 +517,17 @@ footer a:hover{text-decoration:underline}
 
   /* ── search inputs (hero + header share state) ── */
   let typing;
+  const runSearch = () => { if (location.hash === '#/search') load(false); else go('#/search'); };
   function setQuery(v, run) {
     state.query = v.trim();
     if (el.q.value !== v) el.q.value = v;
     if (el.hq.value !== v) el.hq.value = v;
     el.x.hidden = el.hx.hidden = !v;
-    if (run) { clearTimeout(typing); typing = setTimeout(() => { go('#/'); load(false); }, 380); }
+    if (run) { clearTimeout(typing); typing = setTimeout(runSearch, 380); }
   }
   [el.q, el.hq].forEach(i => i.addEventListener('input', () => setQuery(i.value, true)));
-  [el.form, el.hform].forEach(f => f.addEventListener('submit', e => { e.preventDefault(); clearTimeout(typing); document.activeElement.blur(); go('#/'); load(false); }));
-  [el.x, el.hx].forEach(b => b.addEventListener('click', () => { setQuery('', false); go('#/'); load(false); (el.body.dataset.view === 'home' ? el.q : el.hq).focus(); }));
+  [el.form, el.hform].forEach(f => f.addEventListener('submit', e => { e.preventDefault(); clearTimeout(typing); document.activeElement.blur(); runSearch(); }));
+  [el.x, el.hx].forEach(b => b.addEventListener('click', () => { setQuery('', false); runSearch(); el.q.focus(); }));
 
   /* ── load more ── */
   el.moreBtn.onclick = () => load(true);
@@ -459,6 +544,7 @@ footer a:hover{text-decoration:underline}
   }
   function closeLightbox() { if (lightbox) { lightbox.remove(); lightbox = null; } }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+  el.back.addEventListener('click', e => { if (state.fromBrowse) { e.preventDefault(); state.fromBrowse = false; history.back(); } });
 
   const prefetched = new Map();      // movie hash -> promise, filled on hover / touch so the page opens instantly
   function prefetch(card) {
@@ -619,29 +705,34 @@ footer a:hover{text-decoration:underline}
       let ref = null;
       try { ref = JSON.parse(decodeURIComponent(h.slice(4))); } catch {}
       if (!ref || !Array.isArray(ref.k) || !Array.isArray(ref.q)) { location.hash = '#/'; return; }
-      if (el.body.dataset.view !== 'movie') state.scroll = window.scrollY;
+      if (el.body.dataset.view !== 'movie') { state.scroll = window.scrollY; state.fromBrowse = true; }
       el.body.dataset.view = 'movie'; el.browse.hidden = true; el.movie.hidden = false;
+      el.tabs.querySelectorAll('a').forEach(a => a.removeAttribute('aria-current'));
       window.scrollTo(0, 0);
       showMovie(ref);
     } else {
       const wasMovie = el.body.dataset.view === 'movie';
       state.mseq++;      // drop a movie response that arrives after leaving the page
       if (stopMovieNote) { stopMovieNote(); stopMovieNote = null; }
-      el.body.dataset.view = (state.query || state.lang || state.quality) ? 'search' : 'home';
+      const tab = tabFromHash(h);
       el.movie.hidden = true; el.browse.hidden = false;
-      el.hero.hidden = el.body.dataset.view !== 'home';
       document.title = 'KuttuBot — Find movies & series, get them in Telegram';
+      const changed = state.tab !== tab || state.loadedTab !== tab;
+      state.tab = tab;
+      if (changed) { load(false); window.scrollTo(0, 0); if (tab === 'search') setTimeout(() => el.q.focus(), 60); }
+      else { syncView(); if (tab === 'search' && !wasMovie) el.q.focus(); }
       if (wasMovie) requestAnimationFrame(() => window.scrollTo(0, state.scroll));
     }
   }
   const syncView = () => {
     if (el.browse.hidden) return;
-    const v = (state.query || state.lang || state.quality) ? 'search' : 'home';
-    const ae = document.activeElement;
-    el.body.dataset.view = v; el.hero.hidden = v !== 'home';
-    // the input the user is typing in may just have been hidden: hand focus to the other one
-    const to = v === 'home' ? el.q : el.hq, from = v === 'home' ? el.hq : el.q;
-    if (ae === from) { to.focus(); try { to.setSelectionRange(to.value.length, to.value.length); } catch {} }
+    const t = state.tab;
+    el.body.dataset.view = t;
+    el.hero.hidden = t !== 'search';
+    el.filters.hidden = t === 'home';
+    if (t !== 'home') el.homeTop.hidden = true;
+    el.tabs.querySelectorAll('a').forEach(a => a.toggleAttribute('aria-current', a.dataset.tab === t && el.body.dataset.view !== 'movie'));
+    el.tabs.querySelectorAll('a').forEach(a => { if (a.hasAttribute('aria-current')) a.setAttribute('aria-current', 'page'); });
   };
   window.addEventListener('hashchange', route);
 
@@ -679,8 +770,9 @@ footer a:hover{text-decoration:underline}
       const ref = await refFromSlug(sm[1], sm[2]);
       history.replaceState(null, '', '/#/m/' + encodeURIComponent(JSON.stringify(ref)));
     }
+    state.tab = tabFromHash(location.hash.startsWith('#/m/') ? '' : location.hash);
     route();
-    load(false);
+    if (state.loadedTab === null) load(false);
   })();
 })();
 </script>
