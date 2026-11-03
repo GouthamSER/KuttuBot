@@ -5,7 +5,7 @@ Movie grouping + poster lookup for the Mini App.
   get_info(title, year, kind, detail=False) -> dict with poster/thumb/rating/genres/plot (cached)
 
 Poster source order (first one that has a poster wins, text gaps are filled from the others):
-  1. imdbio  (IMDb via the imdbinfo library, no API key)
+  1. imdbio  (IMDb via the imdbio library, no API key)
   2. OMDb    (IMDb data; needs OMDB_API_KEY)  - backup when imdbio is blocked/down
   3. TMDB    (optional; needs TMDB_API_KEY)   - last resort
 Results are cached in memory, including misses, so a title costs at most one lookup a day.
@@ -17,10 +17,16 @@ import logging
 
 import httpx
 
-from info import OMDB_API_KEY, TMDB_API_KEY
+from info import OMDB_API_KEY, TMDB_API_KEY, IMDB_PROXY
 
 try:
-    from imdbinfo import search_title as _imdb_search, get_movie as _imdb_get_movie, TitleType
+    import imdbio as _imdbio_lib
+    from imdbio import search_title as _imdb_search, get_movie as _imdb_get_movie, TitleType
+    if IMDB_PROXY:
+        try:
+            _imdbio_lib.set_proxy(IMDB_PROXY)
+        except Exception as _e:          # bad proxy url: keep going without it
+            logging.getLogger(__name__).warning(f"IMDB_PROXY ignored: {_e}")
 except Exception:                        # library missing: skip imdbio, OMDb/TMDB still work
     _imdb_search = _imdb_get_movie = TitleType = None
 
@@ -162,7 +168,7 @@ async def _imdbio(title, year, kind):
         try:
             return await asyncio.to_thread(_imdb_search, title, y, False, None, types)
         except Exception as e:
-            if "403" in str(e) and retry:                 # blocked: back off once
+            if retry and (getattr(e, "status_code", None) in (202, 403, 429) or "403" in str(e)):   # blocked / WAF: back off once
                 await asyncio.sleep(1.5)
                 return await search(y, retry=False)
             raise

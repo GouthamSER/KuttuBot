@@ -1,4 +1,5 @@
 import os
+import re
 from pyrogram import Client, filters, enums
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from info import IMDB_TEMPLATE
@@ -151,10 +152,29 @@ async def imdb_search(client, message):
 @Client.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     i, movie_id = quer_y.data.split('#')
-    data = await get_poster(query=movie_id, id=True)
+    try:
+        data = await get_poster(query=movie_id, id=True)
+    except Exception:
+        logger.exception(f"imdb details crashed for {movie_id!r}")
+        data = None
     message = quer_y.message.reply_to_message or quer_y.message
     if not data:
-        await quer_y.answer("❌ Could not fetch details.", show_alert=True)
+        tid = re.sub(r"^(imdbio_|omdb_)", "", movie_id)
+        if re.fullmatch(r"tt\d+", tid):
+            # IMDb is slow / blocked right now: keep the user moving with a link + retry instead of a dead-end alert
+            try:
+                await quer_y.message.edit(
+                    "⚠️ IMDb is slow right now, so full details could not load.\nTry again in a moment, or open it on IMDb:",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("🔗 Open on IMDb", url=f"https://www.imdb.com/title/{tid}/")],
+                        [InlineKeyboardButton("🔁 Try again", callback_data=quer_y.data)],
+                    ]),
+                )
+            except Exception:
+                pass
+            await quer_y.answer("⚠️ IMDb is slow right now. Try again.", show_alert=False)
+        else:
+            await quer_y.answer("❌ Could not fetch details.", show_alert=True)
         return
     btn = [
             [
