@@ -95,6 +95,7 @@ Copy `sample_info.py` → `info.py` and fill in your values, **or** set them as 
 | `MELCOW_NEW_USERS` | `True` | Send welcome message to new users |
 | `MINIAPP_URL` | — | Public HTTPS URL of your bot's web server (e.g. `https://yourapp.koyeb.app`). Enables the **🎬 Open Mini App** button and `/app` |
 | `OMDB_API_KEY` | — | Free key from [omdbapi.com](https://www.omdbapi.com). Backup poster/info source when imdbio is blocked, and gives HD posters |
+| `IMDB_PROXY` | — | Optional proxy for imdbio, e.g. `http://user:pass@host:port` or `socks5://host:port`. Use only if IMDb blocks your server IP |
 | `TMDB_API_KEY` | — | Optional. Mini App only — last-resort poster fallback |
 | `AUTO_DELETE_TIME` | `600` | Seconds before sent files are deleted from the user's PM. `0` disables |
 | `COLLECTION_NAME` | `Telegram_files` | MongoDB collection name for indexed files |
@@ -126,6 +127,7 @@ A movie-poster browser that opens inside Telegram.
 - **Select files → send to PM** — pick one or many, the bot sends them to your chat and they auto-delete after `AUTO_DELETE_TIME`
 - **No duplicates** — different filenames of the same movie are merged into one card; subtitles / audio files never get their own card; the same file indexed twice is shown once
 - **Poster chain** — imdbio → OMDb → TMDB (optional), cached in memory
+- **`/imdb` details** — imdbio with retries and a 30 min cache, OMDb backup, and a link + "Try again" button instead of a dead-end error
 
 **Set it up**
 

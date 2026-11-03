@@ -1,8 +1,10 @@
 import logging
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
-from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, OMDB_API_KEY
+from info import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, OMDB_API_KEY, IMDB_PROXY
 import asyncio
-from imdbinfo import search_title as imdbinfo_search_title, get_movie as imdbinfo_get_movie, TitleType
+import time
+import imdbio
+from imdbio import search_title as imdbio_search_title, get_movie as imdbio_get_movie, TitleType
 from pyrogram.types import Message, InlineKeyboardButton
 from pyrogram import enums
 from typing import Union
@@ -17,6 +19,12 @@ import httpx
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+if IMDB_PROXY:
+    try:
+        imdbio.set_proxy(IMDB_PROXY)
+    except Exception as _e:
+        logger.warning(f"IMDB_PROXY ignored: {_e}")
 
 BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
@@ -54,7 +62,7 @@ async def is_subscribed(bot, query):
     return False
 
 class _ImdbioFakeMovie:
-    """Wraps an imdbinfo MovieBriefInfo search result to match Cinemagoer's object interface."""
+    """Wraps an imdbio MovieBriefInfo search result to match Cinemagoer's object interface."""
     def __init__(self, m):
         self._m = m
         # m.imdb_id already carries the 'tt' prefix, e.g. 'tt0133093'
@@ -81,11 +89,11 @@ def _cat_names(movie, key):
 
 
 async def _imdbio_search(title, year=None, bulk=False, _retry=True):
-    """Search imdb via imdbinfo (no API key needed). Falls back to OMDb on block/failure."""
+    """Search imdb via imdbio (no API key needed). Falls back to OMDb on block/failure."""
     try:
         year_int = int(year) if year else None
         result = await asyncio.to_thread(
-            imdbinfo_search_title,
+            imdbio_search_title,
             title,
             year_int,
             False,
@@ -93,11 +101,11 @@ async def _imdbio_search(title, year=None, bulk=False, _retry=True):
             (TitleType.Movies, TitleType.Series),
         )
     except Exception as e:
-        if "403" in str(e) and _retry:
+        if _retry and (getattr(e, "status_code", None) in (202, 403, 429) or "403" in str(e)):
             # blocked, back off once then fall through to OMDb
             await asyncio.sleep(1.5)
             return await _imdbio_search(title, year, bulk, _retry=False)
-        logger.warning(f"imdbinfo search failed for '{title}': {e}, falling back to OMDb")
+        logger.warning(f"imdbio search failed for '{title}': {e!r}, falling back to OMDb")
         return await _omdb_search(title, year, bulk)
 
     if not result or not result.titles:
@@ -109,20 +117,65 @@ async def _imdbio_search(title, year=None, bulk=False, _retry=True):
     return await _imdbio_get_details(imdb_id) if imdb_id else await _omdb_search(title, year, bulk)
 
 
-async def _imdbio_get_details(imdb_id):
-    """Fetch full details via imdbinfo by IMDb ID (accepts with or without 'tt' prefix)."""
-    try:
-        movie = await asyncio.to_thread(imdbinfo_get_movie, imdb_id)
-    except Exception as e:
-        logger.warning(f"imdbinfo details failed for '{imdb_id}': {e}, falling back to OMDb")
-        return await _omdb_get_details(imdb_id)
-    if not movie:
-        return await _omdb_get_details(imdb_id)
+_DETAIL_CACHE = {}           # imdb id -> (time, details dict), keeps repeat taps instant and spares IMDb
+_DETAIL_TTL = 1800
 
+
+def _norm_imdb_id(imdb_id):
+    """'imdbio_tt123', 'omdb_tt123', '123', 'tt0000123' -> 'tt0000123' (or '' when it is not an id)."""
+    v = str(imdb_id or "").strip()
+    for p in ("imdbio_", "omdb_"):
+        if v.startswith(p):
+            v = v[len(p):]
+    m = re.fullmatch(r"(?:tt)?(\d{1,10})", v)
+    return f"tt{m.group(1)}" if m else ""
+
+
+async def _fetch_movie(imdb_id, tries=3):
+    """imdbio get_movie with retries: IMDb sometimes answers 202/403/429 or times out for a moment."""
+    for attempt in range(tries):
+        try:
+            movie = await asyncio.wait_for(asyncio.to_thread(imdbio_get_movie, imdb_id), 25)
+            if movie:
+                return movie
+            logger.warning(f"imdbio returned nothing for '{imdb_id}' (try {attempt + 1}/{tries})")
+        except Exception as e:
+            logger.warning(f"imdbio details failed for '{imdb_id}' (try {attempt + 1}/{tries}): {e!r}")
+        if attempt < tries - 1:
+            await asyncio.sleep(1.2 * (attempt + 1))
+    return None
+
+
+async def _imdbio_get_details(imdb_id):
+    """Full details via imdbio by IMDb ID; retries, then falls back to OMDb. Returns None only if both fail."""
+    tt = _norm_imdb_id(imdb_id)
+    if not tt:
+        return await _omdb_get_details(imdb_id)
+    hit = _DETAIL_CACHE.get(tt)
+    if hit and time.time() - hit[0] < _DETAIL_TTL:
+        return hit[1]
+    movie = await _fetch_movie(tt)
+    data = None
+    if movie:
+        try:
+            data = _movie_to_dict(movie, tt)
+        except Exception:
+            logger.exception(f"mapping imdbio details failed for '{tt}'")
+    if not data:
+        data = await _omdb_get_details(tt)
+    if data:
+        if len(_DETAIL_CACHE) > 300:
+            _DETAIL_CACHE.clear()
+        _DETAIL_CACHE[tt] = (time.time(), data)
+    return data
+
+
+def _movie_to_dict(movie, imdb_id):
     plot = getattr(movie, "plot", None) or "N/A"
     if not LONG_IMDB_DESCRIPTION and plot and len(plot) > 800:
         plot = plot[:800] + "..."
-    kind = "tv series" if movie.is_series() else "movie"
+    _is_series = getattr(movie, "is_series", None)
+    kind = "tv series" if (callable(_is_series) and _is_series()) else "movie"
     seasons = None
     info_series = getattr(movie, "info_series", None)
     if info_series and getattr(info_series, "display_seasons", None):
@@ -168,7 +221,7 @@ async def _imdbio_get_details(imdb_id):
         'plot': plot,
         'rating': str(movie.rating) if getattr(movie, "rating", None) is not None else "N/A",
         'url': getattr(movie, "url", None) or f"https://www.imdb.com/title/{getattr(movie, 'imdb_id', imdb_id)}/",
-        '_source': 'imdbinfo',
+        '_source': 'imdbio',
     }
 
 
