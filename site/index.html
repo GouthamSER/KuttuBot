@@ -668,7 +668,7 @@ footer a:hover{text-decoration:underline}
   }
 
   /* ── short share links: /m/the-paradise-2026 (movie), /s/money-heist (series) ── */
-  const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const slugify = s => s.toLowerCase().replace(/['’`]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');   // I'm Game -> im-game
   const normKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
   function shortUrl(ref) {
     const k0 = (ref.k && ref.k[0]) || '', slug = slugify((ref.q && ref.q[0]) || '');
@@ -687,11 +687,16 @@ footer a:hover{text-decoration:underline}
       cands.push({ title: words(slug), key: normKey(slug) + '|', year: '' });      // a title that really ends in a year ("Blade Runner 2049")
     }
     for (const c of cands) {
-      try {
-        const j = await api('/api/search?q=' + encodeURIComponent(c.title) + '&offset=0');
-        const m = j.movies.find(x => x.keys.includes(c.key));
-        if (m) return { k: m.keys, q: m.qs, t: m.title, y: m.year, kd: m.kind };
-      } catch {}
+      // full title first; then the longest single words: a title like "I'm Game" is stored with an apostrophe,
+      // so the slug words "i m game" / "im game" cannot match it, but "game" can
+      const wl = [...new Set(c.title.split(' ').filter(w => w.length >= 3))].sort((a, b) => b.length - a.length).slice(0, 2);
+      for (const q of [c.title, ...wl]) {
+        try {
+          const j = await api('/api/search?q=' + encodeURIComponent(q) + '&offset=0');
+          const m = j.movies.find(x => x.keys.includes(c.key));
+          if (m) return { k: m.keys, q: m.qs, t: m.title, y: m.year, kd: m.kind };
+        } catch {}
+      }
     }
     const c = cands[0];
     return { k: [c.key], q: [cap(c.title)], t: cap(c.title), y: c.year || '', kd: kind === 's' ? 'series' : 'movie' };
