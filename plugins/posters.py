@@ -13,6 +13,7 @@ Results are cached in memory, including misses, so a title costs at most one loo
 import re
 import time
 import asyncio
+import difflib
 import logging
 
 import httpx
@@ -144,6 +145,37 @@ def _imdb_sizes(url):
     return base, f"{stem}._V1_SX500{suffix}"
 
 
+def _norm_title(t):
+    t = re.sub(r"[^a-z0-9]+", "", (t or "").lower())
+    return t[3:] if t.startswith("the") and len(t) > 6 else t        # "The Paradise" == "Paradise"
+
+
+def _same_title(a, b):
+    """True when two titles are the same show/film (exact, or a tiny typo/punctuation difference).
+    "Eyes" != "Private Eyes", "Jailer" != "Jailer 2"."""
+    x, y = _norm_title(a), _norm_title(b)
+    if not x or not y:
+        return False
+    return x == y or difflib.SequenceMatcher(None, x, y).ratio() >= 0.9
+
+
+def _pick(items, title, year, get_title, get_year):
+    """First result whose title really matches ours. With a year, prefer the closest year.
+    Returns None when nothing matches: a missing poster is better than another show's poster."""
+    good = [it for it in items if _same_title(get_title(it), title)]
+    if not good:
+        return None
+    if year:
+        try:
+            y = int(year)
+            dated = [(abs(int(str(get_year(it))[:4]) - y), i, it) for i, it in enumerate(good) if str(get_year(it) or "")[:4].isdigit()]
+            if dated:
+                return min(dated, key=lambda d: (d[0], d[1]))[2]
+        except (TypeError, ValueError):
+            pass
+    return good[0]
+
+
 def _num(v):
     try:
         v = round(float(v), 1)
@@ -178,7 +210,9 @@ async def _imdbio(title, year, kind):
         res = await search(None)
     if not res or not res.titles:
         return None
-    t = res.titles[0]
+    t = _pick(list(res.titles)[:10], title, year, lambda x: getattr(x, "title", ""), lambda x: getattr(x, "year", None))
+    if t is None:                                          # IMDb's top hit is a different show ("Eyes" -> "Private Eyes")
+        return None
     full, thumb = _imdb_sizes(getattr(t, "cover_url", None))
     return {
         "poster": full, "thumb": thumb, "source": "imdbio",
@@ -254,9 +288,10 @@ async def _tmdb(client, title, year, kind):
     r.raise_for_status()
     results = r.json().get("results") or []
     results = [x for x in results if x.get("poster_path")] or results
-    if not results:
+    m = _pick(results, title, year, lambda x: x.get("title") or x.get("name") or "",
+              lambda x: (x.get("release_date") or x.get("first_air_date") or "")[:4])
+    if m is None:
         return None
-    m = results[0]
     pp = m.get("poster_path")
     date = m.get("release_date") or m.get("first_air_date") or ""
     return {
