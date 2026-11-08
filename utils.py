@@ -112,8 +112,11 @@ async def _imdbio_search(title, year=None, bulk=False, _retry=True):
         return await _omdb_search(title, year, bulk)
     if bulk:
         return [_ImdbioFakeMovie(t) for t in result.titles[:10]]
-    # fetch full details for top result
-    imdb_id = result.titles[0].imdb_id
+    # fetch full details: prefer the result whose title equals the search ("eyes" -> "Eyes", not "Private Eyes")
+    def _n(t):
+        return re.sub(r"[^a-z0-9]+", "", (t or "").lower())
+    best = next((t for t in result.titles[:10] if _n(getattr(t, "title", "")) == _n(title)), result.titles[0])
+    imdb_id = best.imdb_id
     return await _imdbio_get_details(imdb_id) if imdb_id else await _omdb_search(title, year, bulk)
 
 
